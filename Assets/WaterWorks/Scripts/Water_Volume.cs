@@ -39,11 +39,21 @@ public class Water_Volume : ScriptableRendererFeature
         {
             if(renderingData.cameraData.cameraType != CameraType.Reflection)
             {
-                CommandBuffer commandBuffer = CommandBufferPool.Get();
+                CommandBuffer commandBuffer = CommandBufferPool.Get("Water Volume Pass");
 
-                commandBuffer.GetTemporaryRT(tempRenderTarget.id, renderingData.cameraData.cameraTargetDescriptor);
-                Blit(commandBuffer, source, tempRenderTarget.Identifier(), _material);
-                Blit(commandBuffer, tempRenderTarget.Identifier(), source);
+                // В новых версиях URP получаем дескриптор камеры напрямую
+                RenderTextureDescriptor opaqueDesc = renderingData.cameraData.cameraTargetDescriptor;
+                opaqueDesc.depthBufferBits = 0; // Нам не нужен буфер глубины для копии цвета
+
+                // Получаем доступ к текущей текстуре камеры (Source)
+                var cameraTarget = renderingData.cameraData.renderer.cameraColorTargetHandle;
+
+                commandBuffer.GetTemporaryRT(tempRenderTarget.id, opaqueDesc);
+        
+                // Выполняем отрисовку материала во временную текстуру
+                Blit(commandBuffer, cameraTarget, tempRenderTarget.Identifier(), _material);
+                // Копируем результат обратно в камеру
+                Blit(commandBuffer, tempRenderTarget.Identifier(), cameraTarget);
 
                 context.ExecuteCommandBuffer(commandBuffer);
                 CommandBufferPool.Release(commandBuffer);
@@ -86,7 +96,7 @@ public class Water_Volume : ScriptableRendererFeature
     // This method is called when setting up the renderer once per-camera.
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
     {       
-        m_ScriptablePass.source = renderer.cameraColorTarget;
+        // Убираем строку с renderer.cameraColorTargetHandle здесь!
         renderer.EnqueuePass(m_ScriptablePass);
     }
 }
