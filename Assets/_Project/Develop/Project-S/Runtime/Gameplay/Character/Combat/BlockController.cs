@@ -30,12 +30,6 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 _blockStartedAt = Time.time;
             }
 
-            // --- ТУТ СТАВИМО ДЕБАГ ---
-            if (IsBlocking)
-            {
-                Debug.Log("<color=blue>Гравець у блоці!</color>");
-            }
-
             // 3. Запам'ятовуємо стан для наступного кадру
             _wasBlocking = IsBlocking;
         }

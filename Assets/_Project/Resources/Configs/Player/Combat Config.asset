@@ -18,4 +18,4 @@ MonoBehaviour:
   <HeavyAttackCooldown>k__BackingField: 0.75
   <BlockDamageMultiplier>k__BackingField: 0.35
   <ParryWindow>k__BackingField: 0.2
-  <PoiseRecoveryPerSecond>k__BackingField: 8
+  <PoiseRecoveryPerSecond>k__BackingField: 2
