@@ -1,75 +1,85 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Character.Combat
 {
+    [RequireComponent(typeof(Collider))]
     public class MeleeHitTester : MonoBehaviour
     {
-        [SerializeField] private Transform _attackPoint; // Тут залишається Камера
-        [SerializeField] private float _attackDistance = 1.2f; // На скільки метрів ВПЕРЕД вилітає удар
-        [SerializeField] private float _hitRadius = 0.4f; // Товщина самого удару (робимо компактним)
-        [SerializeField] private LayerMask _targetLayer;
+        private WeaponItemData _weaponData;
+        private GameObject _attacker;
 
-        [Header("Тестовий урон")]
-        [SerializeField] private float _testLightDamage = 20f;
-        [SerializeField] private float _testPoiseDamage = 5f;
+        private bool _isHitboxActive = false;
 
-        private float _sphereDisplayTimer;
-        private Vector3 _actualHitPosition;
+        // Список, щоб не вдарити одного й того ж ворога двічі за один помах
+        private HashSet<Collider> _alreadyHit = new HashSet<Collider>();
 
-        private void Update()
+        // Налаштовуємо зброю (передаємо паспорт і власника)
+        public void Setup(WeaponItemData data, GameObject attacker)
         {
-            if (UnityEngine.Input.GetMouseButtonDown(0))
-            {
-                PerformTestAttack();
-            }
+            _weaponData = data;
+            _attacker = attacker;
 
-            if (_sphereDisplayTimer > 0)
-            {
-                _sphereDisplayTimer -= Time.deltaTime;
-            }
+            Collider col = GetComponent<Collider>();
+            col.isTrigger = true; // Робимо колайдер тригером, щоб він не відштовхував фізичні об'єкти
         }
 
-        private void PerformTestAttack()
+        // ВМИКАЄМО ЛЕЗО (викликається, коли починається удар)
+        public void StartHitDetection()
         {
-            // ФІКС: Тепер беремо позицію камери і ПЛЮСУЄМО вектор напрямку погляду (forward) помножений на дистанцію!
-            if (_attackPoint != null)
+            _isHitboxActive = true;
+            _alreadyHit.Clear(); // Очищаємо список пам'яті для нового удару
+        }
+
+        // ВИМИКАЄМО ЛЕЗО (викликається, коли удар завершився)
+        public void StopHitDetection()
+        {
+            _isHitboxActive = false;
+            _alreadyHit.Clear();
+        }
+
+        private void OnTriggerEnter(Collider other)
+        {
+            // 1. Якщо ми зараз не махаємо мечем — лезо безпечне, ігноруємо торкання
+            if (!_isHitboxActive || _weaponData == null) return;
+
+            // 2. Якщо торкнулися самі себе — ігноруємо
+            if (other.gameObject == _attacker) return;
+
+            // 3. Якщо вже вдарили цю ціль у цьому замаху — не б'ємо ще раз
+            if (_alreadyHit.Contains(other)) return;
+
+            // 4. Шукаємо у того, кого торкнулися, компонент IDamageReceiver
+            IDamageReceiver receiver = other.GetComponentInParent<IDamageReceiver>();
+            if (receiver != null)
             {
-                _actualHitPosition = _attackPoint.position + (_attackPoint.forward * _attackDistance);
-            }
-            else
-            {
-                _actualHitPosition = transform.position + (transform.forward * _attackDistance);
-            }
+                _alreadyHit.Add(other); // Записуємо ціль у "чорний список" цього удару
 
-            _sphereDisplayTimer = 0.5f;
+                // Рахуємо весь урон зі списку DamageProfile
+                float totalDamage = 0f;
+                DamageType primaryType = DamageType.Blunt; // Тип за замовчуванням
 
-            var request = new DamageRequest(gameObject, _testLightDamage, _testPoiseDamage, DamageType.Slashing);
-
-            // Сфера створюється чітко перед носом
-            Collider[] hits = Physics.OverlapSphere(_actualHitPosition, _hitRadius, _targetLayer);
-
-            foreach (var hit in hits)
-            {
-                if (hit.TryGetComponent<IDamageReceiver>(out var receiver))
+                if (_weaponData.DamageProfile.Count > 0)
                 {
-                    receiver.ReceiveDamage(request);
-
-                    // Малюємо жовтий лазер від очей (камери) до точки влучання
-                    Vector3 rayOrigin = _attackPoint != null ? _attackPoint.position : transform.position;
-                    Debug.DrawLine(rayOrigin, hit.transform.position, Color.yellow, 1.5f);
+                    foreach (var dmgInstance in _weaponData.DamageProfile)
+                    {
+                        totalDamage += dmgInstance.Amount;
+                    }
+                    primaryType = _weaponData.DamageProfile[0].Type; // Для DamageRequest беремо перший тип з масиву
                 }
-            }
-        }
 
-        private void OnDrawGizmos()
-        {
-            if (_sphereDisplayTimer > 0)
-            {
-                Gizmos.color = new Color(1f, 0f, 0f, 0.4f);
-                Gizmos.DrawSphere(_actualHitPosition, _hitRadius);
+                // Створюємо Запит на урон
+                DamageRequest request = new DamageRequest(
+                    _attacker,
+                    totalDamage,
+                    _weaponData.PoiseDamage,
+                    primaryType
+                );
 
-                Gizmos.color = Color.red;
-                Gizmos.DrawWireSphere(_actualHitPosition, _hitRadius);
+                // Відправляємо урон цілі!
+                receiver.ReceiveDamage(request);
+
+                Debug.Log($"<color=orange>[HitTester]</color> ВЛУЧИЛИ по {other.name}! Нанесено {totalDamage} урону.");
             }
         }
     }

@@ -720,8 +720,8 @@ GameObject:
   - component: {fileID: 320454765}
   - component: {fileID: 320454764}
   - component: {fileID: 320454763}
-  - component: {fileID: 320454762}
   - component: {fileID: 320454767}
+  - component: {fileID: 320454768}
   m_Layer: 6
   m_Name: Sphere
   m_TagString: Untagged
@@ -729,19 +729,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &320454762
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 320454761}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e3b156fc1d19a1458cdedc7928bda6e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _health: 100
 --- !u!135 &320454763
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -850,6 +837,19 @@ MonoBehaviour:
   _strikeDuration: 0.15
   _healthDamage: 30
   _poiseDamage: 15
+--- !u!114 &320454768
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 320454761}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa4ef5330e4cd1848a7894746e905806, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Health: 100
 --- !u!1 &329434603
 GameObject:
   m_ObjectHideFlags: 0
@@ -1250,6 +1250,7 @@ GameObject:
   - component: {fileID: 545051948}
   - component: {fileID: 545051952}
   - component: {fileID: 545051951}
+  - component: {fileID: 545051953}
   m_Layer: 7
   m_Name: Player
   m_TagString: Untagged
@@ -1569,14 +1570,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea253ff2f71dee54fb35b2ff915711ae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _attackPoint: {fileID: 746521441}
-  _attackDistance: 1.2
-  _hitRadius: 0.15
-  _targetLayer:
-    serializedVersion: 2
-    m_Bits: 64
-  _testLightDamage: 20
-  _testPoiseDamage: 5
 --- !u!114 &545051948
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1591,7 +1584,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _stats: {fileID: 545051941}
   _blockController: {fileID: 545051950}
-  _combatController: {fileID: 0}
+  _combatController: {fileID: 545051953}
   _poiseController: {fileID: 545051949}
   _staminaController: {fileID: 545051944}
 --- !u!114 &545051949
@@ -1625,7 +1618,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7fba8efb4e527fd4eb408cbb069adeea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _combatController: {fileID: 0}
+  _combatController: {fileID: 545051953}
 --- !u!114 &545051951
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1659,6 +1652,24 @@ MonoBehaviour:
   _weaponAnchor: {fileID: 80817928}
   _fistsObject: {fileID: 665572731}
   _poise: {fileID: 545051949}
+--- !u!114 &545051953
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 545051934}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13411cac07a11434ba5c7843a1074a50, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _stamina: {fileID: 545051944}
+  _blockController: {fileID: 545051950}
+  _weaponHolder: {fileID: 1179797916}
+  _unarmedWeapon: {fileID: 11400000, guid: 8b3146ccc4325cc4995424c49c2ef7c7, type: 2}
+  _currentWeapon: {fileID: 11400000, guid: eacfaf8bfe9dc2043a7425541b9fc360, type: 2}
+  _comboResetTime: 1.5
 --- !u!1001 &599405943
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2623,6 +2634,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _inventory: {fileID: 545051951}
+  _combatController: {fileID: 545051953}
   _slotPrefab: {fileID: 6313610556956332447, guid: 42aa09698dec67741bf30b0be5b84759,
     type: 3}
   _hotbarGrid: {fileID: 1738156884}
@@ -2692,89 +2704,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 882317934}
   m_CullTransparentMesh: 1
---- !u!1 &892144212
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 892144213}
-  - component: {fileID: 892144215}
-  - component: {fileID: 892144214}
-  m_Layer: 7
-  m_Name: TestSword
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &892144213
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 892144212}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.3, y: 0, z: 0.5}
-  m_LocalScale: {x: 0.1, y: 0.6, z: 0.1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1179797916}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!23 &892144214
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 892144212}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &892144215
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 892144212}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &930680003
 GameObject:
   m_ObjectHideFlags: 0
@@ -3211,8 +3140,7 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 892144213}
+  m_Children: []
   m_Father: {fileID: 746521441}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1272386984

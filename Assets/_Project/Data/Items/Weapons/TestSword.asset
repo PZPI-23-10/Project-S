@@ -18,7 +18,8 @@ MonoBehaviour:
   MaxStack: 1
   Icon: {fileID: 0}
   Description: "\u041E\u043F\u0438\u0441..."
-  WeaponPrefab: {fileID: 0}
+  WeaponPrefab: {fileID: 3942592866433276128, guid: 6e6f288cc1ccdd543b2cd3d632a069ed,
+    type: 3}
   WorldPickupPrefab: {fileID: 0}
   DamageProfile:
   - Type: 2

@@ -1,5 +1,6 @@
 using UnityEngine;
 using Project_S.Runtime.Gameplay.Character.Inventory;
+using Project_S.Runtime.Gameplay.Character.Combat; // ДОДАЛИ ЦЕ: щоб бачити боївку
 using System.Collections.Generic;
 
 namespace Project_S.Runtime.Gameplay.HUD
@@ -7,6 +8,7 @@ namespace Project_S.Runtime.Gameplay.HUD
     public class HotbarUI : MonoBehaviour
     {
         [SerializeField] private InventoryController _inventory;
+        [SerializeField] private CombatController _combatController; // ДОДАЛИ ЦЕ: посилання на боївку
         [SerializeField] private InventorySlotUI _slotPrefab;
         [SerializeField] private Transform _hotbarGrid;
         [SerializeField] private int _hotbarSize = 5;
@@ -51,13 +53,27 @@ namespace Project_S.Runtime.Gameplay.HUD
 
             // ПЕРЕВІРКА: Що у нас у цьому слоті?
             ItemStack stack = _inventory.GetSlot(index);
+
             if (stack != null && stack.Item != null)
             {
                 Debug.Log($"<color=yellow>[Hotbar]</color> Обрано: <b>{stack.Item.ItemName}</b> (x{stack.Amount})");
+
+                // ПРОБУЄМО ЕКІПІРУВАТИ: 
+                // "as WeaponItemData" спробує перетворити предмет на зброю. Якщо це яблуко - буде null.
+                WeaponItemData weaponData = stack.Item as WeaponItemData;
+
+                if (_combatController != null)
+                {
+                    _combatController.EquipWeapon(weaponData); // Якщо weaponData == null, дістануться кулаки
+                }
             }
             else
             {
-                Debug.Log("<color=grey>[Hotbar]</color> Слот порожній");
+                Debug.Log("<color=grey>[Hotbar]</color> Слот порожній, дістаємо кулаки");
+                if (_combatController != null)
+                {
+                    _combatController.EquipWeapon(null); // Слот порожній -> беремо кулаки
+                }
             }
         }
 
