@@ -169,6 +169,13 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
         {
             if (_config == null || _stamina == null) return;
 
+            // --- Ќќ¬≈: ЅЋќ ”¬јЌЌя ”’»Ћ≈ЌЌя ѕ–» ѕ≈–≈¬јЌ“ј∆≈ЌЌ≤ ---
+            if (_inventory != null && _inventory.GetCurrentWeight() > _inventory.GetMaxWeight())
+            {
+                // якщо вага б≥льша за 100%, просто скасовуЇмо ривок
+                return;
+            }
+
             if (!input.DodgePressed || Time.time < _dodgeCooldownUntil || !_motor.GroundingStatus.IsStableOnGround)
                 return;
 
@@ -208,24 +215,27 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
         {
             if (_stats == null || _config == null || _stamina == null) return 5f;
 
-            var hasMove = _moveInput.sqrMagnitude > 0.01f;
+            // ѕерев≥р€Їмо, чи Ї Ѕ”ƒ№-я »… вв≥д руху (вперед, назад, вл≥во, вправо)
+            bool hasMovementInput = _moveInput.sqrMagnitude > 0.01f;
 
-            // ѕ≈–≈¬≤– ј ¬ј√» “ј ЅЋќ ”¬јЌЌя —ѕ–»Ќ“”
             bool isOverweight = false;
             float weightMultiplier = 1f;
 
             if (_inventory != null)
             {
                 isOverweight = _inventory.GetCurrentWeight() > _inventory.GetMaxWeight();
-                weightMultiplier = _inventory.GetWeightSpeedMultiplier();
+                weightMultiplier = _inventory.GetWeightPenaltyMultiplier();
             }
 
-            // якщо перевантажен≥ Ч спринт автоматично в≥дключаЇтьс€ (не забираЇ стам≥ну ≥ не даЇ швидкост≥)
-            var canSprint = hasMove && _sprintHeld && !isOverweight && _stamina.Spend(_config.SprintStaminaCostPerSecond * deltaTime);
+            // —принт тепер працюЇ в ус≥ боки:
+            // 1. ™ будь-€кий рух
+            // 2. «атиснутий Shift
+            // 3. ЌемаЇ критичного перевантаженн€ (швидк≥сть не 0)
+            // 4. ¬далос€ витратити стам≥ну
+            var canSprint = hasMovementInput && _sprintHeld && weightMultiplier > 0f && _stamina.Spend(_config.SprintStaminaCostPerSecond * deltaTime);
 
             float baseSpeed = canSprint ? _stats.Get(StatType.SprintSpeed) : _stats.Get(StatType.MoveSpeed);
 
-            // ћножимо ф≥нальну швидк≥сть на штраф в≥д ваги (0.95, 0.4 або 0)
             return baseSpeed * weightMultiplier;
         }
 

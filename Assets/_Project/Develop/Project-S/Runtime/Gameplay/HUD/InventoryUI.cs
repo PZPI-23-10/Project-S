@@ -188,19 +188,30 @@ namespace Project_S.Runtime.Gameplay.HUD
                 }
             }
             // ==========================================
-            // ПРАВА КНОПКА МИШІ (Екіпірування, По одному)
+            // ПРАВА КНОПКА МИШІ (Взяття по 1 та вклад по 1)
             // ==========================================
             else if (button == PointerEventData.InputButton.Right)
             {
-                // 1. Курсор порожній 
-                if (_draggedStack == null && targetSlotStack != null)
+                // СИТУАЦІЯ 1: Клікаємо по слоту, де Є ПРЕДМЕТ
+                if (targetSlotStack != null)
                 {
-                    // НОВА ЛОГІКА: Якщо предмет стакається (ресурси) - беремо 1 шт.
+                    // Якщо предмет стакається (ресурси, розхідники)
                     if (targetSlotStack.Item.IsStackable)
                     {
-                        _draggedStack = new ItemStack(targetSlotStack.Item, 1);
+                        // А. На курсорі нічого немає - беремо 1 штуку
+                        if (_draggedStack == null)
+                        {
+                            _draggedStack = new ItemStack(targetSlotStack.Item, 1);
+                            targetSlotStack.Amount--;
+                        }
+                        // Б. На курсорі такий самий предмет - додаємо 1 штуку до руки
+                        else if (_draggedStack.Item == targetSlotStack.Item && _draggedStack.Amount < _draggedStack.Item.MaxStack)
+                        {
+                            _draggedStack.Amount++;
+                            targetSlotStack.Amount--;
+                        }
 
-                        targetSlotStack.Amount--;
+                        // Оновлюємо слот: якщо там стало 0, видаляємо його
                         if (targetSlotStack.Amount <= 0)
                             _inventory.SetSlot(slotIndex, null);
                         else
@@ -208,41 +219,22 @@ namespace Project_S.Runtime.Gameplay.HUD
 
                         UpdateDraggedIcon();
                     }
-                    // Якщо предмет НЕ стакається (зброя, броня) - ЕКІПІРУЄМО
-                    else
+                    // Якщо предмет НЕ стакається (меч, броня) - просто екіпіруємо його
+                    else if (_draggedStack == null)
                     {
                         EquipmentSlots eq = FindFirstObjectByType<EquipmentSlots>();
-                        if (eq != null)
-                        {
-                            eq.EquipItem(targetSlotStack.Item);
-                        }
+                        if (eq != null) eq.EquipItem(targetSlotStack.Item);
                     }
                 }
-                // 2. На курсорі є предмет - КЛАДЕМО ПО 1 ШТУЦІ у слот
+                // СИТУАЦІЯ 2: Клікаємо по ПОРОЖНЬОМУ слоту, тримаючи щось у руці
                 else if (_draggedStack != null)
                 {
-                    // Якщо клікаємо по порожньому слоту - відокремлюємо туди 1 штуку
-                    if (targetSlotStack == null)
-                    {
-                        _inventory.SetSlot(slotIndex, new ItemStack(_draggedStack.Item, 1));
+                    // Кладемо 1 штуку з руки в порожню клітинку
+                    _inventory.SetSlot(slotIndex, new ItemStack(_draggedStack.Item, 1));
 
-                        _draggedStack.Amount--;
-                        if (_draggedStack.Amount <= 0) ClearDraggedItem();
-                        else UpdateDraggedIcon();
-                    }
-                    // Якщо клікаємо по такому ж предмету - додаємо 1 штуку в стак
-                    else if (targetSlotStack.Item == _draggedStack.Item && targetSlotStack.Item.IsStackable)
-                    {
-                        if (targetSlotStack.Amount < targetSlotStack.Item.MaxStack)
-                        {
-                            targetSlotStack.Amount++;
-                            _inventory.SetSlot(slotIndex, targetSlotStack);
-
-                            _draggedStack.Amount--;
-                            if (_draggedStack.Amount <= 0) ClearDraggedItem();
-                            else UpdateDraggedIcon();
-                        }
-                    }
+                    _draggedStack.Amount--;
+                    if (_draggedStack.Amount <= 0) ClearDraggedItem();
+                    else UpdateDraggedIcon();
                 }
             }
         }

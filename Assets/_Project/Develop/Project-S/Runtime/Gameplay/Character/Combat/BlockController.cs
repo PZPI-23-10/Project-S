@@ -1,51 +1,68 @@
-using Project_S.Runtime.Gameplay.Character.Input;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Character.Combat
 {
     public class BlockController : MonoBehaviour
     {
-        [SerializeField] private CombatConfig _config;
+        [SerializeField] private CombatController _combatController;
 
-        private bool _wasBlocking;
         private float _blockStartedAt;
 
         public bool IsBlocking { get; private set; }
-        public bool IsParryWindow => IsBlocking && Time.time - _blockStartedAt <= _config.ParryWindow;
 
-        private void Update()
+        // ÷ей метод тепер викликаЇтьс€ з CombatController, коли ти тиснеш ѕ ћ
+        public void StartBlock()
         {
-            Tick(new PlayerInputSnapshot());
-            GetComponentInChildren<Renderer>().material.color = IsBlocking ? Color.blue : Color.white;
+            IsBlocking = true;
+            _blockStartedAt = Time.time;
+
+            // ƒл€ тесту на капсул≥ (зм≥нюЇ кол≥р)
+            if (GetComponentInChildren<Renderer>() != null)
+                GetComponentInChildren<Renderer>().material.color = Color.blue;
         }
 
-        public void Tick(PlayerInputSnapshot input)
+        // ¬икликаЇтьс€ з CombatController, коли в≥дпускаЇш ѕ ћ
+        public void StopBlock()
         {
-            // 1. «читуЇмо ≥нпут
-            IsBlocking = input.BlockHeld || UnityEngine.Input.GetMouseButton(1);
+            IsBlocking = false;
 
-            // 2. Ћог≥ка ф≥ксац≥њ часу (в≥д твого друга)
-            if (IsBlocking && !_wasBlocking)
-            {
-                _blockStartedAt = Time.time;
-            }
+            if (GetComponentInChildren<Renderer>() != null)
+                GetComponentInChildren<Renderer>().material.color = Color.white;
+        }
 
-            // 3. «апам'€товуЇмо стан дл€ наступного кадру
-            _wasBlocking = IsBlocking;
+        public bool IsParryWindow()
+        {
+            // якщо немаЇ зброњ - парирувати не можна
+            if (!IsBlocking || _combatController == null || _combatController.CurrentWeapon == null)
+                return false;
+
+            return Time.time - _blockStartedAt <= _combatController.CurrentWeapon.ParryWindow;
         }
 
         public DamageRequest ModifyIncomingDamage(DamageRequest request)
         {
-            if (!IsBlocking)
+            if (!IsBlocking || _combatController == null || _combatController.CurrentWeapon == null)
                 return request;
 
-            if (IsParryWindow)
+            var weapon = _combatController.CurrentWeapon;
+
+            // 1. ”сп≥шне парируванн€
+            if (IsParryWindow())
+            {
+                Debug.Log("<color=green>[Ѕлок]</color> ≤ƒ≈јЋ№Ќ≈ ѕј–»–”¬јЌЌя!");
+                // “ут ми пот≥м додамо поверненн€ стам≥ни (weapon.ParryStaminaReward)
                 return new DamageRequest(request.Source, 0f, 0f, request.Type);
+            }
+
+            // 2. «вичайний блок
+            // BlockMitigation: 0.5 означаЇ, що блокуЇтьс€ 50% урону. ќтже, пропускаЇмо (1 - 0.5) = 50%
+            // якщо BlockMitigation = 0.8 (ўит), пропускаЇмо (1 - 0.8) = 20% урону
+            float damageMultiplier = 1f - weapon.BlockMitigation;
 
             return new DamageRequest(
                 request.Source,
-                request.HealthDamage * _config.BlockDamageMultiplier,
-                request.PoiseDamage * _config.BlockDamageMultiplier,
+                request.HealthDamage * damageMultiplier,
+                request.PoiseDamage * damageMultiplier,
                 request.Type);
         }
     }

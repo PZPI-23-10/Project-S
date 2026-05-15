@@ -8,73 +8,69 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         [Header("Зв'язки")]
         [SerializeField] private CharacterStats _stats;
         [SerializeField] private BlockController _blockController;
-        [SerializeField] private CombatConfig _combatConfig;
+        [SerializeField] private CombatController _combatController; // Змінили конфіг на новий контролер
         [SerializeField] private PoiseController _poiseController;
         [SerializeField] private StaminaController _staminaController;
 
         public void ReceiveDamage(DamageRequest request)
         {
-            float finalHealthDamage = request.HealthDamage;
-            float finalPoiseDamage = request.PoiseDamage;
+            // Беремо оригінальний урон
+            DamageRequest modifiedRequest = request;
 
             // --- ЛОГІКА ЗАХИСТУ ---
             if (_blockController != null && _blockController.IsBlocking)
             {
-                if (_blockController.IsParryWindow)
-                {
-                    finalHealthDamage = 0f;
-                    finalPoiseDamage = 0f;
-                    Debug.Log("<color=cyan>[ЗАХИСТ]</color> ПАРІРУВАННЯ! Енергію збережено.");
-                }
-                else
-                {
-                    float mult = _combatConfig != null ? _combatConfig.BlockDamageMultiplier : 0.35f;
-                    finalHealthDamage *= mult;
-                    finalPoiseDamage *= (mult * 0.5f);
+                // Пропускаємо урон через блок (він сам застосує відсоток зброї)
+                modifiedRequest = _blockController.ModifyIncomingDamage(request);
 
-                    // --- ПРАВИЛЬНЕ СПИСАННЯ СТАМІНИ ---
+                // Якщо урон став 0, а був більший за 0 - це ідеальне парирування!
+                if (modifiedRequest.HealthDamage == 0f && request.HealthDamage > 0f)
+                {
+                    Debug.Log("<color=cyan>[ЗАХИСТ]</color> ПАРИРУВАННЯ! Енергію збережено.");
+
+                    // Повертаємо стаміну за успішне парирування (з паспорта зброї)
+                    if (_combatController != null && _combatController.CurrentWeapon != null)
+                    {
+                        _stats.Add(StatType.Stamina, _combatController.CurrentWeapon.ParryStaminaReward);
+                    }
+                }
+                else // Це звичайний блок (урон просто зменшився)
+                {
+                    float staminaCost = request.HealthDamage * 0.5f;
+
                     if (_staminaController != null)
                     {
-                        float staminaCost = request.HealthDamage * 0.5f;
-
-                        // Він автоматично заблокує регенерацію на 0.65 секунд
+                        // Пробуємо витратити стаміну на блок
                         if (_staminaController.Spend(staminaCost))
                         {
                             Debug.Log($"<color=blue>[ЗАХИСТ]</color> БЛОК! Витрачено стаміни: {staminaCost}");
                         }
                         else
                         {
-
-                            float currentStamina = _stats != null ? _stats.Get(StatType.Stamina) : 0f;
-                            if (currentStamina > 0) _staminaController.Spend(currentStamina); // Списуємо залишки
-
-                            finalHealthDamage = request.HealthDamage;
-                            finalPoiseDamage = request.PoiseDamage;
+                            // Якщо стаміна вже в мінусі - БЛОК ПРОБИТО
+                            modifiedRequest = request; // Повертаємо повний урон (без порізки блоком)
                             Debug.LogWarning("<color=red>[ЗАХИСТ]</color> ПРОБИТТЯ БЛОКУ! Не вистачило енергії.");
                         }
-                    }
-                    else if (_stats != null) 
-                    {
-                        _stats.Add(StatType.Stamina, -request.HealthDamage * 0.5f);
                     }
                 }
             }
 
+            // --- ЗАСТОСУВАННЯ ФІНАЛЬНОГО УРОНУ ---
             if (_stats != null)
             {
-                if (finalHealthDamage > 0) _stats.Add(StatType.Health, -finalHealthDamage);
+                if (modifiedRequest.HealthDamage > 0)
+                    _stats.Add(StatType.Health, -modifiedRequest.HealthDamage);
 
-                if (finalPoiseDamage > 0)
+                if (modifiedRequest.PoiseDamage > 0)
                 {
                     if (_poiseController != null)
                     {
                         Vector3 attackerPos = request.Source != null ? request.Source.transform.position : transform.position + transform.forward;
-
-                        _poiseController.ApplyPoiseDamage(finalPoiseDamage, attackerPos);
+                        _poiseController.ApplyPoiseDamage(modifiedRequest.PoiseDamage, attackerPos);
                     }
                     else
                     {
-                        _stats.Add(StatType.Poise, -finalPoiseDamage);
+                        _stats.Add(StatType.Poise, -modifiedRequest.PoiseDamage);
                     }
                 }
             }

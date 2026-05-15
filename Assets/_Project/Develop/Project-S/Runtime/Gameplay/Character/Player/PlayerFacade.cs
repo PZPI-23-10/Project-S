@@ -11,7 +11,7 @@ namespace Project_S.Runtime.Gameplay.Character.Player
     {
         [SerializeField] private MonoBehaviour _inputSource;
         [SerializeField] private CharacterMotor _motor;
-        [SerializeField] private CharacterCombatController _combat;
+        [SerializeField] private CombatController _combat;
         [SerializeField] private CharacterStats _stats;
         [SerializeField] private PhylacteryController _phylactery;
 
@@ -35,7 +35,6 @@ namespace Project_S.Runtime.Gameplay.Character.Player
 
             var snapshot = _input.Snapshot;
             _motor.Tick(snapshot);
-            _combat?.Tick(snapshot);
         }
     }
 }

@@ -46,21 +46,20 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
             return total;
         }
 
-        public float GetWeightSpeedMultiplier()
+        public float GetWeightPenaltyMultiplier()
         {
             float current = GetCurrentWeight();
-            float max = GetMaxWeight();
+            float max = GetMaxWeight(); // Ѕеремо саме макс. вагу гравц€
 
             if (max <= 0) return 1f;
 
             float ratio = current / max;
 
-            // “воњ умови штраф≥в:
-            if (ratio >= 1.3f) return 0f;    // <130% - повна зупинка
-            if (ratio >= 1.2f) return 0.4f; // <120% - м≥нус 60% швидкост≥ (залишаЇтьс€ 40%)
-            if (ratio >= 1.0f) return 0.95f; // <100% (тобто р≥вно або трохи б≥льше 100%) - м≥нус 5%
+            if (ratio >= 1.5f) return 0f;    // >= 150%: «меншенн€ на 100% (швидк≥сть 0, реген 0)
+            if (ratio >= 1.2f) return 0.4f;  // >= 120%: «меншенн€ на 60% (залишаЇтьс€ 40%)
+            if (ratio >= 1.0f) return 0.95f; // >= 100%: «меншенн€ на 5% (залишаЇтьс€ 95%)
 
-            return 1f; // якщо вага в норм≥
+            return 1f;
         }
 
         public bool AddItem(ItemData item, int amountToAdd = 1)
