@@ -1,66 +1,97 @@
-using Project_S.Runtime.Gameplay.Character.Inventory; // Підключаємо доступ до ItemData та EquipmentSlots
+using Project_S.Runtime.Gameplay.Character.Inventory;
+using System.Collections; // ДОДАНО ДЛЯ ТАЙМЕРА
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using TMPro;
 
 namespace Project_S.Runtime.Gameplay.HUD
 {
-    // Додали IPointerClickHandler для обробки кліку
-    public class InventorySlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+    public class InventorySlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler
     {
         [SerializeField] private Image _iconImage;
+        [SerializeField] private TMP_Text _amountText;
+        [SerializeField] private float _tooltipDelay = 0.5f; // ЧАС ЗАТРИМКИ (пів секунди)
 
-        private ItemData _currentItem;
-        private EquipmentSlots _equipment;
+        private int _slotIndex;
+        private InventoryUI _uiManager;
+        private ItemStack _cachedStack;
 
-        public void Setup(ItemData item)
+        private Coroutine _tooltipCoroutine; // Змінна, яка пам'ятає наш запущений таймер
+
+        public void Init(int slotIndex, InventoryUI uiManager)
         {
-            _currentItem = item;
+            _slotIndex = slotIndex;
+            _uiManager = uiManager;
+        }
 
-            // Шукаємо EquipmentSlots на Гравцеві (один раз для оптимізації)
-            if (_equipment == null)
-            {
-                _equipment = FindFirstObjectByType<EquipmentSlots>();
-            }
+        public void UpdateView(ItemStack stack)
+        {
+            _cachedStack = stack;
 
-            if (item != null && item.Icon != null)
+            if (stack != null && stack.Item != null && stack.Item.Icon != null)
             {
-                _iconImage.sprite = item.Icon;
+                _iconImage.sprite = stack.Item.Icon;
                 _iconImage.gameObject.SetActive(true);
+
+                if (_amountText != null)
+                {
+                    _amountText.text = stack.Amount > 1 ? stack.Amount.ToString() : "";
+                    _amountText.gameObject.SetActive(stack.Amount > 1);
+                }
             }
             else
             {
                 _iconImage.gameObject.SetActive(false);
+                if (_amountText != null) _amountText.gameObject.SetActive(false);
+            }
+        }
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            // Якщо ми клікнули (взяли предмет), одразу ховаємо підказку і зупиняємо таймер
+            StopTooltipTimer();
+
+            if (_uiManager != null)
+            {
+                _uiManager.OnSlotClicked(_slotIndex, eventData.button);
             }
         }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (_currentItem != null && TooltipUI.Instance != null)
+            // Якщо в слоті є предмет — запускаємо таймер
+            if (_cachedStack != null && _cachedStack.Item != null)
             {
-                TooltipUI.Instance.Show(_currentItem);
+                _tooltipCoroutine = StartCoroutine(ShowTooltipDelayed(_cachedStack.Item));
             }
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            if (TooltipUI.Instance != null)
-            {
-                TooltipUI.Instance.Hide();
-            }
+            // Мишка пішла зі слота — скасовуємо таймер і ховаємо підказку
+            StopTooltipTimer();
         }
 
-        // --- ОБРОБКА КЛІКУ (Екіпірування в Хотбар) ---
-        public void OnPointerClick(PointerEventData eventData)
+        // САМ ТАЙМЕР
+        private IEnumerator ShowTooltipDelayed(ItemData item)
         {
-            if (eventData.button == PointerEventData.InputButton.Left && _currentItem != null)
+            // Чекаємо вказаний час
+            yield return new WaitForSeconds(_tooltipDelay);
+
+            // Якщо час пройшов і мишка досі тут — показуємо
+            TooltipUI.Instance?.Show(item);
+        }
+
+        // Допоміжний метод для зупинки
+        private void StopTooltipTimer()
+        {
+            if (_tooltipCoroutine != null)
             {
-                if (_equipment != null)
-                {
-                    _equipment.EquipItem(_currentItem);
-                    Debug.Log($"<color=cyan>[UI]</color> Клік по слоту: {_currentItem.ItemName} відправлено в Хотбар!");
-                }
+                StopCoroutine(_tooltipCoroutine);
+                _tooltipCoroutine = null;
             }
+            TooltipUI.Instance?.Hide();
         }
     }
 }

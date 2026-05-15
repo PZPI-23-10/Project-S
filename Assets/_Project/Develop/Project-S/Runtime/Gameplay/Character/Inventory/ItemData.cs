@@ -9,12 +9,16 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
         public string ItemName = "Предмет";
         public float Weight = 1.0f;
 
+        [Header("Стакування (Stacks)")]
+        public bool IsStackable = false; 
+        public int MaxStack = 1;         
+
         [Header("Інтерфейс (UI)")]
         public Sprite Icon;
-        [TextArea(3, 5)] public string Description = "Опис предмета для підказки...";
+        [TextArea(3, 5)] public string Description = "Опис...";
 
-        [Header("Бойові параметри")]
-        public GameObject WeaponPrefab;
-        public float Damage = 20f;
+        [Header("Префаби")]
+        public GameObject WeaponPrefab;      
+        public GameObject WorldPickupPrefab; 
     }
 }

@@ -1,37 +1,92 @@
-// Підключаємо правильний простір імен вашого інвентарю
-using Project_S.Runtime.Gameplay.Character.Inventory;
 using UnityEngine;
-using UnityEngine.UI;
+using Project_S.Runtime.Gameplay.Character.Inventory;
+using System.Collections.Generic;
 
 namespace Project_S.Runtime.Gameplay.HUD
 {
     public class HotbarUI : MonoBehaviour
     {
-        [SerializeField] private EquipmentSlots _equipment;
-        [SerializeField] private Image[] _slotIcons = new Image[3];
-        [SerializeField] private Image[] _selectionBorders = new Image[3];
+        [SerializeField] private InventoryController _inventory;
+        [SerializeField] private InventorySlotUI _slotPrefab;
+        [SerializeField] private Transform _hotbarGrid;
+        [SerializeField] private int _hotbarSize = 5;
+
+        [Header("Налаштування виділення")]
+        [SerializeField] private RectTransform _selectionHighlight; // Та сама рамка
+        private int _currentSelectedIndex = 0;
+
+        private List<InventorySlotUI> _hotbarSlots = new List<InventorySlotUI>();
+
+        private void Start()
+        {
+            if (_inventory != null)
+            {
+                _inventory.OnInventoryChanged += RefreshHotbar;
+                GenerateHotbar();
+            }
+        }
 
         private void Update()
         {
-            if (_equipment == null) return;
-
-            for (int i = 0; i < _slotIcons.Length; i++)
+            // Перевірка клавіш 1-5
+            for (int i = 0; i < _hotbarSize; i++)
             {
-                ItemData item = _equipment.GetItemInSlot(i);
-
-                if (item != null && item.Icon != null)
+                if (Input.GetKeyDown(KeyCode.Alpha1 + i))
                 {
-                    _slotIcons[i].sprite = item.Icon;
-                    if (!_slotIcons[i].gameObject.activeSelf) _slotIcons[i].gameObject.SetActive(true);
+                    SelectSlot(i);
                 }
-                else
-                {
-                    if (_slotIcons[i].gameObject.activeSelf) _slotIcons[i].gameObject.SetActive(false);
-                }
+            }
+        }
 
-                if (i < _selectionBorders.Length && _selectionBorders[i] != null)
+        private void SelectSlot(int index)
+        {
+            _currentSelectedIndex = index;
+
+            // Переміщуємо рамку до обраного слота
+            if (_selectionHighlight != null && _hotbarSlots.Count > index)
+            {
+                _selectionHighlight.SetParent(_hotbarSlots[index].transform);
+                _selectionHighlight.localPosition = Vector3.zero; // Центруємо
+            }
+
+            // ПЕРЕВІРКА: Що у нас у цьому слоті?
+            ItemStack stack = _inventory.GetSlot(index);
+            if (stack != null && stack.Item != null)
+            {
+                Debug.Log($"<color=yellow>[Hotbar]</color> Обрано: <b>{stack.Item.ItemName}</b> (x{stack.Amount})");
+            }
+            else
+            {
+                Debug.Log("<color=grey>[Hotbar]</color> Слот порожній");
+            }
+        }
+
+        private void GenerateHotbar()
+        {
+            foreach (Transform child in _hotbarGrid) Destroy(child.gameObject);
+            _hotbarSlots.Clear();
+
+            InventoryUI mainUI = FindFirstObjectByType<InventoryUI>();
+
+            for (int i = 0; i < _hotbarSize; i++)
+            {
+                InventorySlotUI newSlot = Instantiate(_slotPrefab, _hotbarGrid);
+                newSlot.Init(i, mainUI);
+                _hotbarSlots.Add(newSlot);
+            }
+
+            RefreshHotbar();
+            SelectSlot(0); // Виділяємо перший слот при старті
+        }
+
+        public void RefreshHotbar()
+        {
+            var allSlots = _inventory.GetAllSlots();
+            for (int i = 0; i < _hotbarSlots.Count; i++)
+            {
+                if (i < allSlots.Length)
                 {
-                    _selectionBorders[i].enabled = (i == _equipment.CurrentSlotIndex);
+                    _hotbarSlots[i].UpdateView(allSlots[i]);
                 }
             }
         }
