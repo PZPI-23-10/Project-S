@@ -8,11 +8,18 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
     {
         private WeaponItemData _weaponData;
         private GameObject _attacker;
-
         private bool _isHitboxActive = false;
+        private Collider _collider;
 
         // Список, щоб не вдарити одного й того ж ворога двічі за один помах
         private HashSet<Collider> _alreadyHit = new HashSet<Collider>();
+
+        private void Awake()
+        {
+            _collider = GetComponent<Collider>();
+            // На старті гри хітбокс фізично вимкнений, щоб нікого не чіпляти
+            if (_collider != null) _collider.enabled = false;
+        }
 
         // Налаштовуємо зброю (передаємо паспорт і власника)
         public void Setup(WeaponItemData data, GameObject attacker)
@@ -20,31 +27,46 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             _weaponData = data;
             _attacker = attacker;
 
-            Collider col = GetComponent<Collider>();
-            col.isTrigger = true; // Робимо колайдер тригером, щоб він не відштовхував фізичні об'єкти
+            if (_collider != null) _collider.isTrigger = true;
         }
 
-        // ВМИКАЄМО ЛЕЗО (викликається, коли починається удар)
+        // ВМИКАЄМО ЛЕЗО (викликається з CombatController під час удару)
         public void StartHitDetection()
         {
             _isHitboxActive = true;
-            _alreadyHit.Clear(); // Очищаємо список пам'яті для нового удару
+            _alreadyHit.Clear();
+            // ФІЗИЧНО вмикаємо колайдер! 
+            if (_collider != null) _collider.enabled = true;
         }
 
-        // ВИМИКАЄМО ЛЕЗО (викликається, коли удар завершився)
+        // ВИМИКАЄМО ЛЕЗО (викликається через 0.2 сек після початку удару)
         public void StopHitDetection()
         {
             _isHitboxActive = false;
             _alreadyHit.Clear();
+            // ФІЗИЧНО вимикаємо колайдер
+            if (_collider != null) _collider.enabled = false;
         }
 
         private void OnTriggerEnter(Collider other)
         {
-            // 1. Якщо ми зараз не махаємо мечем — лезо безпечне, ігноруємо торкання
-            if (!_isHitboxActive || _weaponData == null) return;
+            // Перевіряємо, чи є взагалі фізичний контакт
+            Debug.Log($"<color=yellow>[ФІЗИКА]</color> Хітбокс торкнувся об'єкта: {other.gameObject.name}");
 
-            // 2. Якщо торкнулися самі себе — ігноруємо
-            if (other.gameObject == _attacker) return;
+            // 1. Перевірка на активність та наявність даних
+            if (!_isHitboxActive)
+            {
+                Debug.Log("<color=red>[БЛОК]</color> Хітбокс торкнувся, але _isHitboxActive = false!");
+                return;
+            }
+            if (_weaponData == null)
+            {
+                Debug.Log("<color=red>[БЛОК]</color> Хітбокс торкнувся, але _weaponData = null!");
+                return;
+            }
+
+            // 2. ЗАХИСТ ВІД САМОВЛУЧАННЯ (якщо колайдер належить нам - ігноруємо)
+            if (other.transform.root == _attacker.transform.root) return;
 
             // 3. Якщо вже вдарили цю ціль у цьому замаху — не б'ємо ще раз
             if (_alreadyHit.Contains(other)) return;
@@ -59,7 +81,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 float totalDamage = 0f;
                 DamageType primaryType = DamageType.Blunt; // Тип за замовчуванням
 
-                if (_weaponData.DamageProfile.Count > 0)
+                if (_weaponData.DamageProfile != null && _weaponData.DamageProfile.Count > 0)
                 {
                     foreach (var dmgInstance in _weaponData.DamageProfile)
                     {

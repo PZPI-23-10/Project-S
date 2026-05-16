@@ -30,6 +30,9 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         [SerializeField] private Transform _weaponHolder; // Пустишка в руці гравця (куди спавнити)
         private GameObject _currentWeaponModel; // Збережене посилання на 3D-модель (щоб видалити стару)
 
+        private MeleeHitTester _currentHitTester;
+        private Animator _weaponAnimator;
+
         [Header("Екіпірування")]
         [SerializeField] private WeaponItemData _unarmedWeapon; // Твої Кулаки (перетягни файл сюди)
         [SerializeField] private WeaponItemData _currentWeapon; // Зброя з інвентарю
@@ -109,21 +112,43 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             _lastAttackTime = Time.time;
 
             _comboStep++;
-            // Замінили _currentWeapon на ActiveWeapon
             if (_comboStep > ActiveWeapon.MaxComboHits) _comboStep = 1;
 
             AttackDirection direction = GetAttackDirection();
-            Debug.Log($"<color=cyan>[Боївка]</color> Удар: {ActiveWeapon.name} | Крок: {_comboStep} | Напрямок: {direction}");
+            // Замінив тут _currentWeapon.name на ActiveWeapon.name, щоб не було помилки, коли зброї немає
+            Debug.Log($"<color=cyan>[Боївка]</color> Удар: {ActiveWeapon.name} | Крок: {_comboStep} | Напрямок: Center");
 
-            // Додаємо заряд
+            // 1. ВМИКАЄМО ФІЗИКУ (Тільки один раз!)
+            if (_currentHitTester != null)
+            {
+                _currentHitTester.StartHitDetection();
+                Invoke(nameof(EndAttackHitbox), 0.2f);
+            }
+
+            // Додаємо заряд ульти
             if (_currentHeavyCharge < ActiveWeapon.HitsToChargeHeavy)
             {
                 _currentHeavyCharge++;
             }
 
-            // Швидкість анімації залежить від ActiveWeapon
+            // Швидкість повернення в Idle
             float animDuration = 0.5f / ActiveWeapon.AttackSpeedMultiplier;
             Invoke(nameof(ResetToIdle), animDuration);
+
+            // 2. ВМИКАЄМО АНІМАЦІЮ
+            if (_weaponAnimator != null)
+            {
+                _weaponAnimator.SetInteger("ComboStep", _comboStep);
+                _weaponAnimator.SetTrigger("Attack");
+            }
+        }
+
+        private void EndAttackHitbox()
+        {
+            if (_currentHitTester != null)
+            {
+                _currentHitTester.StopHitDetection();
+            }
         }
 
         private void PerformHeavySkill()
@@ -150,12 +175,16 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         {
             CurrentState = CombatState.Blocking;
             if (_blockController != null) _blockController.StartBlock();
+
+            if (_weaponAnimator != null) _weaponAnimator.SetBool("IsBlocking", true);
         }
 
         private void StopBlocking()
         {
             CurrentState = CombatState.Idle;
             if (_blockController != null) _blockController.StopBlock();
+
+            if (_weaponAnimator != null) _weaponAnimator.SetBool("IsBlocking", false);
         }
 
         private AttackDirection GetAttackDirection()
@@ -185,28 +214,46 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
         public void EquipWeapon(WeaponItemData newWeapon)
         {
-            // 1. Знищуємо стару модельку меча, якщо вона була в руках
+            // 1. Знищуємо стару модельку меча (або старий хітбокс кулаків)
             if (_currentWeaponModel != null)
             {
                 Destroy(_currentWeaponModel);
             }
 
-            // 2. Оновлюємо логічні дані
-            _currentWeapon = newWeapon;
-            _comboStep = 0;
-            _currentHeavyCharge = 0;
-
-            // 3. Спавнимо нову 3D-модель (якщо це не порожні руки і у зброї є префаб)
-            if (newWeapon != null && newWeapon.WeaponPrefab != null)
+            // 2. Визначаємо, що беремо в руки. Якщо newWeapon порожній - беремо кулаки!
+            WeaponItemData weaponToEquip = newWeapon;
+            if (weaponToEquip == null)
             {
-                _currentWeaponModel = Instantiate(newWeapon.WeaponPrefab, _weaponHolder);
-
-                // Скидаємо координати, щоб меч рівно ліг у руку
-                _currentWeaponModel.transform.localPosition = Vector3.zero;
-                _currentWeaponModel.transform.localRotation = Quaternion.identity;
+                weaponToEquip = _unarmedWeapon; // _unarmedWeapon - це те поле, куди ти поклав файл Fists
             }
 
-            Debug.Log($"<color=green>[Екіпірування]</color> Взято зброю: {(newWeapon != null ? newWeapon.name : "Кулаки")}");
+            // 3. Оновлюємо логічні дані
+            _currentWeapon = weaponToEquip;
+            _comboStep = 0;
+
+            // 4. Спавнимо нову 3D-модель АБО невидимий хітбокс кулаків
+            if (weaponToEquip != null && weaponToEquip.WeaponPrefab != null)
+            {
+                _currentWeaponModel = Instantiate(weaponToEquip.WeaponPrefab, _weaponHolder);
+
+                if (_currentWeaponModel != null) // перевір, як у тебе називається змінна заспавненого об'єкта
+                {
+                    _weaponAnimator = _currentWeaponModel.GetComponent<Animator>();
+                }
+
+                // Скидаємо координати
+                _currentWeaponModel.transform.localPosition = Vector3.zero;
+                _currentWeaponModel.transform.localRotation = Quaternion.identity;
+
+                // Знаходимо тестер і передаємо йому дані
+                _currentHitTester = _currentWeaponModel.GetComponentInChildren<MeleeHitTester>();
+                if (_currentHitTester != null)
+                {
+                    _currentHitTester.Setup(weaponToEquip, gameObject);
+                }
+            }
+
+            Debug.Log($"<color=green>[Екіпірування]</color> Взято зброю: {(weaponToEquip != null ? weaponToEquip.name : "Порожньо")}");
         }
     }
 }
