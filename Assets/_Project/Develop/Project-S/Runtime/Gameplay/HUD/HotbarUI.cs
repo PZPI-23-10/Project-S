@@ -1,23 +1,25 @@
-using UnityEngine;
-using Project_S.Runtime.Gameplay.Character.Inventory;
-using Project_S.Runtime.Gameplay.Character.Combat; // ДОДАЛИ ЦЕ: щоб бачити боївку
 using System.Collections.Generic;
+using Project_S.Runtime.Gameplay.Character.Combat;
+using Project_S.Runtime.Gameplay.Character.Inventory;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace Project_S.Runtime.Gameplay.HUD
 {
     public class HotbarUI : MonoBehaviour
     {
         [SerializeField] private InventoryController _inventory;
-        [SerializeField] private CombatController _combatController; // ДОДАЛИ ЦЕ: посилання на боївку
+        [SerializeField] private CombatController _combatController;
         [SerializeField] private InventorySlotUI _slotPrefab;
         [SerializeField] private Transform _hotbarGrid;
         [SerializeField] private int _hotbarSize = 5;
+        [SerializeField] private Vector2 _slotSize = new Vector2(72f, 72f);
+        [SerializeField] private float _slotSpacing = 10f;
+        [SerializeField] private Vector2 _panelPadding = new Vector2(12f, 10f);
 
-        [Header("Налаштування виділення")]
-        [SerializeField] private RectTransform _selectionHighlight; // Та сама рамка
+        private readonly List<InventorySlotUI> _hotbarSlots = new List<InventorySlotUI>();
         private int _currentSelectedIndex = 0;
-
-        private List<InventorySlotUI> _hotbarSlots = new List<InventorySlotUI>();
 
         private void Start()
         {
@@ -28,82 +30,169 @@ namespace Project_S.Runtime.Gameplay.HUD
             }
         }
 
+        private void OnDestroy()
+        {
+            if (_inventory != null)
+                _inventory.OnInventoryChanged -= RefreshHotbar;
+        }
+
         private void Update()
         {
-            // Перевірка клавіш 1-5
             for (int i = 0; i < _hotbarSize; i++)
             {
-                if (Input.GetKeyDown(KeyCode.Alpha1 + i))
-                {
+                if (Input.GetKeyDown((KeyCode)((int)KeyCode.Alpha1 + i))
+                    || Input.GetKeyDown((KeyCode)((int)KeyCode.Keypad1 + i)))
                     SelectSlot(i);
-                }
             }
         }
 
         private void SelectSlot(int index)
         {
+            if (index < 0 || index >= _hotbarSize)
+                return;
+
             _currentSelectedIndex = index;
+            RefreshSelectionVisuals();
 
-            // Переміщуємо рамку до обраного слота
-            if (_selectionHighlight != null && _hotbarSlots.Count > index)
-            {
-                _selectionHighlight.SetParent(_hotbarSlots[index].transform);
-                _selectionHighlight.localPosition = Vector3.zero; // Центруємо
-            }
-
-            // ПЕРЕВІРКА: Що у нас у цьому слоті?
-            ItemStack stack = _inventory.GetSlot(index);
+            ItemStack stack = _inventory != null ? _inventory.GetSlot(index) : null;
 
             if (stack != null && stack.Item != null)
             {
-                Debug.Log($"<color=yellow>[Hotbar]</color> Обрано: <b>{stack.Item.ItemName}</b> (x{stack.Amount})");
+                if (stack.Item.IsUsable)
+                {
+                    if (_inventory.TryUseItemAtSlot(index))
+                        Debug.Log($"[Hotbar] Used {stack.Item.ItemName}.");
 
-                // ПРОБУЄМО ЕКІПІРУВАТИ: 
-                // "as WeaponItemData" спробує перетворити предмет на зброю. Якщо це яблуко - буде null.
+                    return;
+                }
+
                 WeaponItemData weaponData = stack.Item as WeaponItemData;
 
                 if (_combatController != null)
-                {
-                    _combatController.EquipWeapon(weaponData); // Якщо weaponData == null, дістануться кулаки
-                }
+                    _combatController.EquipWeapon(weaponData);
             }
-            else
+            else if (_combatController != null)
             {
-                Debug.Log("<color=grey>[Hotbar]</color> Слот порожній, дістаємо кулаки");
-                if (_combatController != null)
-                {
-                    _combatController.EquipWeapon(null); // Слот порожній -> беремо кулаки
-                }
+                _combatController.EquipWeapon(null);
             }
         }
 
         private void GenerateHotbar()
         {
+            if (_hotbarGrid == null || _slotPrefab == null || _inventory == null) return;
+
+            ConfigureLayout();
+
             foreach (Transform child in _hotbarGrid) Destroy(child.gameObject);
             _hotbarSlots.Clear();
-
-            InventoryUI mainUI = FindFirstObjectByType<InventoryUI>();
 
             for (int i = 0; i < _hotbarSize; i++)
             {
                 InventorySlotUI newSlot = Instantiate(_slotPrefab, _hotbarGrid);
-                newSlot.Init(i, mainUI);
+                ConfigureSlotRect(newSlot);
+                newSlot.Init(i, null, OnHotbarSlotClicked);
                 _hotbarSlots.Add(newSlot);
             }
 
             RefreshHotbar();
-            SelectSlot(0); // Виділяємо перший слот при старті
+            SelectSlot(0);
+        }
+
+        private void OnHotbarSlotClicked(int slotIndex, PointerEventData.InputButton button)
+        {
+            if (button == PointerEventData.InputButton.Left)
+                SelectSlot(slotIndex);
         }
 
         public void RefreshHotbar()
         {
+            if (_inventory == null) return;
+
             var allSlots = _inventory.GetAllSlots();
             for (int i = 0; i < _hotbarSlots.Count; i++)
             {
                 if (i < allSlots.Length)
-                {
                     _hotbarSlots[i].UpdateView(allSlots[i]);
-                }
+            }
+        }
+
+        private void ConfigureLayout()
+        {
+            var gridRect = _hotbarGrid as RectTransform;
+            if (gridRect != null)
+            {
+                gridRect.anchorMin = new Vector2(0.5f, 0.5f);
+                gridRect.anchorMax = new Vector2(0.5f, 0.5f);
+                gridRect.pivot = new Vector2(0.5f, 0.5f);
+                gridRect.anchoredPosition = Vector2.zero;
+
+                float width = _slotSize.x * _hotbarSize + _slotSpacing * Mathf.Max(0, _hotbarSize - 1);
+                gridRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
+                gridRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, _slotSize.y);
+            }
+
+            if (_hotbarGrid.TryGetComponent(out ContentSizeFitter fitter))
+            {
+                fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+                fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+            }
+
+            var layout = _hotbarGrid.GetComponent<HorizontalLayoutGroup>();
+            if (layout == null)
+                layout = _hotbarGrid.gameObject.AddComponent<HorizontalLayoutGroup>();
+
+            layout.padding = new RectOffset(0, 0, 0, 0);
+            layout.spacing = _slotSpacing;
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+
+            if (transform is RectTransform panelRect)
+            {
+                float panelWidth = _slotSize.x * _hotbarSize
+                    + _slotSpacing * Mathf.Max(0, _hotbarSize - 1)
+                    + _panelPadding.x * 2f;
+                float panelHeight = _slotSize.y + _panelPadding.y * 2f;
+                panelRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, panelWidth);
+                panelRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, panelHeight);
+            }
+        }
+
+        private void ConfigureSlotRect(InventorySlotUI slot)
+        {
+            if (slot == null)
+                return;
+
+            if (slot.transform is RectTransform slotRect)
+            {
+                slotRect.anchorMin = new Vector2(0.5f, 0.5f);
+                slotRect.anchorMax = new Vector2(0.5f, 0.5f);
+                slotRect.pivot = new Vector2(0.5f, 0.5f);
+                slotRect.localScale = Vector3.one;
+                slotRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, _slotSize.x);
+                slotRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, _slotSize.y);
+            }
+
+            var layoutElement = slot.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+                layoutElement = slot.gameObject.AddComponent<LayoutElement>();
+
+            layoutElement.minWidth = _slotSize.x;
+            layoutElement.minHeight = _slotSize.y;
+            layoutElement.preferredWidth = _slotSize.x;
+            layoutElement.preferredHeight = _slotSize.y;
+            layoutElement.flexibleWidth = 0f;
+            layoutElement.flexibleHeight = 0f;
+        }
+
+        private void RefreshSelectionVisuals()
+        {
+            for (int i = 0; i < _hotbarSlots.Count; i++)
+            {
+                if (_hotbarSlots[i] != null)
+                    _hotbarSlots[i].SetSelected(i == _currentSelectedIndex);
             }
         }
     }
