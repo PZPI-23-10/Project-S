@@ -1,36 +1,197 @@
 using Project_S.Runtime.Gameplay.Character.Inventory;
+using Project_S.Runtime.Gameplay.Crafting;
+using Project_S.Runtime.Gameplay.HUD;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Project_S.Runtime.Gameplay.Character.Interaction
 {
+    public struct InteractionHoverInfo
+    {
+        public string Title;
+        public string ActionText;
+        public Vector3 PromptWorldPosition;
+        public ItemPickup Pickup;
+        public IInteractable Interactable;
+
+        public InteractionHoverInfo(
+            string title,
+            string actionText,
+            Vector3 promptWorldPosition,
+            ItemPickup pickup,
+            IInteractable interactable)
+        {
+            Title = title;
+            ActionText = actionText;
+            PromptWorldPosition = promptWorldPosition;
+            Pickup = pickup;
+            Interactable = interactable;
+        }
+    }
+
     public class PlayerInteractor : MonoBehaviour
     {
+        private const string PickupActionText = "E - ÐŸÐ¾Ð´Ð½ÑÑ‚ÑŒ";
+        private const string InteractActionText = "E - Ð’Ð·Ð°Ð¸Ð¼Ð¾Ð´ÐµÐ¹ÑÑ‚Ð²Ð¾Ð²Ð°Ñ‚ÑŒ";
+
         [SerializeField] private float _interactDistance = 2.5f;
         [SerializeField] private InventoryController _inventory;
+        [SerializeField] private float _promptWorldYOffset = 0.35f;
+        [SerializeField] private float _menuCloseDistanceBuffer = 0.5f;
 
-        // Âèïðàâëåíî: æîðñòêî âêàçóºìî UnityEngine.Camera, ùîá óíèêíóòè êîíôë³êòó
         private UnityEngine.Camera _cam;
+        private SoulAshWallet _soulAshWallet;
+        private InventoryUI _inventoryUI;
+        private InteractionHoverInfo _currentHover;
+        private bool _hasCurrentHover;
+
+        public InventoryController Inventory => _inventory;
+        public float InteractDistance => _interactDistance;
+        public float MenuCloseDistance => Mathf.Max(_interactDistance, _interactDistance + _menuCloseDistanceBuffer);
+
+        public SoulAshWallet SoulAshWallet
+        {
+            get
+            {
+                if (_soulAshWallet == null && _inventory != null)
+                {
+                    _soulAshWallet = _inventory.GetComponent<SoulAshWallet>();
+                    if (_soulAshWallet == null)
+                        _soulAshWallet = _inventory.gameObject.AddComponent<SoulAshWallet>();
+                }
+
+                return _soulAshWallet;
+            }
+        }
 
         private void Awake()
         {
-            _cam = GetComponent<UnityEngine.Camera>();
-            if (_inventory == null) _inventory = GetComponentInParent<InventoryController>();
+            EnsureReferences();
         }
 
         private void Update()
         {
-            if (UnityEngine.Input.GetKeyDown(KeyCode.E))
-            {
-                Ray ray = new Ray(_cam.transform.position, _cam.transform.forward);
+            RefreshHoverPrompt();
 
-                if (Physics.Raycast(ray, out RaycastHit hit, _interactDistance))
+            if (UnityEngine.Input.GetKeyDown(KeyCode.E))
+                InteractWithCurrentHover();
+        }
+
+        public bool TryGetHoverInfo(out InteractionHoverInfo hoverInfo)
+        {
+            hoverInfo = default;
+            EnsureReferences();
+
+            if (ShouldSuppressHover())
+                return false;
+
+            Ray ray = new Ray(_cam.transform.position, _cam.transform.forward);
+            if (!Physics.Raycast(ray, out RaycastHit hit, _interactDistance))
+                return false;
+
+            var pickup = hit.collider.GetComponentInParent<ItemPickup>();
+            if (pickup != null && pickup.Item != null)
+            {
+                string title = pickup.Item.ItemName;
+                if (pickup.Amount > 1)
+                    title += $" x{pickup.Amount}";
+
+                hoverInfo = new InteractionHoverInfo(
+                    title,
+                    PickupActionText,
+                    PromptPosition(hit.collider, hit.point),
+                    pickup,
+                    null);
+                return true;
+            }
+
+            foreach (var behaviour in hit.collider.GetComponentsInParent<MonoBehaviour>())
+            {
+                if (behaviour is IInteractable interactable)
                 {
-                    if (hit.collider.TryGetComponent(out ItemPickup pickup))
-                    {
-                        pickup.Collect(_inventory);
-                    }
+                    hoverInfo = new InteractionHoverInfo(
+                        interactable.InteractionPrompt,
+                        InteractActionText,
+                        PromptPosition(hit.collider, hit.point),
+                        null,
+                        interactable);
+                    return true;
                 }
             }
+
+            return false;
+        }
+
+        private void RefreshHoverPrompt()
+        {
+            if (TryGetHoverInfo(out var hoverInfo))
+            {
+                _currentHover = hoverInfo;
+                _hasCurrentHover = true;
+                WorldInteractionPromptUI.GetOrCreate()?.Show(
+                    hoverInfo.PromptWorldPosition,
+                    hoverInfo.Title,
+                    hoverInfo.ActionText,
+                    _cam);
+                return;
+            }
+
+            _hasCurrentHover = false;
+            WorldInteractionPromptUI.Instance?.Hide();
+        }
+
+        private void InteractWithCurrentHover()
+        {
+            if (!_hasCurrentHover && !TryGetHoverInfo(out _currentHover))
+                return;
+
+            if (_currentHover.Pickup != null)
+            {
+                if (_inventory != null)
+                    _currentHover.Pickup.Collect(_inventory);
+            }
+            else
+            {
+                _currentHover.Interactable?.Interact(this);
+            }
+
+            _hasCurrentHover = false;
+            WorldInteractionPromptUI.Instance?.Hide();
+        }
+
+        private bool ShouldSuppressHover()
+        {
+            if (_cam == null)
+                return true;
+
+            if (_inventoryUI != null && _inventoryUI.IsOpen)
+                return true;
+
+            return Application.isPlaying
+                && Cursor.visible
+                && EventSystem.current != null
+                && EventSystem.current.IsPointerOverGameObject();
+        }
+
+        private Vector3 PromptPosition(Collider hitCollider, Vector3 fallbackPoint)
+        {
+            if (hitCollider == null)
+                return fallbackPoint + Vector3.up * _promptWorldYOffset;
+
+            Bounds bounds = hitCollider.bounds;
+            return new Vector3(bounds.center.x, bounds.max.y + _promptWorldYOffset, bounds.center.z);
+        }
+
+        private void EnsureReferences()
+        {
+            if (_cam == null)
+                _cam = GetComponent<UnityEngine.Camera>() ?? GetComponentInChildren<UnityEngine.Camera>() ?? UnityEngine.Camera.main;
+
+            if (_inventory == null)
+                _inventory = GetComponentInParent<InventoryController>();
+
+            if (_inventoryUI == null)
+                _inventoryUI = Object.FindFirstObjectByType<InventoryUI>();
         }
     }
 }

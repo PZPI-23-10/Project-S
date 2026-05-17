@@ -51,7 +51,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             {
                 Debug.Log("<color=green>[Блок]</color> ІДЕАЛЬНЕ ПАРИРУВАННЯ!");
                 // Тут ми потім додамо повернення стаміни (weapon.ParryStaminaReward)
-                return new DamageRequest(request.Source, 0f, 0f, request.Type);
+                return new DamageRequest(request.Source, 0f, 0f, request.Type, request.Weapon);
             }
 
             // 2. Звичайний блок
@@ -63,7 +63,8 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 request.Source,
                 request.HealthDamage * damageMultiplier,
                 request.PoiseDamage * damageMultiplier,
-                request.Type);
+                request.Type,
+                request.Weapon);
         }
     }
 }

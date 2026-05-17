@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24e58db34c6e53c9ce5b4fdaa1bed91e, type: 3}
+  m_Name: StoneNode
+  m_EditorClassIdentifier: 
+  DisplayName: "Stone"
+  MaxHealth: 42
+  PreferredTool: 2
+  MatchingToolDamageMultiplier: 1
+  MismatchedToolDamageMultiplier: 0.25
+  SoulAshReward: 3
+  Drops:
+  - Item: {fileID: 11400000, guid: 2b27167344e89f6b1257e31646d0c795, type: 2}
+    MinAmount: 2
+    MaxAmount: 3
+    Chance: 1
+  - Item: {fileID: 11400000, guid: bbc643b8c957870539b0c5b906d4e0e3, type: 2}
+    MinAmount: 1
+    MaxAmount: 2
+    Chance: 0.6

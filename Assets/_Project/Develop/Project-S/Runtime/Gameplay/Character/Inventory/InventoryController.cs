@@ -1,10 +1,11 @@
+using System;
 using System.Collections.Generic;
 using Project_S.Runtime.Gameplay.Character.Stats;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Character.Inventory
 {
-    [System.Serializable]
+    [Serializable]
     public class ItemStack
     {
         public ItemData Item;
@@ -22,100 +23,406 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
         [SerializeField] private CharacterStats _stats;
         [SerializeField] private int _inventorySize = 16;
 
-        // Масив фіксованого розміру
         private ItemStack[] _slots;
+        private BuffController _buffs;
 
-        public System.Action OnInventoryChanged;
+        public Action OnInventoryChanged;
 
         private void Awake()
         {
             if (_stats == null) _stats = GetComponent<CharacterStats>();
-            _slots = new ItemStack[_inventorySize];
+            _buffs = GetComponent<BuffController>();
+            EnsureSlots();
         }
 
         public float GetMaxWeight() => _stats != null ? _stats.Get(StatType.CarryWeight) : 50f;
 
         public float GetCurrentWeight()
         {
+            EnsureSlots();
+
             float total = 0;
             for (int i = 0; i < _slots.Length; i++)
             {
                 if (_slots[i] != null && _slots[i].Item != null)
-                    total += _slots[i].Item.Weight * _slots[i].Amount;
+                    total += _slots[i].Item.Weight * Mathf.Max(0, _slots[i].Amount);
             }
+
             return total;
         }
 
         public float GetWeightPenaltyMultiplier()
         {
             float current = GetCurrentWeight();
-            float max = GetMaxWeight(); // Беремо саме макс. вагу гравця
+            float max = GetMaxWeight();
 
             if (max <= 0) return 1f;
 
             float ratio = current / max;
 
-            if (ratio >= 1.5f) return 0f;    // >= 150%: Зменшення на 100% (швидкість 0, реген 0)
-            if (ratio >= 1.2f) return 0.4f;  // >= 120%: Зменшення на 60% (залишається 40%)
-            if (ratio >= 1.0f) return 0.95f; // >= 100%: Зменшення на 5% (залишається 95%)
+            if (ratio >= 1.5f) return 0f;
+            if (ratio >= 1.2f) return 0.4f;
+            if (ratio >= 1.0f) return 0.95f;
 
             return 1f;
         }
 
         public bool AddItem(ItemData item, int amountToAdd = 1)
         {
-            if (item.IsStackable)
+            EnsureSlots();
+
+            if (!CanAddItem(item, amountToAdd))
             {
-                for (int i = 0; i < _slots.Length; i++)
-                {
-                    if (_slots[i] != null && _slots[i].Item == item && _slots[i].Amount < item.MaxStack)
-                    {
-                        int space = item.MaxStack - _slots[i].Amount;
-                        if (amountToAdd <= space)
-                        {
-                            _slots[i].Amount += amountToAdd;
-                            OnInventoryChanged?.Invoke();
-                            return true;
-                        }
-                        else
-                        {
-                            _slots[i].Amount = item.MaxStack;
-                            amountToAdd -= space;
-                        }
-                    }
-                }
+                Debug.LogWarning("[Inventory] Not enough inventory space.");
+                return false;
             }
 
-            for (int i = 0; i < _slots.Length; i++)
-            {
-                if (_slots[i] == null || _slots[i].Item == null)
-                {
-                    _slots[i] = new ItemStack(item, amountToAdd);
-                    OnInventoryChanged?.Invoke();
-                    return true;
-                }
-            }
-
-            Debug.LogWarning("<color=orange>[Сумка]</color> Немає вільних слотів!");
-            return false; // Повертаємо false тільки якщо фізично немає вільних клітинок
+            AddItemUnchecked(item, amountToAdd);
+            NotifyInventoryChanged();
+            return true;
         }
 
-        // Прямий доступ до конкретного слота
+        public bool CanAddItem(ItemData item, int amountToAdd = 1)
+        {
+            EnsureSlots();
+
+            if (item == null || amountToAdd <= 0) return false;
+
+            var simulatedSlots = CreateSlotSnapshot();
+            return CanAddToSnapshot(simulatedSlots, item, amountToAdd);
+        }
+
+        public bool CanAddItemAfterRemoving(ItemData item, int amountToAdd, IReadOnlyList<ItemStack> removals)
+        {
+            EnsureSlots();
+
+            if (item == null || amountToAdd <= 0) return false;
+
+            var simulatedSlots = CreateSlotSnapshot();
+            if (removals != null)
+            {
+                foreach (var removal in removals)
+                {
+                    if (!RemoveFromSnapshot(simulatedSlots, removal.Item, removal.Amount))
+                        return false;
+                }
+            }
+
+            return CanAddToSnapshot(simulatedSlots, item, amountToAdd);
+        }
+
+        public int GetItemCount(ItemData item)
+        {
+            EnsureSlots();
+
+            if (item == null) return 0;
+
+            int count = 0;
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                if (_slots[i] != null && _slots[i].Item == item)
+                    count += Mathf.Max(0, _slots[i].Amount);
+            }
+
+            return count;
+        }
+
+        public bool CanRemoveItem(ItemData item, int amount)
+        {
+            if (item == null || amount <= 0) return false;
+            return GetItemCount(item) >= amount;
+        }
+
+        public bool TryRemoveItem(ItemData item, int amount)
+        {
+            EnsureSlots();
+
+            if (!CanRemoveItem(item, amount)) return false;
+
+            int remaining = amount;
+            for (int i = _slots.Length - 1; i >= 0 && remaining > 0; i--)
+            {
+                var slot = _slots[i];
+                if (slot == null || slot.Item != item) continue;
+
+                int take = Mathf.Min(slot.Amount, remaining);
+                slot.Amount -= take;
+                remaining -= take;
+
+                if (slot.Amount <= 0)
+                    _slots[i] = null;
+            }
+
+            NotifyInventoryChanged();
+            return true;
+        }
+
+        public bool TryConsumeSlot(int index, int amount = 1)
+        {
+            EnsureSlots();
+
+            if (index < 0 || index >= _slots.Length || amount <= 0) return false;
+
+            var slot = _slots[index];
+            if (slot == null || slot.Item == null || slot.Amount < amount) return false;
+
+            slot.Amount -= amount;
+            if (slot.Amount <= 0)
+                _slots[index] = null;
+
+            NotifyInventoryChanged();
+            return true;
+        }
+
+        public bool TryUseItemAtSlot(int index)
+        {
+            EnsureSlots();
+
+            if (index < 0 || index >= _slots.Length) return false;
+
+            var slot = _slots[index];
+            if (slot == null || slot.Item == null) return false;
+
+            if (!ApplyConsumableEffect(slot.Item)) return false;
+
+            return TryConsumeSlot(index);
+        }
+
         public ItemStack GetSlot(int index)
         {
+            EnsureSlots();
+
             if (index < 0 || index >= _slots.Length) return null;
             return _slots[index];
         }
 
-        // Записати стак у конкретний слот
         public void SetSlot(int index, ItemStack stack)
         {
+            EnsureSlots();
+
             if (index < 0 || index >= _slots.Length) return;
             _slots[index] = stack;
-            OnInventoryChanged?.Invoke();
+            NormalizeSlot(index);
+            NotifyInventoryChanged();
         }
 
-        public ItemStack[] GetAllSlots() => _slots;
+        public ItemStack[] GetAllSlots()
+        {
+            EnsureSlots();
+            return _slots;
+        }
+
         public int GetSize() => _inventorySize;
+
+        private bool ApplyConsumableEffect(ItemData item)
+        {
+            if (item == null) return false;
+
+            bool applied = false;
+
+            if (_stats != null)
+            {
+                if (!Mathf.Approximately(item.HealthRestoreAmount, 0f))
+                {
+                    _stats.Add(StatType.Health, item.HealthRestoreAmount);
+                    applied = true;
+                }
+
+                if (!Mathf.Approximately(item.HungerRestoreAmount, 0f))
+                {
+                    _stats.Add(StatType.Hunger, -item.HungerRestoreAmount);
+                    applied = true;
+                }
+
+                if (!Mathf.Approximately(item.StaminaRestoreAmount, 0f))
+                {
+                    _stats.Add(StatType.Stamina, item.StaminaRestoreAmount);
+                    applied = true;
+                }
+            }
+
+            if (ApplyTimedBuff(item.TimedBuffType, item.TimedBuffCategory, item.TimedBuffMultiplier, item.TimedBuffDurationSeconds))
+                applied = true;
+
+            if (ApplyTimedBuff(item.SecondaryTimedBuffType, item.SecondaryTimedBuffCategory, item.SecondaryTimedBuffMultiplier, item.SecondaryTimedBuffDurationSeconds))
+                applied = true;
+
+            if (item.SpecialEffect == ConsumableSpecialEffectType.HomeTeleport)
+            {
+                var teleport = GetComponent<HomeTeleportController>() ?? gameObject.AddComponent<HomeTeleportController>();
+                teleport.StartTeleport(item.SpecialEffectDelaySeconds > 0f ? item.SpecialEffectDelaySeconds : 5f);
+                applied = true;
+            }
+
+            return applied;
+        }
+
+        private bool ApplyTimedBuff(TimedBuffType type, TimedBuffCategory category, float multiplier, float durationSeconds)
+        {
+            if (type == TimedBuffType.None || durationSeconds <= 0f)
+                return false;
+
+            if (_buffs == null)
+                _buffs = GetComponent<BuffController>() ?? gameObject.AddComponent<BuffController>();
+
+            _buffs.ApplyBuff(type, category, multiplier, durationSeconds);
+            return true;
+        }
+
+        private void AddItemUnchecked(ItemData item, int amountToAdd)
+        {
+            int remaining = amountToAdd;
+            int maxStack = GetMaxStack(item);
+
+            if (item.IsStackable)
+            {
+                for (int i = 0; i < _slots.Length && remaining > 0; i++)
+                {
+                    var slot = _slots[i];
+                    if (slot == null || slot.Item != item || slot.Amount >= maxStack) continue;
+
+                    int add = Mathf.Min(maxStack - slot.Amount, remaining);
+                    slot.Amount += add;
+                    remaining -= add;
+                }
+            }
+
+            for (int i = 0; i < _slots.Length && remaining > 0; i++)
+            {
+                if (_slots[i] != null && _slots[i].Item != null) continue;
+                if (!CanCreateNewStack(CreateSlotSnapshot(), item)) break;
+
+                int add = item.IsStackable ? Mathf.Min(maxStack, remaining) : 1;
+                _slots[i] = new ItemStack(item, add);
+                remaining -= add;
+            }
+        }
+
+        private static bool CanAddToSnapshot(List<ItemStack> slots, ItemData item, int amountToAdd)
+        {
+            int remaining = amountToAdd;
+            int maxStack = GetMaxStack(item);
+
+            if (item.IsStackable)
+            {
+                foreach (var slot in slots)
+                {
+                    if (slot == null || slot.Item != item || slot.Amount >= maxStack) continue;
+
+                    int add = Mathf.Min(maxStack - slot.Amount, remaining);
+                    slot.Amount += add;
+                    remaining -= add;
+                    if (remaining <= 0) return true;
+                }
+            }
+
+            foreach (var slot in slots)
+            {
+                if (slot != null && slot.Item != null) continue;
+
+                if (!CanCreateNewStack(slots, item))
+                    return false;
+
+                int add = item.IsStackable ? Mathf.Min(maxStack, remaining) : 1;
+                slot.Item = item;
+                slot.Amount = add;
+                remaining -= add;
+                if (remaining <= 0) return true;
+            }
+
+            return remaining <= 0;
+        }
+
+        private static bool CanCreateNewStack(List<ItemStack> slots, ItemData item)
+        {
+            if (item == null || item.MaxInventoryStacks <= 0)
+                return true;
+
+            int stacks = 0;
+            foreach (var slot in slots)
+            {
+                if (slot != null && slot.Item == item && slot.Amount > 0)
+                    stacks++;
+            }
+
+            return stacks < item.MaxInventoryStacks;
+        }
+
+        private static bool RemoveFromSnapshot(List<ItemStack> slots, ItemData item, int amount)
+        {
+            if (item == null || amount <= 0) return false;
+
+            int remaining = amount;
+            for (int i = slots.Count - 1; i >= 0 && remaining > 0; i--)
+            {
+                var slot = slots[i];
+                if (slot == null || slot.Item != item) continue;
+
+                int take = Mathf.Min(slot.Amount, remaining);
+                slot.Amount -= take;
+                remaining -= take;
+
+                if (slot.Amount <= 0)
+                {
+                    slot.Item = null;
+                    slot.Amount = 0;
+                }
+            }
+
+            return remaining <= 0;
+        }
+
+        private List<ItemStack> CreateSlotSnapshot()
+        {
+            var snapshot = new List<ItemStack>(_slots.Length);
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                var slot = _slots[i];
+                snapshot.Add(slot == null ? new ItemStack(null, 0) : new ItemStack(slot.Item, slot.Amount));
+            }
+
+            return snapshot;
+        }
+
+        private void EnsureSlots()
+        {
+            if (_inventorySize <= 0)
+                _inventorySize = 1;
+
+            if (_slots != null && _slots.Length == _inventorySize)
+                return;
+
+            var oldSlots = _slots;
+            _slots = new ItemStack[_inventorySize];
+
+            if (oldSlots == null) return;
+
+            int count = Mathf.Min(oldSlots.Length, _slots.Length);
+            for (int i = 0; i < count; i++)
+                _slots[i] = oldSlots[i];
+        }
+
+        private void NormalizeSlot(int index)
+        {
+            var slot = _slots[index];
+            if (slot == null || slot.Item == null || slot.Amount <= 0)
+            {
+                _slots[index] = null;
+                return;
+            }
+
+            slot.Amount = Mathf.Min(slot.Amount, GetMaxStack(slot.Item));
+        }
+
+        private static int GetMaxStack(ItemData item)
+        {
+            if (item == null) return 1;
+            return item.IsStackable ? Mathf.Max(1, item.MaxStack) : 1;
+        }
+
+        private void NotifyInventoryChanged()
+        {
+            OnInventoryChanged?.Invoke();
+        }
     }
 }

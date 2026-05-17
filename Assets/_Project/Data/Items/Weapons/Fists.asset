@@ -36,3 +36,4 @@ MonoBehaviour:
   ParryWindow: 0.25
   ParryStaminaReward: 20
   ParryPoiseDamage: 40
+  HarvestTool: 0

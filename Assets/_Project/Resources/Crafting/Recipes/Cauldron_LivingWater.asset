@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
+  m_Name: Cauldron_LivingWater
+  m_EditorClassIdentifier: 
+  DisplayName: "Living Water"
+  Context: 4
+  Output:
+    Item: {fileID: 11400000, guid: 7cf7ea74370444943f27f143e592b5ba, type: 2}
+    Amount: 1
+  Ingredients:
+  - Item: {fileID: 11400000, guid: 05d7c21688847dc8253db3bf8b58fa31, type: 2}
+    Amount: 2
+  - Item: {fileID: 11400000, guid: e5f03bd6ee9e2d044bca9d96e4564966, type: 2}
+    Amount: 1
+  SoulAshCost: 80
+  RequiredItems: []
+  CraftDurationSeconds: 5
+  FuelSecondsCost: 5
+  Description: "MVP station recipe with shortened timer."

@@ -132,7 +132,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             }
 
             // Швидкість повернення в Idle
-            float animDuration = 0.5f / ActiveWeapon.AttackSpeedMultiplier;
+            float animDuration = 0.5f / GetAttackSpeedMultiplier();
             Invoke(nameof(ResetToIdle), animDuration);
 
             // 2. ВМИКАЄМО АНІМАЦІЮ
@@ -141,6 +141,18 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 _weaponAnimator.SetInteger("ComboStep", _comboStep);
                 _weaponAnimator.SetTrigger("Attack");
             }
+        }
+
+        public float GetAttackSpeedMultiplier()
+        {
+            if (ActiveWeapon == null) return 1f;
+
+            float multiplier = ActiveWeapon.AttackSpeedMultiplier;
+            var buffs = GetComponentInParent<BuffController>();
+            if (buffs != null)
+                multiplier *= buffs.AttackSpeedMultiplier;
+
+            return Mathf.Max(0.01f, multiplier);
         }
 
         private void EndAttackHitbox()

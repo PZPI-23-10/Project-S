@@ -1,4 +1,5 @@
 using Project_S.Runtime.Gameplay.Character.Inventory;
+using Project_S.Runtime.Gameplay.Crafting;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -8,26 +9,37 @@ namespace Project_S.Runtime.Gameplay.HUD
 {
     public class InventoryUI : MonoBehaviour
     {
-        [Header("Основні панелі")]
+        [Header("Panels")]
         [SerializeField] private GameObject _inventoryPanel;
         [SerializeField] private GameObject _contextPanel;
 
-        [Header("Внутрішні зв'язки")]
+        [Header("Inventory")]
         [SerializeField] private Transform _slotsGrid;
         [SerializeField] private InventorySlotUI _slotPrefab;
         [SerializeField] private InventoryController _inventory;
         [SerializeField] private TMP_Text _weightText;
 
-        [Header("Іконка на курсорі (Drag & Drop)")]
+        [Header("Drag and drop")]
         [SerializeField] private Image _draggedItemIcon;
         [SerializeField] private TMP_Text _draggedItemAmount;
 
+        [Header("Interaction")]
+        [SerializeField] private float _defaultInteractionCloseDistance = 3f;
+
         private InventorySlotUI[] _createdSlots;
         private ItemStack _draggedStack;
+        private CraftingPanelUI _craftingPanel;
+        private SoulAshWallet _soulAshWallet;
+        private CraftingContext _currentCraftingContext = CraftingContext.Hand;
+        private Transform _distanceCloseTarget;
+        private Transform _distanceCloseObserver;
+        private float _distanceCloseRange;
+        private bool _hasDistanceCloseTarget;
+
+        public bool IsOpen => _inventoryPanel != null && _inventoryPanel.activeSelf;
 
         private void Awake()
         {
-            // В Awake лише ховаємо панельки зі старту
             if (_inventoryPanel != null) _inventoryPanel.SetActive(false);
             if (_contextPanel != null) _contextPanel.SetActive(false);
             SetDraggedIconActive(false);
@@ -35,17 +47,23 @@ namespace Project_S.Runtime.Gameplay.HUD
 
         private void Start()
         {
-            // У Start вже безпечно звертатися до інших скриптів
             if (_inventory != null)
             {
                 _inventory.OnInventoryChanged += Refresh;
                 GenerateSlots();
+                InitializeCraftingPanel();
             }
+        }
+
+        private void OnDestroy()
+        {
+            if (_inventory != null)
+                _inventory.OnInventoryChanged -= Refresh;
         }
 
         private void GenerateSlots()
         {
-            if (_slotsGrid == null || _slotPrefab == null) return;
+            if (_slotsGrid == null || _slotPrefab == null || _inventory == null) return;
 
             foreach (Transform child in _slotsGrid) Destroy(child.gameObject);
 
@@ -58,60 +76,78 @@ namespace Project_S.Runtime.Gameplay.HUD
                 newSlot.Init(i, this);
                 _createdSlots[i] = newSlot;
             }
+
             Refresh();
         }
 
         private void Update()
         {
-            if (_draggedStack != null && _draggedItemIcon != null && _draggedItemIcon.gameObject.activeSelf)
-            {
-                _draggedItemIcon.transform.position = UnityEngine.Input.mousePosition;
-
-                if (UnityEngine.Input.GetKeyDown(KeyCode.Mouse0))
-                {
-                    if (!EventSystem.current.IsPointerOverGameObject())
-                    {
-                        DropDraggedStackToWorld();
-                    }
-                }
-            }
+            UpdateDraggedItem();
+            if (SwitchToHandCraftingIfTooFarFromInteractionTarget())
+                return;
 
             if (UnityEngine.Input.GetKeyDown(KeyCode.Tab) || UnityEngine.Input.GetKeyDown(KeyCode.I))
             {
-                bool nextState = !_inventoryPanel.activeSelf;
-                _inventoryPanel.SetActive(nextState);
-                if (_contextPanel != null) _contextPanel.SetActive(nextState);
-
-                if (nextState)
-                {
-                    Refresh();
-                    Cursor.lockState = CursorLockMode.None;
-                    Cursor.visible = true;
-                }
-                else
-                {
-                    if (_draggedStack != null)
-                    {
-                        _inventory.AddItem(_draggedStack.Item, _draggedStack.Amount);
-                        ClearDraggedItem();
-                    }
-                    TooltipUI.Instance?.Hide();
-                    Cursor.lockState = CursorLockMode.Locked;
-                    Cursor.visible = false;
-                }
+                bool isOpen = _inventoryPanel != null && _inventoryPanel.activeSelf;
+                SetInventoryOpen(!isOpen, CraftingContext.Hand);
             }
-
-            if (UnityEngine.Input.GetKeyDown(KeyCode.Alpha1)) UseHotbarSlot(0);
-            if (UnityEngine.Input.GetKeyDown(KeyCode.Alpha2)) UseHotbarSlot(1);
-            if (UnityEngine.Input.GetKeyDown(KeyCode.Alpha3)) UseHotbarSlot(2);
         }
 
-        private void UseHotbarSlot(int index)
+        public void OpenWithCraftingContext(CraftingContext context)
         {
-            ItemStack stack = _inventory.GetSlot(index);
-            if (stack != null && stack.Item != null)
+            ClearDistanceCloseTarget();
+            SetInventoryOpen(true, context);
+        }
+
+        public void OpenWithCraftingContext(
+            CraftingContext context,
+            Transform closeTarget,
+            Transform closeObserver,
+            float closeDistance)
+        {
+            SetDistanceCloseTarget(closeTarget, closeObserver, closeDistance);
+            SetInventoryOpenInternal(true, context);
+        }
+
+        public void SetCraftingContext(CraftingContext context)
+        {
+            _currentCraftingContext = context;
+            if (_craftingPanel != null)
+                _craftingPanel.SetContext(context);
+        }
+
+        public void SetInventoryOpen(bool open, CraftingContext context)
+        {
+            if (open)
+                ClearDistanceCloseTarget();
+
+            SetInventoryOpenInternal(open, context);
+        }
+
+        private void SetInventoryOpenInternal(bool open, CraftingContext context)
+        {
+            if (_inventoryPanel == null)
+                return;
+
+            _currentCraftingContext = context;
+            _inventoryPanel.SetActive(open);
+            if (_contextPanel != null) _contextPanel.SetActive(open);
+
+            if (open)
             {
-                Debug.Log($"Використовуємо: {stack.Item.ItemName}");
+                InitializeCraftingPanel();
+                Refresh();
+                _craftingPanel?.SetContext(_currentCraftingContext);
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+            else
+            {
+                ClearDistanceCloseTarget();
+                ReturnDraggedStackToInventory();
+                TooltipUI.Instance?.Hide();
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
             }
         }
 
@@ -119,30 +155,20 @@ namespace Project_S.Runtime.Gameplay.HUD
         {
             ItemStack targetSlotStack = _inventory.GetSlot(slotIndex);
 
-            // ==========================================
-            // ЛІВА КНОПКА МИШІ (Взяття, Свап, Половина)
-            // ==========================================
             if (button == PointerEventData.InputButton.Left)
             {
-                // 1. Курсор порожній, беремо зі слота
                 if (_draggedStack == null && targetSlotStack != null)
                 {
-                    // ШИФТ + КЛІК: Беремо рівно половину стака
                     if (Input.GetKey(KeyCode.LeftShift) && targetSlotStack.Item.IsStackable && targetSlotStack.Amount > 1)
                     {
                         int takeAmount = targetSlotStack.Amount / 2;
                         int leaveAmount = targetSlotStack.Amount - takeAmount;
 
-                        // Створюємо новий стак для мишки з половиною предметів
                         _draggedStack = new ItemStack(targetSlotStack.Item, takeAmount);
-
-                        // Залишаємо іншу половину в слоті
                         targetSlotStack.Amount = leaveAmount;
                         _inventory.SetSlot(slotIndex, targetSlotStack);
-
                         UpdateDraggedIcon();
                     }
-                    // ЗВИЧАЙНИЙ КЛІК: Беремо весь стак
                     else
                     {
                         _draggedStack = targetSlotStack;
@@ -150,18 +176,15 @@ namespace Project_S.Runtime.Gameplay.HUD
                         UpdateDraggedIcon();
                     }
                 }
-                // 2. На курсорі вже є предмет
                 else if (_draggedStack != null)
                 {
-                    // Слот порожній - кладемо все, що в руці
                     if (targetSlotStack == null)
                     {
                         _inventory.SetSlot(slotIndex, _draggedStack);
                         ClearDraggedItem();
                     }
-                    else // У слоті щось є
+                    else
                     {
-                        // Це однакові предмети? Тоді зсипаємо їх до купи
                         if (targetSlotStack.Item == _draggedStack.Item && targetSlotStack.Item.IsStackable)
                         {
                             int space = targetSlotStack.Item.MaxStack - targetSlotStack.Amount;
@@ -179,7 +202,6 @@ namespace Project_S.Runtime.Gameplay.HUD
                             }
                         }
 
-                        // Якщо предмети різні (або стак повний) - просто міняємо їх місцями
                         ItemStack temp = targetSlotStack;
                         _inventory.SetSlot(slotIndex, _draggedStack);
                         _draggedStack = temp;
@@ -187,31 +209,23 @@ namespace Project_S.Runtime.Gameplay.HUD
                     }
                 }
             }
-            // ==========================================
-            // ПРАВА КНОПКА МИШІ (Взяття по 1 та вклад по 1)
-            // ==========================================
             else if (button == PointerEventData.InputButton.Right)
             {
-                // СИТУАЦІЯ 1: Клікаємо по слоту, де Є ПРЕДМЕТ
                 if (targetSlotStack != null)
                 {
-                    // Якщо предмет стакається (ресурси, розхідники)
                     if (targetSlotStack.Item.IsStackable)
                     {
-                        // А. На курсорі нічого немає - беремо 1 штуку
                         if (_draggedStack == null)
                         {
                             _draggedStack = new ItemStack(targetSlotStack.Item, 1);
                             targetSlotStack.Amount--;
                         }
-                        // Б. На курсорі такий самий предмет - додаємо 1 штуку до руки
                         else if (_draggedStack.Item == targetSlotStack.Item && _draggedStack.Amount < _draggedStack.Item.MaxStack)
                         {
                             _draggedStack.Amount++;
                             targetSlotStack.Amount--;
                         }
 
-                        // Оновлюємо слот: якщо там стало 0, видаляємо його
                         if (targetSlotStack.Amount <= 0)
                             _inventory.SetSlot(slotIndex, null);
                         else
@@ -219,17 +233,14 @@ namespace Project_S.Runtime.Gameplay.HUD
 
                         UpdateDraggedIcon();
                     }
-                    // Якщо предмет НЕ стакається (меч, броня) - просто екіпіруємо його
                     else if (_draggedStack == null)
                     {
                         EquipmentSlots eq = FindFirstObjectByType<EquipmentSlots>();
                         if (eq != null) eq.EquipItem(targetSlotStack.Item);
                     }
                 }
-                // СИТУАЦІЯ 2: Клікаємо по ПОРОЖНЬОМУ слоту, тримаючи щось у руці
                 else if (_draggedStack != null)
                 {
-                    // Кладемо 1 штуку з руки в порожню клітинку
                     _inventory.SetSlot(slotIndex, new ItemStack(_draggedStack.Item, 1));
 
                     _draggedStack.Amount--;
@@ -237,6 +248,119 @@ namespace Project_S.Runtime.Gameplay.HUD
                     else UpdateDraggedIcon();
                 }
             }
+        }
+
+        public void Refresh()
+        {
+            if (_inventory == null || _createdSlots == null) return;
+
+            var slots = _inventory.GetAllSlots();
+            if (slots == null) return;
+
+            for (int i = 0; i < _createdSlots.Length; i++)
+            {
+                if (_createdSlots[i] != null)
+                    _createdSlots[i].UpdateView(i < slots.Length ? slots[i] : null);
+            }
+
+            if (_weightText != null)
+                _weightText.text = $"Weight: {_inventory.GetCurrentWeight():F1} / {_inventory.GetMaxWeight():F1}";
+
+            _craftingPanel?.Refresh();
+        }
+
+        private void InitializeCraftingPanel()
+        {
+            if (_inventory == null || _contextPanel == null)
+                return;
+
+            if (_soulAshWallet == null)
+            {
+                _soulAshWallet = _inventory.GetComponent<SoulAshWallet>();
+                if (_soulAshWallet == null)
+                    _soulAshWallet = _inventory.gameObject.AddComponent<SoulAshWallet>();
+            }
+
+            if (_craftingPanel == null)
+            {
+                _craftingPanel = _contextPanel.GetComponent<CraftingPanelUI>();
+                if (_craftingPanel == null)
+                    _craftingPanel = _contextPanel.AddComponent<CraftingPanelUI>();
+
+                _craftingPanel.Initialize(_inventory, _soulAshWallet, _currentCraftingContext);
+            }
+        }
+
+        private void UpdateDraggedItem()
+        {
+            if (_draggedStack == null || _draggedItemIcon == null || !_draggedItemIcon.gameObject.activeSelf)
+                return;
+
+            _draggedItemIcon.transform.position = UnityEngine.Input.mousePosition;
+
+            if (UnityEngine.Input.GetKeyDown(KeyCode.Mouse0) &&
+                (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
+                DropDraggedStackToWorld();
+        }
+
+        private bool SwitchToHandCraftingIfTooFarFromInteractionTarget()
+        {
+            if (!IsOpen || !_hasDistanceCloseTarget)
+                return false;
+
+            if (_distanceCloseTarget == null || !_distanceCloseTarget.gameObject.activeInHierarchy)
+            {
+                SwitchStationContextBackToHand();
+                return true;
+            }
+
+            Transform observer = _distanceCloseObserver != null
+                ? _distanceCloseObserver
+                : (_inventory != null ? _inventory.transform : null);
+
+            if (observer == null)
+            {
+                SwitchStationContextBackToHand();
+                return true;
+            }
+
+            float closeDistance = Mathf.Max(0.1f,
+                _distanceCloseRange > 0f ? _distanceCloseRange : _defaultInteractionCloseDistance);
+            float sqrDistance = (observer.position - _distanceCloseTarget.position).sqrMagnitude;
+            if (sqrDistance <= closeDistance * closeDistance)
+                return false;
+
+            SwitchStationContextBackToHand();
+            return true;
+        }
+
+        private void SwitchStationContextBackToHand()
+        {
+            ClearDistanceCloseTarget();
+            SetCraftingContext(CraftingContext.Hand);
+            TooltipUI.Instance?.Hide();
+        }
+
+        private void SetDistanceCloseTarget(Transform closeTarget, Transform closeObserver, float closeDistance)
+        {
+            if (closeTarget == null)
+            {
+                ClearDistanceCloseTarget();
+                return;
+            }
+
+            _distanceCloseTarget = closeTarget;
+            _distanceCloseObserver = closeObserver;
+            _distanceCloseRange = closeDistance > 0f ? closeDistance : _defaultInteractionCloseDistance;
+            _hasDistanceCloseTarget = true;
+        }
+
+        private void ClearDistanceCloseTarget()
+        {
+            _distanceCloseTarget = null;
+            _distanceCloseObserver = null;
+            _distanceCloseRange = 0f;
+            _hasDistanceCloseTarget = false;
         }
 
         private void DropDraggedStackToWorld()
@@ -248,15 +372,25 @@ namespace Project_S.Runtime.Gameplay.HUD
 
             GameObject dropped = Instantiate(_draggedStack.Item.WorldPickupPrefab, pos, Quaternion.identity);
             if (dropped.TryGetComponent(out ItemPickup pickup))
-            {
                 pickup.Amount = _draggedStack.Amount;
-            }
 
+            ClearDraggedItem();
+        }
+
+        private void ReturnDraggedStackToInventory()
+        {
+            if (_draggedStack == null)
+                return;
+
+            _inventory.AddItem(_draggedStack.Item, _draggedStack.Amount);
             ClearDraggedItem();
         }
 
         private void UpdateDraggedIcon()
         {
+            if (_draggedItemIcon == null)
+                return;
+
             if (_draggedStack != null && _draggedStack.Item != null)
             {
                 _draggedItemIcon.sprite = _draggedStack.Item.Icon;
@@ -280,29 +414,6 @@ namespace Project_S.Runtime.Gameplay.HUD
             {
                 _draggedItemIcon.gameObject.SetActive(active);
                 _draggedItemIcon.raycastTarget = false;
-            }
-        }
-
-        public void Refresh()
-        {
-            if (_inventory == null || _createdSlots == null) return;
-
-            var slots = _inventory.GetAllSlots();
-            // Захист: якщо масив ще не встиг створитися, перериваємо виконання
-            if (slots == null) return;
-
-            for (int i = 0; i < _createdSlots.Length; i++)
-            {
-                if (_createdSlots[i] != null)
-                {
-                    // Захист від виходу за межі масиву
-                    _createdSlots[i].UpdateView(i < slots.Length ? slots[i] : null);
-                }
-            }
-
-            if (_weightText != null)
-            {
-                _weightText.text = $"Вага: {_inventory.GetCurrentWeight():F1} / {_inventory.GetMaxWeight():F1} кг";
             }
         }
     }

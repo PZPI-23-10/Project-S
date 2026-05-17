@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
+  m_Name: Campfire_StrongBoneSoup
+  m_EditorClassIdentifier: 
+  DisplayName: "Strong Bone Soup"
+  Context: 2
+  Output:
+    Item: {fileID: 11400000, guid: a7988f26e73c0e23aa495e932227fa75, type: 2}
+    Amount: 2
+  Ingredients:
+  - Item: {fileID: 11400000, guid: 9644e950c2a3e34a7efc590be85bf38e, type: 2}
+    Amount: 1
+  - Item: {fileID: 11400000, guid: 09625741fd81492b33aa7cf8961c324c, type: 2}
+    Amount: 1
+  SoulAshCost: 0
+  RequiredItems: []
+  CraftDurationSeconds: 5
+  FuelSecondsCost: 5
+  Description: "A simple bone soup batch. MVP timer is shorter than document balance."

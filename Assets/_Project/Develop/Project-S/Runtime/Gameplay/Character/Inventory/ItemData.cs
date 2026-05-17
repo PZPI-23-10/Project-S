@@ -1,24 +1,78 @@
 using UnityEngine;
+using Project_S.Runtime.Gameplay.Character.Stats;
 
 namespace Project_S.Runtime.Gameplay.Character.Inventory
 {
+    public enum ItemKind
+    {
+        Resource,
+        Weapon,
+        Consumable,
+        Tool,
+        Accessory,
+        Material
+    }
+
+    public enum ConsumableEffectType
+    {
+        None,
+        RestoreHealth,
+        RestoreHunger
+    }
+
+    public enum ConsumableSpecialEffectType
+    {
+        None,
+        HomeTeleport
+    }
+
     [CreateAssetMenu(fileName = "NewItem", menuName = "Project-S/Inventory/Item Data")]
     public class ItemData : ScriptableObject
     {
-        [Header("Основна інформація")]
-        public string ItemName = "Предмет";
+        [Header("Base")]
+        public string ItemName = "Item";
+        public ItemKind Kind = ItemKind.Resource;
         public float Weight = 1.0f;
 
-        [Header("Стакування (Stacks)")]
-        public bool IsStackable = false; 
-        public int MaxStack = 1;         
+        [Header("Stacks")]
+        public bool IsStackable = false;
+        public int MaxStack = 1;
+        [Tooltip("0 means unlimited inventory stacks.")]
+        public int MaxInventoryStacks;
 
-        [Header("Інтерфейс (UI)")]
+        [Header("UI")]
         public Sprite Icon;
-        [TextArea(3, 5)] public string Description = "Опис...";
+        [TextArea(3, 5)] public string Description = "Description...";
 
-        [Header("Префаби")]
-        public GameObject WeaponPrefab;      
-        public GameObject WorldPickupPrefab; 
+        [Header("World")]
+        public GameObject WeaponPrefab;
+        public GameObject WorldPickupPrefab;
+
+        [Header("Consumable")]
+        public ConsumableEffectType ConsumableEffect;
+        public float HealthRestoreAmount;
+        public float HungerRestoreAmount;
+        public float StaminaRestoreAmount;
+        public ConsumableSpecialEffectType SpecialEffect;
+        public float SpecialEffectDelaySeconds;
+
+        [Header("Timed Buff")]
+        public TimedBuffType TimedBuffType = TimedBuffType.None;
+        public TimedBuffCategory TimedBuffCategory = TimedBuffCategory.None;
+        public float TimedBuffMultiplier = 1f;
+        public float TimedBuffDurationSeconds;
+        public TimedBuffType SecondaryTimedBuffType = TimedBuffType.None;
+        public TimedBuffCategory SecondaryTimedBuffCategory = TimedBuffCategory.None;
+        public float SecondaryTimedBuffMultiplier = 1f;
+        public float SecondaryTimedBuffDurationSeconds;
+
+        public bool IsUsable =>
+            ConsumableEffect != ConsumableEffectType.None
+            || !Mathf.Approximately(HealthRestoreAmount, 0f)
+            || !Mathf.Approximately(HungerRestoreAmount, 0f)
+            || !Mathf.Approximately(StaminaRestoreAmount, 0f)
+            || TimedBuffType != TimedBuffType.None
+            || SecondaryTimedBuffType != TimedBuffType.None
+            || SpecialEffect != ConsumableSpecialEffectType.None;
     }
 }

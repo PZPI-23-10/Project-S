@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 215432127562c5e46812873892628a75, type: 3}
+  m_Name: FlintKnife
+  m_EditorClassIdentifier: 
+  ItemName: "Flint Knife"
+  Kind: 1
+  Weight: 0.3
+  IsStackable: 0
+  MaxStack: 1
+  Icon: {fileID: 0}
+  Description: "Fast short blade for close range fighting."
+  WeaponPrefab: {fileID: 3942592866433276128, guid: 6e6f288cc1ccdd543b2cd3d632a069ed, type: 3}
+  WorldPickupPrefab: {fileID: 0}
+  ConsumableEffect: 0
+  HealthRestoreAmount: 0
+  HungerRestoreAmount: 0
+  DamageProfile:
+  - Type: 2
+    Amount: 10
+  PoiseDamage: 4
+  AttackSpeedMultiplier: 1.45
+  MaxComboHits: 2
+  HitsToChargeHeavy: 4
+  HeavyAbility: 0
+  HeavyAbilityDuration: 0
+  OffhandAbility: 0
+  AbilityCooldown: 8
+  BlockMitigation: 0.05
+  ParryWindow: 0.32
+  ParryStaminaReward: 20
+  ParryPoiseDamage: 40
+  HarvestTool: 3

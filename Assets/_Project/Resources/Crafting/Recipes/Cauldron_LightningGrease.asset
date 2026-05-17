@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
+  m_Name: Cauldron_LightningGrease
+  m_EditorClassIdentifier: 
+  DisplayName: "Lightning Grease"
+  Context: 4
+  Output:
+    Item: {fileID: 11400000, guid: d72c8b2755d54027ffdf06d965f0b52e, type: 2}
+    Amount: 2
+  Ingredients:
+  - Item: {fileID: 11400000, guid: cd0daeb177f15eacd3fe89886055ad6a, type: 2}
+    Amount: 4
+  - Item: {fileID: 11400000, guid: 9644e950c2a3e34a7efc590be85bf38e, type: 2}
+    Amount: 1
+  SoulAshCost: 120
+  RequiredItems: []
+  CraftDurationSeconds: 10
+  FuelSecondsCost: 10
+  Description: "MVP station recipe with shortened timer."

@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35381e3f13136374abee8a5ed10dc4aa, type: 3}
+  m_Name: MavkaPotion
+  m_EditorClassIdentifier: 
+  ItemName: "Mavka Potion"
+  Kind: 2
+  Weight: 0.2
+  IsStackable: 1
+  MaxStack: 5
+  MaxInventoryStacks: 0
+  Icon: {fileID: 0}
+  Description: "Restores 10 stamina and removes stamina costs briefly."
+  WeaponPrefab: {fileID: 0}
+  WorldPickupPrefab: {fileID: 0}
+  ConsumableEffect: 0
+  HealthRestoreAmount: 0
+  HungerRestoreAmount: 0
+  StaminaRestoreAmount: 10
+  SpecialEffect: 0
+  SpecialEffectDelaySeconds: 0
+  TimedBuffType: 4
+  TimedBuffCategory: 3
+  TimedBuffMultiplier: 0
+  TimedBuffDurationSeconds: 10
+  SecondaryTimedBuffType: 0
+  SecondaryTimedBuffCategory: 0
+  SecondaryTimedBuffMultiplier: 1
+  SecondaryTimedBuffDurationSeconds: 0
