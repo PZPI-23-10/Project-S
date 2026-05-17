@@ -7,15 +7,15 @@ namespace Project_S.Runtime.Gameplay.Crafting
 {
     public static class CraftingMvpBootstrapper
     {
-        private const string ChestName = "[MVP] Resource Chest";
+        private const string ChestName = "[DEBUG] Resource Crate";
         private const string WorkbenchName = "[MVP] Workbench";
         private const string CampfireName = "[MVP] Campfire";
-        private const string FoodChestName = "[MVP] Food Crate";
+        private const string FoodChestName = "[DEBUG] Food Crate";
         private const string CharcoalPitName = "[MVP] Charcoal Pit";
         private const string CauldronName = "[MVP] Cauldron";
         private const string FurnaceName = "[MVP] Furnace";
         private const string AnvilName = "[MVP] Anvil";
-        private const string ForgeChestName = "[MVP] Forge Crate";
+        private const string ForgeChestName = "[DEBUG] Forge Crate";
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
@@ -95,7 +95,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
         {
             var chest = GameObject.CreatePrimitive(PrimitiveType.Cube);
             chest.name = ChestName;
-            chest.transform.position = player.position + player.forward * 2f + player.right * 0.9f + Vector3.up * 0.5f;
+            chest.transform.position = player.position + player.forward * 1.4f - player.right * 4.1f + Vector3.up * 0.5f;
             chest.transform.localScale = new Vector3(0.9f, 0.7f, 0.9f);
 
             var renderer = chest.GetComponent<Renderer>();
@@ -113,7 +113,8 @@ namespace Project_S.Runtime.Gameplay.Crafting
                     new ItemGrant(LoadItem("Crafting/Items/Resources/Flint"), 20)
                 },
                 500,
-                true);
+                true,
+                ChestName);
         }
 
         private static void SpawnWorkbench(Transform player)
@@ -148,7 +149,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
         {
             var chest = GameObject.CreatePrimitive(PrimitiveType.Cube);
             chest.name = FoodChestName;
-            chest.transform.position = player.position + player.forward * 3.4f + player.right * 1.25f + Vector3.up * 0.5f;
+            chest.transform.position = player.position + player.forward * 2.8f - player.right * 4.1f + Vector3.up * 0.5f;
             chest.transform.localScale = new Vector3(0.8f, 0.65f, 0.8f);
 
             var renderer = chest.GetComponent<Renderer>();
@@ -168,7 +169,8 @@ namespace Project_S.Runtime.Gameplay.Crafting
                     new ItemGrant(LoadItem("Crafting/Items/Resources/PetrifiedBlood"), 5)
                 },
                 1200,
-                true);
+                true,
+                FoodChestName);
         }
 
         private static void SpawnCharcoalPit(Transform player)
@@ -231,7 +233,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
         {
             var chest = GameObject.CreatePrimitive(PrimitiveType.Cube);
             chest.name = ForgeChestName;
-            chest.transform.position = player.position + player.forward * 5.6f + Vector3.up * 0.5f;
+            chest.transform.position = player.position + player.forward * 4.2f - player.right * 4.1f + Vector3.up * 0.5f;
             chest.transform.localScale = new Vector3(0.85f, 0.65f, 0.85f);
 
             var renderer = chest.GetComponent<Renderer>();
@@ -249,7 +251,8 @@ namespace Project_S.Runtime.Gameplay.Crafting
                     new ItemGrant(LoadItem("Crafting/Items/Resources/Gromovytsia"), 4)
                 },
                 1000,
-                true);
+                true,
+                ForgeChestName);
         }
 
         private static ItemData LoadItem(string path)

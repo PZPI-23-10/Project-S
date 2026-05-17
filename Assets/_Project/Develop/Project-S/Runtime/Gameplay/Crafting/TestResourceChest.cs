@@ -26,16 +26,19 @@ namespace Project_S.Runtime.Gameplay.Crafting
         [SerializeField] private List<ItemGrant> _itemGrants = new List<ItemGrant>();
         [SerializeField] private int _soulAshGrant = 500;
         [SerializeField] private bool _grantOnce = true;
+        [SerializeField] private string _interactionPrompt = "Resource Chest";
 
         private bool _granted;
 
-        public string InteractionPrompt => "Resource Chest";
+        public string InteractionPrompt => _interactionPrompt;
 
-        public void Configure(IEnumerable<ItemGrant> itemGrants, int soulAshGrant, bool grantOnce)
+        public void Configure(IEnumerable<ItemGrant> itemGrants, int soulAshGrant, bool grantOnce, string interactionPrompt = null)
         {
             _itemGrants = new List<ItemGrant>(itemGrants);
             _soulAshGrant = soulAshGrant;
             _grantOnce = grantOnce;
+            if (!string.IsNullOrWhiteSpace(interactionPrompt))
+                _interactionPrompt = interactionPrompt;
         }
 
         public void Interact(PlayerInteractor interactor)

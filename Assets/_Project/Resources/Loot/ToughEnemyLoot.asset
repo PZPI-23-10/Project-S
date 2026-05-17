@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec61d2a47c75da0ddf87f372e451c87e, type: 3}
+  m_Name: ToughEnemyLoot
+  m_EditorClassIdentifier: 
+  SoulAshReward: 35
+  GuaranteedDrops:
+  - Item: {fileID: 11400000, guid: 9644e950c2a3e34a7efc590be85bf38e, type: 2}
+    MinAmount: 2
+    MaxAmount: 4
+    Chance: 1
+  - Item: {fileID: 11400000, guid: e5f03bd6ee9e2d044bca9d96e4564966, type: 2}
+    MinAmount: 1
+    MaxAmount: 3
+    Chance: 1
+  ChanceDrops:
+  - Item: {fileID: 11400000, guid: 09625741fd81492b33aa7cf8961c324c, type: 2}
+    MinAmount: 2
+    MaxAmount: 3
+    Chance: 1
+  - Item: {fileID: 11400000, guid: dd7b1e09903594431ac8639d296db917, type: 2}
+    MinAmount: 1
+    MaxAmount: 1
+    Chance: 0.45

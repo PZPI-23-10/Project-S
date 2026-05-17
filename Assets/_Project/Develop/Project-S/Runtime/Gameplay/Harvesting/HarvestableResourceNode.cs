@@ -102,39 +102,7 @@ namespace Project_S.Runtime.Gameplay.Harvesting
             if (amount <= 0)
                 return;
 
-            if (inventory != null && inventory.AddItem(drop.Item, amount))
-                return;
-
-            SpawnPickup(drop.Item, amount);
-        }
-
-        private void SpawnPickup(ItemData item, int amount)
-        {
-            GameObject pickupObject;
-            if (item.WorldPickupPrefab != null)
-            {
-                pickupObject = Instantiate(item.WorldPickupPrefab, DropPosition(), Quaternion.identity);
-            }
-            else
-            {
-                pickupObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                pickupObject.name = $"{item.ItemName} Pickup";
-                pickupObject.transform.position = DropPosition();
-                pickupObject.transform.localScale = Vector3.one * 0.35f;
-            }
-
-            var pickup = pickupObject.GetComponent<ItemPickup>();
-            if (pickup == null)
-                pickup = pickupObject.AddComponent<ItemPickup>();
-
-            pickup.Item = item;
-            pickup.Amount = amount;
-        }
-
-        private Vector3 DropPosition()
-        {
-            Vector2 offset = UnityEngine.Random.insideUnitCircle * 0.55f;
-            return transform.position + new Vector3(offset.x, 0.45f, offset.y);
+            WorldItemDropUtility.GrantOrDrop(drop.Item, amount, inventory, transform.position, "[Harvesting]");
         }
 
         private void ResetHealth()

@@ -1,5 +1,6 @@
 using Project_S.Runtime.Gameplay.Character.Inventory;
 using Project_S.Runtime.Gameplay.Crafting;
+using Project_S.Runtime.Gameplay.Loot;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Character.Combat
@@ -8,6 +9,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
     {
         [SerializeField] private float _health = 100f;
         [SerializeField] private int _soulAshReward = 10;
+        [SerializeField] private LootDropper _lootDropper;
 
         private bool _dead;
 
@@ -15,6 +17,18 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         {
             get => _health;
             set => _health = value;
+        }
+
+        public int SoulAshReward
+        {
+            get => _soulAshReward;
+            set => _soulAshReward = Mathf.Max(0, value);
+        }
+
+        private void Awake()
+        {
+            if (_lootDropper == null)
+                _lootDropper = GetComponent<LootDropper>();
         }
 
         public void ReceiveDamage(DamageRequest request)
@@ -32,7 +46,14 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         private void Die(GameObject source)
         {
             _dead = true;
-            TryGrantSoulAsh(source);
+
+            if (_lootDropper == null)
+                _lootDropper = GetComponent<LootDropper>();
+
+            if (_lootDropper != null)
+                _lootDropper.DropFor(source, _soulAshReward);
+            else
+                TryGrantSoulAsh(source);
 
             if (Application.isPlaying)
                 Destroy(gameObject);

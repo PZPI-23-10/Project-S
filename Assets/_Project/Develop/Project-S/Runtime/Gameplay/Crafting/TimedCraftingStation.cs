@@ -196,40 +196,15 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             if (completedRecipe != null && completedRecipe.Output != null && completedRecipe.Output.Item != null && completedRecipe.Output.Amount > 0)
             {
-                if (targetInventory == null || !targetInventory.AddItem(completedRecipe.Output.Item, completedRecipe.Output.Amount))
-                    SpawnPickup(completedRecipe.Output.Item, completedRecipe.Output.Amount);
+                WorldItemDropUtility.GrantOrDrop(
+                    completedRecipe.Output.Item,
+                    completedRecipe.Output.Amount,
+                    targetInventory,
+                    transform.position,
+                    "[Crafting]");
             }
 
             NotifyChanged();
-        }
-
-        private void SpawnPickup(ItemData item, int amount)
-        {
-            GameObject pickupObject;
-            if (item.WorldPickupPrefab != null)
-            {
-                pickupObject = Instantiate(item.WorldPickupPrefab, DropPosition(), Quaternion.identity);
-            }
-            else
-            {
-                pickupObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                pickupObject.name = $"{item.ItemName} Pickup";
-                pickupObject.transform.position = DropPosition();
-                pickupObject.transform.localScale = Vector3.one * 0.35f;
-            }
-
-            var pickup = pickupObject.GetComponent<ItemPickup>();
-            if (pickup == null)
-                pickup = pickupObject.AddComponent<ItemPickup>();
-
-            pickup.Item = item;
-            pickup.Amount = amount;
-        }
-
-        private Vector3 DropPosition()
-        {
-            Vector2 offset = Random.insideUnitCircle * 0.55f;
-            return transform.position + new Vector3(offset.x, 0.45f, offset.y);
         }
 
         private void NotifyChanged()
