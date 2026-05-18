@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
   m_Name: Anvil_IronSword
   m_EditorClassIdentifier: 
-  DisplayName: "Iron Sword"
+  DisplayName: Iron Sword
   Context: 6
   Output:
     Item: {fileID: 11400000, guid: e9deef6d085f4307899db11ea277db68, type: 2}
@@ -30,4 +30,4 @@ MonoBehaviour:
   RequiredItems: []
   CraftDurationSeconds: 0
   FuelSecondsCost: 0
-  Description: "Forge an iron-tier sword. Its active ability is deferred."
+  Description: Forge an iron-tier sword. Its active ability is deferred.
