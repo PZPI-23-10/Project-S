@@ -75,13 +75,22 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 totalDamage *= buffs.AttackDamageMultiplier;
 
             var request = new DamageRequest(
-                _attacker,
-                totalDamage,
-                _weaponData.PoiseDamage,
-                primaryType,
-                _weaponData);
+                            _attacker,
+                            totalDamage,
+                            _weaponData.PoiseDamage,
+                            primaryType,
+                            _weaponData);
 
             receiver.ReceiveDamage(request);
+
+            if (_attacker != null)
+            {
+                var combatController = _attacker.GetComponent<CombatController>();
+                if (combatController != null)
+                {
+                    combatController.AddChargeOnHit();
+                }
+            }
         }
     }
 }

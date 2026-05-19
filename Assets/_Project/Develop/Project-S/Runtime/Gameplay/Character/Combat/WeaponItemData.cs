@@ -19,6 +19,9 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
     [CreateAssetMenu(fileName = "New Weapon", menuName = "Project-S/Items/Weapon")]
     public class WeaponItemData : ItemData
     {
+        [Header("Equip Settings")]
+        public bool IsTwoHanded = false;
+
         [Header("Damage")]
         public List<DamageInstance> DamageProfile = new List<DamageInstance>();
 

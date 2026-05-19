@@ -26,26 +26,39 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         [SerializeField] private StaminaController _stamina;
         [SerializeField] private BlockController _blockController;
 
-        [Header("Візуал")]
-        [SerializeField] private Transform _weaponHolder; // Пустишка в руці гравця (куди спавнити)
-        private GameObject _currentWeaponModel; // Збережене посилання на 3D-модель (щоб видалити стару)
-
+        [Header("Візуал (Права рука)")]
+        [SerializeField] private Transform _weaponHolder;
+        private GameObject _currentWeaponModel;
         private MeleeHitTester _currentHitTester;
         private Animator _weaponAnimator;
 
+        [Header("Візуал (Ліва рука)")]
+        [SerializeField] private Transform _offhandHolder;
+        [SerializeField] private GameObject _phylacteryPrefab;
+        private GameObject _currentOffhandModel;
+
+        private bool _isPhylacteryInHand = false;
+        private bool _isCombatOffhandInHand = false;
+
+        private bool _isOffhandActive => _isPhylacteryInHand || _isCombatOffhandInHand;
+
         [Header("Екіпірування")]
-        [SerializeField] private WeaponItemData _unarmedWeapon; // Твої Кулаки (перетягни файл сюди)
-        [SerializeField] private WeaponItemData _currentWeapon; // Зброя з інвентарю
+        [SerializeField] private WeaponItemData _unarmedWeapon;
+        [SerializeField] private WeaponItemData _currentWeapon;
+        [SerializeField] private WeaponItemData _equippedOffhandItem; // ЛІВА РУКА (те, що лежить у слоті інвентарю)
+
+        [Header("Прогресія (Скіли)")]
+        [SerializeField] private bool _isOffhandSkillUnlocked = true; // ГАЛОЧКА ДЛЯ ТЕСТУ ПРОКАЧКИ
+
+        [Header("Управління (Клавіші)")]
+        [SerializeField] private KeyCode _toggleOffhandKey = KeyCode.G;  // Кнопка, щоб дістати/сховати ліву руку
+        [SerializeField] private KeyCode _offhandAbilityKey = KeyCode.F; // Кнопка для здібності другої руки
 
         [Header("Налаштування Комбо")]
         [SerializeField] private float _comboResetTime = 1.5f;
 
-        // ВЛАСТИВІСТЬ: Повертає зброю з рук, або кулаки, якщо рук порожні
         public WeaponItemData ActiveWeapon => _currentWeapon != null ? _currentWeapon : _unarmedWeapon;
-
-        // Для Блок-контролера та інших скриптів
         public WeaponItemData CurrentWeapon => ActiveWeapon;
-
         public CombatState CurrentState { get; private set; } = CombatState.Idle;
 
         private int _comboStep = 0;
@@ -56,8 +69,6 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         private void Update()
         {
             if (CurrentState == CombatState.Staggered) return;
-
-            // Якщо немає навіть кулаків у слоті Unarmed - нічого не робимо
             if (ActiveWeapon == null) return;
 
             HandleCombatInput();
@@ -66,8 +77,29 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
         private void HandleCombatInput()
         {
-            // 1. БЛОК (ПКМ)
-            if (UnityEngine.Input.GetMouseButtonDown(1) && CurrentState == CombatState.Idle)
+            // 1. ДІСТАТИ / СХОВАТИ ПРЕДМЕТ У ЛІВІЙ РУЦІ
+            if (UnityEngine.Input.GetKeyDown(_toggleOffhandKey) && CurrentState == CombatState.Idle)
+            {
+                ToggleOffhand();
+            }
+
+            // 2. ВАЖКИЙ УДАР (ЛКМ ЗАЖАТО + ПКМ НАТИСНУТО)
+            // Ми перевіряємо це до блоку, щоб гра не плутала ПКМ для блоку з ПКМ для здібності
+            if (UnityEngine.Input.GetMouseButton(0) && UnityEngine.Input.GetMouseButtonDown(1) && !_isOffhandActive)
+            {
+                if (_currentHeavyCharge >= ActiveWeapon.HitsToChargeHeavy)
+                {
+                    PerformHeavySkill();
+                }
+                else
+                {
+                    Debug.Log($"<color=orange>[Боївка]</color> Вміння ще не заряджено! ({_currentHeavyCharge}/{ActiveWeapon.HitsToChargeHeavy})");
+                }
+                return; // Зупиняємо перевірку, щоб не спрацював звичайний блок
+            }
+
+            // 3. БЛОК (ПКМ)
+            if (UnityEngine.Input.GetMouseButtonDown(1) && CurrentState == CombatState.Idle && !_isOffhandActive)
             {
                 StartBlocking();
             }
@@ -78,28 +110,16 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
             if (CurrentState != CombatState.Idle) return;
 
-            // 2. ВАЖКИЙ УДАР / УЛЬТА (ЛКМ + ПКМ)
-            if (UnityEngine.Input.GetMouseButton(0) && UnityEngine.Input.GetMouseButton(1))
-            {
-                // Замінили _currentWeapon на ActiveWeapon
-                if (_currentHeavyCharge >= ActiveWeapon.HitsToChargeHeavy)
-                {
-                    PerformHeavySkill();
-                }
-                return;
-            }
-
-            // 3. ЛЕГКИЙ УДАР (ЛКМ)
+            // 4. ЛЕГКИЙ УДАР (ЛКМ)
             if (UnityEngine.Input.GetMouseButtonDown(0))
             {
                 PerformLightAttack();
             }
 
-            // 4. ЗДІБНІСТЬ ДРУГОЇ РУКИ (Кнопка F)
-            if (UnityEngine.Input.GetKeyDown(KeyCode.F))
+            // 5. ЗДІБНІСТЬ ДРУГОЇ РУКИ (Кнопка F)
+            if (UnityEngine.Input.GetKeyDown(_offhandAbilityKey))
             {
-                // Замінили _currentWeapon на ActiveWeapon
-                if (Time.time >= _lastAbilityTime + ActiveWeapon.AbilityCooldown)
+                if (_isOffhandActive)
                 {
                     PerformOffhandAbility();
                 }
@@ -112,30 +132,22 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             _lastAttackTime = Time.time;
 
             _comboStep++;
-            if (_comboStep > ActiveWeapon.MaxComboHits) _comboStep = 1;
 
-            AttackDirection direction = GetAttackDirection();
-            // Замінив тут _currentWeapon.name на ActiveWeapon.name, щоб не було помилки, коли зброї немає
-            Debug.Log($"<color=cyan>[Боївка]</color> Удар: {ActiveWeapon.name} | Крок: {_comboStep} | Напрямок: Center");
-
-            // 1. ВМИКАЄМО ФІЗИКУ (Тільки один раз!)
-            if (_currentHitTester != null)
+            // Якщо в руках КУЛАКИ і активна ліва рука — комбо ріжеться до 1 удару
+            if (_currentWeapon == null && _isOffhandActive)
             {
-                _currentHitTester.StartHitDetection();
-                Invoke(nameof(EndAttackHitbox), 0.2f);
+                _comboStep = 1;
+            }
+            else if (_comboStep > ActiveWeapon.MaxComboHits)
+            {
+                _comboStep = 1;
             }
 
-            // Додаємо заряд ульти
-            if (_currentHeavyCharge < ActiveWeapon.HitsToChargeHeavy)
-            {
-                _currentHeavyCharge++;
-            }
+            Debug.Log($"<color=cyan>[Боївка]</color> Удар: {ActiveWeapon.name} | Крок: {_comboStep}");
 
-            // Швидкість повернення в Idle
             float animDuration = 0.5f / GetAttackSpeedMultiplier();
             Invoke(nameof(ResetToIdle), animDuration);
 
-            // 2. ВМИКАЄМО АНІМАЦІЮ
             if (_weaponAnimator != null)
             {
                 _weaponAnimator.SetInteger("ComboStep", _comboStep);
@@ -143,33 +155,151 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             }
         }
 
+        private void ToggleOffhand()
+        {
+            // Якщо зброя дворучна — ліва рука взагалі заблокована
+            if (ActiveWeapon.IsTwoHanded)
+            {
+                Debug.Log("<color=orange>[Боївка]</color> Не можна використати ліву руку! Зброя дворучна.");
+                return;
+            }
+
+            // Очищаємо ліву руку перед тим, як щось туди дати
+            if (_currentOffhandModel != null)
+            {
+                Destroy(_currentOffhandModel);
+            }
+
+            // ЛОГІКА ПЕРЕМИКАННЯ
+            // Якщо зараз в руці нічого немає (або був ліхтар), і в нас Є ПРОКАЧКА та ЕКІПІРОВАНИЙ ПРЕДМЕТ
+            if (!_isCombatOffhandInHand && _isOffhandSkillUnlocked && _equippedOffhandItem != null)
+            {
+                // Дістаємо бойовий предмет (Щит/Кинджал)
+                _isCombatOffhandInHand = true;
+                _isPhylacteryInHand = false;
+
+                _currentOffhandModel = Instantiate(_equippedOffhandItem.WeaponPrefab, _offhandHolder);
+                if (_weaponAnimator != null) _weaponAnimator.SetBool("PhylacteryActive", true);
+
+                Debug.Log($"<color=magenta>[Ліва рука]</color> Дістали бойовий предмет: {_equippedOffhandItem.name}");
+            }
+            // Якщо бойового предмета немає, скіл не вкачаний, АБО ми хочемо змінити Щит на Ліхтар
+            else if (!_isPhylacteryInHand)
+            {
+                // Дістаємо Філактерій (ЙОМУ НЕ ПОТРІБНА ПРОКАЧКА!)
+                _isPhylacteryInHand = true;
+                _isCombatOffhandInHand = false;
+
+                if (_phylacteryPrefab != null)
+                {
+                    _currentOffhandModel = Instantiate(_phylacteryPrefab, _offhandHolder);
+                }
+                if (_weaponAnimator != null) _weaponAnimator.SetBool("PhylacteryActive", true);
+
+                Debug.Log("<color=yellow>[Ліва рука]</color> Дістали Філактерій!");
+            }
+            // Якщо в руці вже був Філактерій — просто ховаємо все
+            else
+            {
+                _isPhylacteryInHand = false;
+                _isCombatOffhandInHand = false;
+                if (_weaponAnimator != null) _weaponAnimator.SetBool("PhylacteryActive", false);
+
+                Debug.Log("<color=grey>[Ліва рука]</color> Сховали все в ножни.");
+            }
+
+            // Скидаємо координати спавну, щоб предмет рівно сидів у руці
+            if (_currentOffhandModel != null)
+            {
+                _currentOffhandModel.transform.localPosition = Vector3.zero;
+                _currentOffhandModel.transform.localRotation = Quaternion.identity;
+            }
+        }
+
+        // Цей метод викликає інвентар, коли гравець перетягує предмет у слот лівої руки
+        public void EquipOffhand(WeaponItemData newOffhandItem)
+        {
+            _equippedOffhandItem = newOffhandItem;
+
+            if (_isOffhandActive)
+            {
+                ToggleOffhand(); // Сховати старий
+                if (newOffhandItem != null)
+                {
+                    ToggleOffhand(); // Дістати новий
+                }
+            }
+
+            Debug.Log($"<color=green>[Екіпірування]</color> У ліву руку покладено: {(newOffhandItem != null ? newOffhandItem.name : "Порожньо")}");
+        }
+
+        public void AddChargeOnHit()
+        {
+            if (_currentHeavyCharge < ActiveWeapon.HitsToChargeHeavy)
+            {
+                _currentHeavyCharge++;
+                Debug.Log($"<color=yellow>[Боївка]</color> Влучання! Заряд: {_currentHeavyCharge} / {ActiveWeapon.HitsToChargeHeavy}");
+            }
+        }
+
+        public void AnimEvent_StartHitbox()
+        {
+            if (_currentHitTester != null) _currentHitTester.StartHitDetection();
+        }
+
+        public void AnimEvent_StopHitbox()
+        {
+            if (_currentHitTester != null) _currentHitTester.StopHitDetection();
+        }
+
+        public void EquipWeapon(WeaponItemData newWeapon)
+        {
+            if (_currentWeaponModel != null) Destroy(_currentWeaponModel);
+
+            WeaponItemData weaponToEquip = newWeapon != null ? newWeapon : _unarmedWeapon;
+            _currentWeapon = newWeapon;
+            _comboStep = 0;
+
+            if (weaponToEquip != null && weaponToEquip.IsTwoHanded && _isOffhandActive)
+            {
+                ToggleOffhand();
+            }
+
+            if (weaponToEquip != null && weaponToEquip.WeaponPrefab != null)
+            {
+                _currentWeaponModel = Instantiate(weaponToEquip.WeaponPrefab, _weaponHolder);
+                if (_currentWeaponModel != null)
+                {
+                    _weaponAnimator = _currentWeaponModel.GetComponent<Animator>();
+                }
+
+                _currentWeaponModel.transform.localPosition = Vector3.zero;
+                _currentWeaponModel.transform.localRotation = Quaternion.identity;
+
+                _currentHitTester = _currentWeaponModel.GetComponentInChildren<MeleeHitTester>();
+                if (_currentHitTester != null)
+                {
+                    _currentHitTester.Setup(weaponToEquip, gameObject);
+                }
+            }
+
+            Debug.Log($"<color=green>[Екіпірування]</color> Взято зброю: {weaponToEquip.name}");
+        }
+
         public float GetAttackSpeedMultiplier()
         {
             if (ActiveWeapon == null) return 1f;
-
             float multiplier = ActiveWeapon.AttackSpeedMultiplier;
             var buffs = GetComponentInParent<BuffController>();
-            if (buffs != null)
-                multiplier *= buffs.AttackSpeedMultiplier;
-
+            if (buffs != null) multiplier *= buffs.AttackSpeedMultiplier;
             return Mathf.Max(0.01f, multiplier);
-        }
-
-        private void EndAttackHitbox()
-        {
-            if (_currentHitTester != null)
-            {
-                _currentHitTester.StopHitDetection();
-            }
         }
 
         private void PerformHeavySkill()
         {
             CurrentState = CombatState.HeavySkill;
             _currentHeavyCharge = 0;
-
-            Debug.Log($"<color=red>[Боївка]</color> ВМІННЯ: {ActiveWeapon.HeavyAbility}!");
-
+            Debug.Log($"<color=red>[Боївка]</color> ВМІННЯ ПРАВОЇ РУКИ: {ActiveWeapon.HeavyAbility}!");
             Invoke(nameof(ResetToIdle), 1.0f);
         }
 
@@ -178,7 +308,11 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             CurrentState = CombatState.Ability;
             _lastAbilityTime = Time.time;
 
-            Debug.Log($"<color=magenta>[Боївка]</color> ДРУГА РУКА: {ActiveWeapon.OffhandAbility}!");
+            // Якщо екіпіровано предмет, викликаємо його здібність (наприклад, Філактерій)
+            if (_equippedOffhandItem != null)
+            {
+                Debug.Log($"<color=yellow>[Магія]</color> ЗДІБНІСТЬ ЛІВОЇ РУКИ: {_equippedOffhandItem.OffhandAbility}!");
+            }
 
             Invoke(nameof(ResetToIdle), 0.8f);
         }
@@ -187,7 +321,6 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         {
             CurrentState = CombatState.Blocking;
             if (_blockController != null) _blockController.StartBlock();
-
             if (_weaponAnimator != null) _weaponAnimator.SetBool("IsBlocking", true);
         }
 
@@ -195,20 +328,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         {
             CurrentState = CombatState.Idle;
             if (_blockController != null) _blockController.StopBlock();
-
             if (_weaponAnimator != null) _weaponAnimator.SetBool("IsBlocking", false);
-        }
-
-        private AttackDirection GetAttackDirection()
-        {
-            float h = UnityEngine.Input.GetAxisRaw("Horizontal");
-            float v = UnityEngine.Input.GetAxisRaw("Vertical");
-
-            if (Mathf.Abs(h) > Mathf.Abs(v))
-            {
-                return h < 0 ? AttackDirection.Left : AttackDirection.Right;
-            }
-            return AttackDirection.Center;
         }
 
         private void CheckComboReset()
@@ -222,50 +342,6 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         private void ResetToIdle()
         {
             CurrentState = CombatState.Idle;
-        }
-
-        public void EquipWeapon(WeaponItemData newWeapon)
-        {
-            // 1. Знищуємо стару модельку меча (або старий хітбокс кулаків)
-            if (_currentWeaponModel != null)
-            {
-                Destroy(_currentWeaponModel);
-            }
-
-            // 2. Визначаємо, що беремо в руки. Якщо newWeapon порожній - беремо кулаки!
-            WeaponItemData weaponToEquip = newWeapon;
-            if (weaponToEquip == null)
-            {
-                weaponToEquip = _unarmedWeapon; // _unarmedWeapon - це те поле, куди ти поклав файл Fists
-            }
-
-            // 3. Оновлюємо логічні дані
-            _currentWeapon = weaponToEquip;
-            _comboStep = 0;
-
-            // 4. Спавнимо нову 3D-модель АБО невидимий хітбокс кулаків
-            if (weaponToEquip != null && weaponToEquip.WeaponPrefab != null)
-            {
-                _currentWeaponModel = Instantiate(weaponToEquip.WeaponPrefab, _weaponHolder);
-
-                if (_currentWeaponModel != null) // перевір, як у тебе називається змінна заспавненого об'єкта
-                {
-                    _weaponAnimator = _currentWeaponModel.GetComponent<Animator>();
-                }
-
-                // Скидаємо координати
-                _currentWeaponModel.transform.localPosition = Vector3.zero;
-                _currentWeaponModel.transform.localRotation = Quaternion.identity;
-
-                // Знаходимо тестер і передаємо йому дані
-                _currentHitTester = _currentWeaponModel.GetComponentInChildren<MeleeHitTester>();
-                if (_currentHitTester != null)
-                {
-                    _currentHitTester.Setup(weaponToEquip, gameObject);
-                }
-            }
-
-            Debug.Log($"<color=green>[Екіпірування]</color> Взято зброю: {(weaponToEquip != null ? weaponToEquip.name : "Порожньо")}");
         }
     }
 }

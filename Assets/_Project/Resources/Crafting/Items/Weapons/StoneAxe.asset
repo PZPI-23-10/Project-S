@@ -12,21 +12,35 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 215432127562c5e46812873892628a75, type: 3}
   m_Name: StoneAxe
   m_EditorClassIdentifier: 
-  ItemName: "Stone Axe"
+  ItemName: Stone Axe
   Kind: 1
   Weight: 2
   IsStackable: 0
   MaxStack: 1
+  MaxInventoryStacks: 0
   Icon: {fileID: 0}
-  Description: "Heavy starter axe. Temporary model uses the shared test weapon prefab."
-  WeaponPrefab: {fileID: 3942592866433276128, guid: 6e6f288cc1ccdd543b2cd3d632a069ed, type: 3}
+  Description: Heavy starter axe. Temporary model uses the shared test weapon prefab.
+  WeaponPrefab: {fileID: 2115912416057973661, guid: 43973c2ee11af2a4ab4059bc0d83e94f,
+    type: 3}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 0
   HealthRestoreAmount: 0
   HungerRestoreAmount: 0
+  StaminaRestoreAmount: 0
+  SpecialEffect: 0
+  SpecialEffectDelaySeconds: 0
+  TimedBuffType: 0
+  TimedBuffCategory: 0
+  TimedBuffMultiplier: 1
+  TimedBuffDurationSeconds: 0
+  SecondaryTimedBuffType: 0
+  SecondaryTimedBuffCategory: 0
+  SecondaryTimedBuffMultiplier: 1
+  SecondaryTimedBuffDurationSeconds: 0
+  IsTwoHanded: 1
   DamageProfile:
   - Type: 2
-    Amount: 28
+    Amount: 40
   PoiseDamage: 28
   AttackSpeedMultiplier: 0.75
   MaxComboHits: 1
@@ -37,6 +51,6 @@ MonoBehaviour:
   AbilityCooldown: 8
   BlockMitigation: 0.25
   ParryWindow: 0.16
-  ParryStaminaReward: 20
-  ParryPoiseDamage: 40
+  ParryStaminaReward: 10
+  ParryPoiseDamage: 20
   HarvestTool: 1
