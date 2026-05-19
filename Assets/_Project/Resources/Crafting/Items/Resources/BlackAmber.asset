@@ -9,20 +9,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 215432127562c5e46812873892628a75, type: 3}
-  m_Name: KrytsiaHammer
+  m_Script: {fileID: 11500000, guid: 35381e3f13136374abee8a5ed10dc4aa, type: 3}
+  m_Name: BlackAmber
   m_EditorClassIdentifier: 
-  ItemName: Krytsia Hammer
-  Kind: 1
-  Weight: 4.9
-  IsStackable: 0
-  MaxStack: 1
+  ItemName: Item
+  Kind: 0
+  Weight: 0.05
+  IsStackable: 1
+  MaxStack: 20
   MaxInventoryStacks: 0
   Icon: {fileID: 0}
-  Description: Very heavy iron-tier hammer. Earthquake active ability is deferred;
-    this MVP uses its weapon stats.
-  WeaponPrefab: {fileID: 3942592866433276128, guid: 6e6f288cc1ccdd543b2cd3d632a069ed,
-    type: 3}
+  Description: Rare looting resource
+  WeaponPrefab: {fileID: 0}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 0
   HealthRestoreAmount: 0
@@ -38,19 +36,3 @@ MonoBehaviour:
   SecondaryTimedBuffCategory: 0
   SecondaryTimedBuffMultiplier: 1
   SecondaryTimedBuffDurationSeconds: 0
-  DamageProfile:
-  - Type: 1
-    Amount: 65
-  PoiseDamage: 45
-  AttackSpeedMultiplier: 0.5
-  MaxComboHits: 1
-  HitsToChargeHeavy: 3
-  HeavyAbility: 0
-  HeavyAbilityDuration: 0
-  OffhandAbility: 0
-  AbilityCooldown: 8
-  BlockMitigation: 0.825
-  ParryWindow: 0.14
-  ParryStaminaReward: 20
-  ParryPoiseDamage: 40
-  HarvestTool: 0

@@ -1428,13 +1428,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _stats:
   - _type: 0
-    _baseValue: 5000
+    _baseValue: 500
     _minValue: 0
-    _maxValue: 5000
+    _maxValue: 500
   - _type: 1
-    _baseValue: 5000
+    _baseValue: 200
     _minValue: 0
-    _maxValue: 5000
+    _maxValue: 500
   - _type: 2
     _baseValue: 100
     _minValue: 0
