@@ -1,4 +1,5 @@
 using UnityEngine;
+using Project_S.Runtime.Gameplay.Character.Input;
 using Project_S.Runtime.Gameplay.Character.Stats;
 
 namespace Project_S.Runtime.Gameplay.Character.Combat
@@ -50,9 +51,6 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         [Header("œÓ„ÂÒ≥ˇ (—Í≥ÎË)")]
         [SerializeField] private bool _isOffhandSkillUnlocked = true; // √¿ÀŒ◊ ¿ ƒÀﬂ “≈—“” œ–Œ ¿◊ »
 
-        [Header("”Ô‡‚Î≥ÌÌˇ ( Î‡‚≥¯≥)")]
-        [SerializeField] private KeyCode _toggleOffhandKey = KeyCode.G;  //  ÌÓÔÍ‡, ˘Ó· ‰≥ÒÚ‡ÚË/ÒıÓ‚‡ÚË Î≥‚Û ÛÍÛ
-        [SerializeField] private KeyCode _offhandAbilityKey = KeyCode.F; //  ÌÓÔÍ‡ ‰Îˇ Á‰≥·ÌÓÒÚ≥ ‰Û„Óø ÛÍË
 
         [Header("Õ‡Î‡¯ÚÛ‚‡ÌÌˇ  ÓÏ·Ó")]
         [SerializeField] private float _comboResetTime = 1.5f;
@@ -66,26 +64,26 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         private float _lastAttackTime = 0f;
         private float _lastAbilityTime = 0f;
 
-        private void Update()
+        public void Tick(PlayerInputSnapshot input)
         {
             if (CurrentState == CombatState.Staggered) return;
             if (ActiveWeapon == null) return;
 
-            HandleCombatInput();
+            HandleCombatInput(input);
             CheckComboReset();
         }
 
-        private void HandleCombatInput()
+        private void HandleCombatInput(PlayerInputSnapshot input)
         {
             // 1. ƒ≤—“¿“» / —’Œ¬¿“» œ–≈ƒÃ≈“ ” À≤¬≤… –”÷≤
-            if (UnityEngine.Input.GetKeyDown(_toggleOffhandKey) && CurrentState == CombatState.Idle)
+            if (input.ToggleOffhandPressed && CurrentState == CombatState.Idle)
             {
                 ToggleOffhand();
             }
 
             // 2. ¬¿∆ »… ”ƒ¿– (À Ã «¿∆¿“Œ + œ Ã Õ¿“»—Õ”“Œ)
             // ÃË ÔÂÂ‚≥ˇ∫ÏÓ ˆÂ ‰Ó ·ÎÓÍÛ, ˘Ó· „‡ ÌÂ ÔÎÛÚ‡Î‡ œ Ã ‰Îˇ ·ÎÓÍÛ Á œ Ã ‰Îˇ Á‰≥·ÌÓÒÚ≥
-            if (UnityEngine.Input.GetMouseButton(0) && UnityEngine.Input.GetMouseButtonDown(1) && !_isOffhandActive)
+            if (input.HeavyAttackPressed && !_isOffhandActive)
             {
                 if (_currentHeavyCharge >= ActiveWeapon.HitsToChargeHeavy)
                 {
@@ -99,11 +97,11 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             }
 
             // 3. ¡ÀŒ  (œ Ã)
-            if (UnityEngine.Input.GetMouseButtonDown(1) && CurrentState == CombatState.Idle && !_isOffhandActive)
+            if (input.BlockHeld && CurrentState == CombatState.Idle && !_isOffhandActive)
             {
                 StartBlocking();
             }
-            else if (UnityEngine.Input.GetMouseButtonUp(1) && CurrentState == CombatState.Blocking)
+            else if (!input.BlockHeld && CurrentState == CombatState.Blocking)
             {
                 StopBlocking();
             }
@@ -111,13 +109,13 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             if (CurrentState != CombatState.Idle) return;
 
             // 4. À≈√ »… ”ƒ¿– (À Ã)
-            if (UnityEngine.Input.GetMouseButtonDown(0))
+            if (input.LightAttackPressed)
             {
                 PerformLightAttack();
             }
 
             // 5. «ƒ≤¡Õ≤—“‹ ƒ–”√ŒØ –” » ( ÌÓÔÍ‡ F)
-            if (UnityEngine.Input.GetKeyDown(_offhandAbilityKey))
+            if (input.OffhandAbilityPressed)
             {
                 if (_isOffhandActive)
                 {

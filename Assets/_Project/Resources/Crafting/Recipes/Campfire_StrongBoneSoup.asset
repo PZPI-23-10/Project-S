@@ -24,6 +24,6 @@ MonoBehaviour:
     Amount: 1
   SoulAshCost: 0
   RequiredItems: []
-  CraftDurationSeconds: 5
+  CraftDurationSeconds: 0
   FuelSecondsCost: 5
   Description: "A simple bone soup batch. MVP timer is shorter than document balance."

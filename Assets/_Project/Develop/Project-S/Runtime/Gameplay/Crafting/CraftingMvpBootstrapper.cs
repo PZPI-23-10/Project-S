@@ -16,6 +16,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
         private const string FurnaceName = "[MVP] Furnace";
         private const string AnvilName = "[MVP] Anvil";
         private const string ForgeChestName = "[DEBUG] Forge Crate";
+        private const string BaseStorageName = "[MVP] Base Storage";
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
@@ -75,6 +76,9 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             if (GameObject.Find(ForgeChestName) == null)
                 SpawnForgeChest(inventory.transform);
+
+            if (GameObject.Find(BaseStorageName) == null)
+                SpawnBaseStorage(inventory.transform);
 
             return true;
         }
@@ -253,6 +257,20 @@ namespace Project_S.Runtime.Gameplay.Crafting
                 1000,
                 true,
                 ForgeChestName);
+        }
+
+        private static void SpawnBaseStorage(Transform player)
+        {
+            var storage = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            storage.name = BaseStorageName;
+            storage.transform.position = player.position + player.forward * 1.2f + player.right * 4.1f + Vector3.up * 0.55f;
+            storage.transform.localScale = new Vector3(1.05f, 0.9f, 1.05f);
+
+            var renderer = storage.GetComponent<Renderer>();
+            if (renderer != null)
+                renderer.material.color = new Color(0.12f, 0.16f, 0.23f);
+
+            storage.AddComponent<BaseResourceStorage>();
         }
 
         private static ItemData LoadItem(string path)

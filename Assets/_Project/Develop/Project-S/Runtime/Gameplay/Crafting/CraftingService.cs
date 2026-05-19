@@ -24,11 +24,13 @@ namespace Project_S.Runtime.Gameplay.Crafting
     {
         private readonly InventoryController _inventory;
         private readonly SoulAshWallet _wallet;
+        private readonly BaseResourceStorage _baseStorage;
 
-        public CraftingService(InventoryController inventory, SoulAshWallet wallet)
+        public CraftingService(InventoryController inventory, SoulAshWallet wallet, BaseResourceStorage baseStorage = null)
         {
             _inventory = inventory;
             _wallet = wallet;
+            _baseStorage = baseStorage;
         }
 
         public CraftingCheck Check(CraftingRecipeData recipe)
@@ -59,18 +61,19 @@ namespace Project_S.Runtime.Gameplay.Crafting
             CheckAmounts(recipe.Ingredients, false, check);
             CheckAmounts(recipe.RequiredItems, true, check);
 
-            if (recipe.SoulAshCost > 0 && !_wallet.CanSpend(recipe.SoulAshCost))
-                check.AddProblem($"Need {recipe.SoulAshCost - _wallet.Amount} more Soul Ash.");
+            if (recipe.SoulAshCost > 0 && GetSoulAshCount() < recipe.SoulAshCost)
+                check.AddProblem($"Need {recipe.SoulAshCost - GetSoulAshCount()} more Soul Ash.");
 
             var validIngredients = (recipe.Ingredients ?? Enumerable.Empty<CraftingItemAmount>())
                 .Where(IsValidAmount)
                 .ToList();
-            bool hasAllIngredients = validIngredients.All(x => _inventory.GetItemCount(x.Item) >= x.Amount);
+            bool hasAllIngredients = validIngredients.All(x => GetItemCount(x.Item) >= x.Amount);
 
             if (hasAllIngredients && recipe.Output != null && recipe.Output.Item != null && recipe.Output.Amount > 0)
             {
                 var removals = validIngredients
-                    .Select(x => new ItemStack(x.Item, x.Amount))
+                    .Select(x => new ItemStack(x.Item, Mathf.Min(_inventory.GetItemCount(x.Item), x.Amount)))
+                    .Where(x => x.Amount > 0)
                     .ToList();
 
                 if (!_inventory.CanAddItemAfterRemoving(recipe.Output.Item, recipe.Output.Amount, removals))
@@ -102,14 +105,14 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             foreach (var ingredient in (recipe.Ingredients ?? Enumerable.Empty<CraftingItemAmount>()).Where(IsValidAmount))
             {
-                if (!_inventory.TryRemoveItem(ingredient.Item, ingredient.Amount))
+                if (!TryRemoveItem(ingredient.Item, ingredient.Amount))
                 {
                     check.AddProblem("Inventory changed before crafting completed.");
                     return false;
                 }
             }
 
-            if (!_wallet.Spend(recipe.SoulAshCost))
+            if (!TrySpendSoulAsh(recipe.SoulAshCost))
             {
                 check.AddProblem("Soul Ash changed before crafting completed.");
                 return false;
@@ -141,7 +144,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
                     continue;
                 }
 
-                int owned = _inventory.GetItemCount(amount.Item);
+                int owned = GetItemCount(amount.Item);
                 if (owned < amount.Amount)
                 {
                     string verb = nonConsumed ? "Requires" : "Need";
@@ -153,6 +156,62 @@ namespace Project_S.Runtime.Gameplay.Crafting
         private static bool IsValidAmount(CraftingItemAmount amount)
         {
             return amount != null && amount.Item != null && amount.Amount > 0;
+        }
+
+        private int GetItemCount(ItemData item)
+        {
+            int count = _inventory != null ? _inventory.GetItemCount(item) : 0;
+            if (_baseStorage != null)
+                count += _baseStorage.GetItemCount(item);
+
+            return count;
+        }
+
+        private int GetSoulAshCount()
+        {
+            return (_wallet != null ? _wallet.Amount : 0) + (_baseStorage != null ? _baseStorage.SoulAshAmount : 0);
+        }
+
+        private bool TryRemoveItem(ItemData item, int amount)
+        {
+            if (item == null || amount <= 0)
+                return false;
+
+            int remaining = amount;
+            int fromInventory = Mathf.Min(_inventory.GetItemCount(item), remaining);
+            if (fromInventory > 0)
+            {
+                if (!_inventory.TryRemoveItem(item, fromInventory))
+                    return false;
+
+                remaining -= fromInventory;
+            }
+
+            if (remaining <= 0)
+                return true;
+
+            return _baseStorage != null && _baseStorage.TryRemoveItem(item, remaining);
+        }
+
+        private bool TrySpendSoulAsh(int amount)
+        {
+            if (amount <= 0)
+                return true;
+
+            int remaining = amount;
+            int fromWallet = _wallet != null ? Mathf.Min(_wallet.Amount, remaining) : 0;
+            if (fromWallet > 0)
+            {
+                if (!_wallet.Spend(fromWallet))
+                    return false;
+
+                remaining -= fromWallet;
+            }
+
+            if (remaining <= 0)
+                return true;
+
+            return _baseStorage != null && _baseStorage.SpendSoulAsh(remaining);
         }
     }
 }

@@ -19,7 +19,7 @@ MonoBehaviour:
   MaxStack: 10
   MaxInventoryStacks: 1
   Icon: {fileID: 0}
-  Description: "MVP weapon grease. Grants +35% outgoing melee damage for a short duration."
+  Description: "MVP weapon grease. Converts part of physical weapon damage into lightning damage for a short duration."
   WeaponPrefab: {fileID: 0}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 0
@@ -28,10 +28,21 @@ MonoBehaviour:
   StaminaRestoreAmount: 0
   SpecialEffect: 0
   SpecialEffectDelaySeconds: 0
-  TimedBuffType: 1
-  TimedBuffCategory: 4
-  TimedBuffMultiplier: 1.35
-  TimedBuffDurationSeconds: 120
+  StatEffects: []
+  TimedBuffs: []
+  SpecialEffects: []
+  DamageConversions:
+  - Source: 1
+    FromType: 2
+    ToType: 4
+    Category: 4
+    SourceFraction: 0.3
+    ConvertedDamageFraction: 0.5
+    DurationSeconds: 120
+  TimedBuffType: 0
+  TimedBuffCategory: 0
+  TimedBuffMultiplier: 1
+  TimedBuffDurationSeconds: 0
   SecondaryTimedBuffType: 0
   SecondaryTimedBuffCategory: 0
   SecondaryTimedBuffMultiplier: 1

@@ -139,10 +139,13 @@ namespace Project_S.Runtime.Gameplay.HUD
                 AppendWeaponDetails(lines, weapon);
 
             AppendConsumableDetails(lines, item);
+            AppendStatEffects(lines, item.StatEffects);
             AppendBuff(lines, item.TimedBuffType, item.TimedBuffCategory, item.TimedBuffMultiplier,
                 item.TimedBuffDurationSeconds);
             AppendBuff(lines, item.SecondaryTimedBuffType, item.SecondaryTimedBuffCategory,
                 item.SecondaryTimedBuffMultiplier, item.SecondaryTimedBuffDurationSeconds);
+            AppendBuffs(lines, item.TimedBuffs);
+            AppendDamageConversions(lines, item.DamageConversions);
 
             if (item.SpecialEffect == ConsumableSpecialEffectType.HomeTeleport)
             {
@@ -150,7 +153,9 @@ namespace Project_S.Runtime.Gameplay.HUD
                 lines.Add($"Особое: телепорт домой через {FormatFloat(delay)}с");
             }
 
-            return string.Join("", lines);
+            AppendSpecialEffects(lines, item.SpecialEffects);
+
+            return string.Join("\n", lines);
         }
 
         public static Vector2 ClampAnchoredPosition(Vector2 desired, Vector2 canvasSize, Vector2 tooltipSize,
@@ -277,6 +282,20 @@ namespace Project_S.Runtime.Gameplay.HUD
                 lines.Add($"Стамина: {Signed(item.StaminaRestoreAmount)}");
         }
 
+        private static void AppendStatEffects(List<string> lines, IReadOnlyList<ConsumableStatEffect> effects)
+        {
+            if (effects == null)
+                return;
+
+            foreach (var effect in effects)
+            {
+                if (effect == null || Mathf.Approximately(effect.Amount, 0f))
+                    continue;
+
+                lines.Add($"{effect.StatType}: {Signed(effect.Amount)}");
+            }
+        }
+
         private static void AppendBuff(List<string> lines, TimedBuffType type, TimedBuffCategory category,
             float multiplier, float durationSeconds)
         {
@@ -284,6 +303,56 @@ namespace Project_S.Runtime.Gameplay.HUD
                 return;
 
             lines.Add($"Бафф: {type} x{FormatFloat(multiplier)} на {FormatFloat(durationSeconds)}с ({category})");
+        }
+
+        private static void AppendBuffs(List<string> lines, IReadOnlyList<ConsumableTimedBuffEffect> buffs)
+        {
+            if (buffs == null)
+                return;
+
+            foreach (var buff in buffs)
+            {
+                if (buff == null)
+                    continue;
+
+                AppendBuff(lines, buff.Type, buff.Category, buff.Multiplier, buff.DurationSeconds);
+            }
+        }
+
+        private static void AppendDamageConversions(List<string> lines, IReadOnlyList<DamageConversionEffect> conversions)
+        {
+            if (conversions == null)
+                return;
+
+            foreach (var conversion in conversions)
+            {
+                if (conversion == null || !conversion.IsValid())
+                    continue;
+
+                string source = conversion.Source == DamageConversionSource.Physical
+                    ? "Physical"
+                    : conversion.FromType.ToString();
+                lines.Add(
+                    $"Конверсия: {FormatFloat(conversion.SourceFraction * 100f)}% {source} -> {FormatFloat(conversion.ConvertedDamageFraction * 100f)}% {conversion.ToType} на {FormatFloat(conversion.DurationSeconds)}с");
+            }
+        }
+
+        private static void AppendSpecialEffects(List<string> lines, IReadOnlyList<ConsumableSpecialEffect> specialEffects)
+        {
+            if (specialEffects == null)
+                return;
+
+            foreach (var specialEffect in specialEffects)
+            {
+                if (specialEffect == null || specialEffect.Type == ConsumableSpecialEffectType.None)
+                    continue;
+
+                if (specialEffect.Type == ConsumableSpecialEffectType.HomeTeleport)
+                {
+                    float delay = specialEffect.DelaySeconds > 0f ? specialEffect.DelaySeconds : 5f;
+                    lines.Add($"Особое: телепорт домой через {FormatFloat(delay)}с");
+                }
+            }
         }
 
         private void SetContent(ItemData item)

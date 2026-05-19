@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Project_S.Runtime.Gameplay.Character.Combat;
+using Project_S.Runtime.Gameplay.Character.Input;
 using Project_S.Runtime.Gameplay.Character.Inventory;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -36,17 +37,13 @@ namespace Project_S.Runtime.Gameplay.HUD
                 _inventory.OnInventoryChanged -= RefreshHotbar;
         }
 
-        private void Update()
+        public void Tick(PlayerInputSnapshot input)
         {
-            for (int i = 0; i < _hotbarSize; i++)
-            {
-                if (Input.GetKeyDown((KeyCode)((int)KeyCode.Alpha1 + i))
-                    || Input.GetKeyDown((KeyCode)((int)KeyCode.Keypad1 + i)))
-                    SelectSlot(i);
-            }
+            if (input.HotbarSlotPressed >= 0)
+                SelectSlot(input.HotbarSlotPressed);
         }
 
-        private void SelectSlot(int index)
+        public void SelectSlot(int index)
         {
             if (index < 0 || index >= _hotbarSize)
                 return;

@@ -15,6 +15,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
         [SerializeField] private float _secondsPerFuelItem = 300f;
         [SerializeField] private float _maxFuelSeconds = 900f;
         [SerializeField] private float _fuelSeconds;
+        [SerializeField] private BaseResourceStorage _baseStorage;
 
         private CraftingRecipeData _activeRecipe;
         private InventoryController _activeInventory;
@@ -135,7 +136,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
             if (_usesFuel && recipe.FuelSecondsCost > 0f && _fuelSeconds < recipe.FuelSecondsCost)
                 check.AddProblem($"Need {Mathf.CeilToInt(recipe.FuelSecondsCost - _fuelSeconds)} more fuel seconds.");
 
-            var crafting = new CraftingService(inventory, wallet);
+            var crafting = new CraftingService(inventory, wallet, ResolveBaseStorage());
             var recipeCheck = crafting.Check(recipe);
             foreach (var problem in recipeCheck.Problems)
                 check.AddProblem(problem);
@@ -149,7 +150,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
             if (!check.CanCraft)
                 return false;
 
-            var crafting = new CraftingService(inventory, wallet);
+            var crafting = new CraftingService(inventory, wallet, ResolveBaseStorage());
             if (!crafting.TryConsumeCosts(recipe, out var consumeCheck))
             {
                 foreach (var problem in consumeCheck.Problems)
@@ -160,14 +161,18 @@ namespace Project_S.Runtime.Gameplay.Crafting
             if (_usesFuel)
                 _fuelSeconds = Mathf.Max(0f, _fuelSeconds - recipe.FuelSecondsCost);
 
+            if (GetEffectiveCraftDuration(recipe) <= 0f)
+            {
+                GrantRecipeOutput(recipe, inventory);
+                NotifyChanged();
+                return true;
+            }
+
             _activeRecipe = recipe;
             _activeInventory = inventory;
-            _activeDurationSeconds = Mathf.Max(0f, recipe.CraftDurationSeconds);
+            _activeDurationSeconds = GetEffectiveCraftDuration(recipe);
             _remainingCraftSeconds = _activeDurationSeconds;
             NotifyChanged();
-
-            if (_remainingCraftSeconds <= 0f)
-                CompleteRecipe();
 
             return true;
         }
@@ -194,17 +199,35 @@ namespace Project_S.Runtime.Gameplay.Crafting
             _activeDurationSeconds = 0f;
             _remainingCraftSeconds = 0f;
 
-            if (completedRecipe != null && completedRecipe.Output != null && completedRecipe.Output.Item != null && completedRecipe.Output.Amount > 0)
-            {
-                WorldItemDropUtility.GrantOrDrop(
-                    completedRecipe.Output.Item,
-                    completedRecipe.Output.Amount,
-                    targetInventory,
-                    transform.position,
-                    "[Crafting]");
-            }
+            GrantRecipeOutput(completedRecipe, targetInventory);
 
             NotifyChanged();
+        }
+
+        private float GetEffectiveCraftDuration(CraftingRecipeData recipe)
+        {
+            return 0f;
+        }
+
+        private void GrantRecipeOutput(CraftingRecipeData recipe, InventoryController targetInventory)
+        {
+            if (recipe == null || recipe.Output == null || recipe.Output.Item == null || recipe.Output.Amount <= 0)
+                return;
+
+            WorldItemDropUtility.GrantOrDrop(
+                recipe.Output.Item,
+                recipe.Output.Amount,
+                targetInventory,
+                transform.position,
+                "[Crafting]");
+        }
+
+        private BaseResourceStorage ResolveBaseStorage()
+        {
+            if (_baseStorage != null)
+                return _baseStorage;
+
+            return BaseResourceStorage.Active;
         }
 
         private void NotifyChanged()

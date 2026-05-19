@@ -1,4 +1,5 @@
 using Project_S.Runtime.Gameplay.Character.Inventory;
+using Project_S.Runtime.Gameplay.Character.Input;
 using Project_S.Runtime.Gameplay.Crafting;
 using Project_S.Runtime.Gameplay.HUD;
 using UnityEngine;
@@ -69,11 +70,11 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
             EnsureReferences();
         }
 
-        private void Update()
+        public void Tick(PlayerInputSnapshot input)
         {
             RefreshHoverPrompt();
 
-            if (UnityEngine.Input.GetKeyDown(KeyCode.E))
+            if (input.InteractPressed)
                 InteractWithCurrentHover();
         }
 
