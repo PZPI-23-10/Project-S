@@ -6,39 +6,26 @@ using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Crafting
 {
-    public class BaseResourceStorage : MonoBehaviour, IInteractable, IItemStorage
+    public class GeneralItemStorage : MonoBehaviour, IInteractable, IItemStorage
     {
         private const int DefaultStorageSize = 24;
 
-        [SerializeField] private string _interactionPrompt = "Base Storage";
+        [SerializeField] private string _interactionPrompt = "Storage Chest";
         [SerializeField] private int _storageSize = DefaultStorageSize;
         [SerializeField] private ItemStack[] _slots;
-        [SerializeField] private int _soulAshAmount;
-
-        public static BaseResourceStorage Active { get; private set; }
 
         public string InteractionPrompt => _interactionPrompt;
-        public int SoulAshAmount => _soulAshAmount;
         public event Action Changed;
 
         private void OnEnable()
         {
             EnsureSlots();
-
-            if (Active == null)
-                Active = this;
         }
 
         private void OnValidate()
         {
             if (_storageSize <= 0)
                 _storageSize = DefaultStorageSize;
-        }
-
-        private void OnDisable()
-        {
-            if (Active == this)
-                Active = null;
         }
 
         public void Interact(PlayerInteractor interactor)
@@ -48,13 +35,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             var inventoryUI = FindFirstObjectByType<InventoryUI>();
             if (inventoryUI != null)
-                inventoryUI.OpenWithStorage(this, transform, interactor.transform, interactor.MenuCloseDistance);
-        }
-
-        public void DepositFrom(InventoryController inventory, SoulAshWallet wallet)
-        {
-            DepositAllResourcesFrom(inventory);
-            DepositSoulAshFrom(wallet);
+                inventoryUI.OpenWithGeneralStorage(this, transform, interactor.transform, interactor.MenuCloseDistance);
         }
 
         public int GetSize()
@@ -66,11 +47,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
         public ItemStack GetSlot(int index)
         {
             EnsureSlots();
-
-            if (index < 0 || index >= _slots.Length)
-                return null;
-
-            return _slots[index];
+            return index >= 0 && index < _slots.Length ? _slots[index] : null;
         }
 
         public void SetSlot(int index, ItemStack stack)
@@ -78,9 +55,6 @@ namespace Project_S.Runtime.Gameplay.Crafting
             EnsureSlots();
 
             if (index < 0 || index >= _slots.Length)
-                return;
-
-            if (stack != null && stack.Item != null && !CanStore(stack.Item))
                 return;
 
             _slots[index] = stack;
@@ -110,7 +84,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
         {
             EnsureSlots();
 
-            if (item == null || amount <= 0 || !CanStore(item))
+            if (item == null || amount <= 0)
                 return false;
 
             int remaining = amount;
@@ -188,10 +162,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
         {
             EnsureSlots();
 
-            if (item == null || amount <= 0)
-                return false;
-
-            if (!CanRemoveItem(item, amount))
+            if (item == null || amount <= 0 || !CanRemoveItem(item, amount))
                 return false;
 
             int remaining = amount;
@@ -248,99 +219,17 @@ namespace Project_S.Runtime.Gameplay.Crafting
                 return false;
 
             var source = inventory.GetSlot(slotIndex);
-            if (source == null || source.Item == null || source.Amount <= 0 || !CanStore(source.Item))
+            if (source == null || source.Item == null || source.Amount <= 0)
                 return false;
 
             int depositAmount = Mathf.Min(amount, source.Amount);
             ItemData item = source.Item;
-
-            if (!CanAddItem(item, depositAmount))
-                return false;
-
-            if (!AddItem(item, depositAmount))
+            if (!CanAddItem(item, depositAmount) || !AddItem(item, depositAmount))
                 return false;
 
             source.Amount -= depositAmount;
             inventory.SetSlot(slotIndex, source.Amount > 0 ? source : null);
             return true;
-        }
-
-        public bool DepositAllResourcesFrom(InventoryController inventory)
-        {
-            if (inventory == null)
-                return false;
-
-            bool changed = false;
-            var slots = inventory.GetAllSlots();
-            for (int i = 0; i < slots.Length; i++)
-            {
-                var slot = slots[i];
-                if (slot == null || slot.Item == null || slot.Amount <= 0 || !CanStore(slot.Item))
-                    continue;
-
-                if (TryDepositFromInventory(inventory, i, slot.Amount))
-                    changed = true;
-            }
-
-            return changed;
-        }
-
-        public bool CanSpendSoulAsh(int amount)
-        {
-            return amount <= 0 || _soulAshAmount >= amount;
-        }
-
-        public bool SpendSoulAsh(int amount)
-        {
-            if (amount <= 0)
-                return true;
-
-            if (!CanSpendSoulAsh(amount))
-                return false;
-
-            _soulAshAmount -= amount;
-            NotifyChanged();
-            return true;
-        }
-
-        public void AddSoulAsh(int amount)
-        {
-            if (amount <= 0)
-                return;
-
-            _soulAshAmount += amount;
-            NotifyChanged();
-        }
-
-        public bool DepositSoulAshFrom(SoulAshWallet wallet, int amount = int.MaxValue)
-        {
-            if (wallet == null || wallet.Amount <= 0 || amount <= 0)
-                return false;
-
-            int depositAmount = Mathf.Min(wallet.Amount, amount);
-            if (!wallet.Spend(depositAmount))
-                return false;
-
-            _soulAshAmount += depositAmount;
-            NotifyChanged();
-            return true;
-        }
-
-        public bool WithdrawSoulAshTo(SoulAshWallet wallet, int amount = int.MaxValue)
-        {
-            if (wallet == null || _soulAshAmount <= 0 || amount <= 0)
-                return false;
-
-            int withdrawAmount = Mathf.Min(_soulAshAmount, amount);
-            _soulAshAmount -= withdrawAmount;
-            wallet.Add(withdrawAmount);
-            NotifyChanged();
-            return true;
-        }
-
-        private static bool CanStore(ItemData item)
-        {
-            return item != null && (item.Kind == ItemKind.Resource || item.Kind == ItemKind.Material);
         }
 
         private static int GetMaxStack(ItemData item)
@@ -376,7 +265,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
         private void NormalizeSlot(int index)
         {
             var slot = _slots[index];
-            if (slot == null || slot.Item == null || slot.Amount <= 0 || !CanStore(slot.Item))
+            if (slot == null || slot.Item == null || slot.Amount <= 0)
             {
                 _slots[index] = null;
                 return;

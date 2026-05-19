@@ -32,7 +32,9 @@ namespace Project_S.Runtime.Gameplay.HUD
         private ItemStack _draggedStack;
         private CraftingPanelUI _craftingPanel;
         private StoragePanelUI _storagePanel;
-        private BaseResourceStorage _activeStorage;
+        private AccessoryPanelUI _accessoryPanel;
+        private AccessorySlotController _accessories;
+        private IItemStorage _activeStorage;
         private SoulAshWallet _soulAshWallet;
         private CraftingContext _currentCraftingContext = CraftingContext.Hand;
         private Transform _distanceCloseTarget;
@@ -57,6 +59,7 @@ namespace Project_S.Runtime.Gameplay.HUD
                 _inventory.OnInventoryChanged += Refresh;
                 GenerateSlots();
                 InitializeCraftingPanel();
+                InitializeAccessoryPanel();
             }
         }
 
@@ -132,6 +135,20 @@ namespace Project_S.Runtime.Gameplay.HUD
             SetInventoryOpenInternal(true, CraftingContext.Hand);
         }
 
+        public void OpenWithGeneralStorage(
+            GeneralItemStorage storage,
+            Transform closeTarget,
+            Transform closeObserver,
+            float closeDistance)
+        {
+            if (storage == null)
+                return;
+
+            _activeStorage = storage;
+            SetDistanceCloseTarget(closeTarget, closeObserver, closeDistance);
+            SetInventoryOpenInternal(true, CraftingContext.Hand);
+        }
+
         public void SetCraftingContext(CraftingContext context)
         {
             _currentCraftingContext = context;
@@ -163,6 +180,7 @@ namespace Project_S.Runtime.Gameplay.HUD
             {
                 InitializeCraftingPanel();
                 InitializeStoragePanel();
+                InitializeAccessoryPanel();
 
                 bool storageMode = _activeStorage != null;
                 _craftingPanel?.SetPanelVisible(!storageMode);
@@ -283,6 +301,14 @@ namespace Project_S.Runtime.Gameplay.HUD
 
                         UpdateDraggedIcon();
                     }
+                    else if (_draggedStack == null && targetSlotStack.Item is AccessoryItemData)
+                    {
+                        if (ResolveAccessorySlots()?.TryEquipFromInventory(slotIndex) == true)
+                        {
+                            Refresh();
+                            return;
+                        }
+                    }
                     else if (_draggedStack == null)
                     {
                         EquipmentSlots eq = FindFirstObjectByType<EquipmentSlots>();
@@ -321,6 +347,7 @@ namespace Project_S.Runtime.Gameplay.HUD
 
             _craftingPanel?.Refresh();
             _storagePanel?.Refresh();
+            _accessoryPanel?.Refresh();
         }
 
         private void InitializeCraftingPanel()
@@ -367,6 +394,54 @@ namespace Project_S.Runtime.Gameplay.HUD
                 _storagePanel.Initialize(_inventory, _soulAshWallet, _slotPrefab);
                 _storagePanel.gameObject.SetActive(false);
             }
+        }
+
+        private void InitializeAccessoryPanel()
+        {
+            if (_inventory == null || _inventoryPanel == null)
+                return;
+
+            var accessories = ResolveAccessorySlots();
+            if (accessories == null)
+                return;
+
+            if (_accessoryPanel == null)
+            {
+                _accessoryPanel = _inventoryPanel.GetComponentInChildren<AccessoryPanelUI>(true);
+                if (_accessoryPanel == null)
+                {
+                    var accessoryObject = new GameObject("AccessoryPanel", typeof(RectTransform));
+                    accessoryObject.transform.SetParent(_inventoryPanel.transform, false);
+
+                    var rect = (RectTransform)accessoryObject.transform;
+                    rect.anchorMin = new Vector2(0f, 1f);
+                    rect.anchorMax = new Vector2(1f, 1f);
+                    rect.pivot = new Vector2(0.5f, 1f);
+                    rect.offsetMin = Vector2.zero;
+                    rect.offsetMax = Vector2.zero;
+
+                    _accessoryPanel = accessoryObject.AddComponent<AccessoryPanelUI>();
+                }
+
+                _accessoryPanel.Initialize(accessories, _slotPrefab);
+            }
+        }
+
+        private AccessorySlotController ResolveAccessorySlots()
+        {
+            if (_accessories != null)
+                return _accessories;
+
+            if (_inventory != null)
+                _accessories = _inventory.GetComponent<AccessorySlotController>() ?? _inventory.GetComponentInParent<AccessorySlotController>();
+
+            if (_accessories == null && _inventory != null)
+                _accessories = _inventory.gameObject.AddComponent<AccessorySlotController>();
+
+            if (_accessories == null)
+                _accessories = FindFirstObjectByType<AccessorySlotController>();
+
+            return _accessories;
         }
 
         private void EnsureSoulAshWallet()

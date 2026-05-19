@@ -14,6 +14,10 @@ namespace Project_S.Runtime.Gameplay.Character.Input
         [SerializeField] private KeyCode _interactKey = KeyCode.E;
         [SerializeField] private KeyCode _toggleOffhandKey = KeyCode.G;
         [SerializeField] private KeyCode _offhandAbilityKey = KeyCode.F;
+        [SerializeField] private KeyCode _qteForwardKey = KeyCode.W;
+        [SerializeField] private KeyCode _qteBackKey = KeyCode.S;
+        [SerializeField] private KeyCode _qteLeftKey = KeyCode.A;
+        [SerializeField] private KeyCode _qteRightKey = KeyCode.D;
         [SerializeField] private int _hotbarSize = 5;
 
         public PlayerInputSnapshot Snapshot { get; private set; }
@@ -32,7 +36,11 @@ namespace Project_S.Runtime.Gameplay.Character.Input
                 UnityEngine.Input.GetKeyDown(_interactKey),
                 UnityEngine.Input.GetKeyDown(_toggleOffhandKey),
                 UnityEngine.Input.GetKeyDown(_offhandAbilityKey),
-                GetHotbarSlotPressed());
+                GetHotbarSlotPressed(),
+                UnityEngine.Input.GetKeyDown(_qteForwardKey),
+                UnityEngine.Input.GetKeyDown(_qteBackKey),
+                UnityEngine.Input.GetKeyDown(_qteLeftKey),
+                UnityEngine.Input.GetKeyDown(_qteRightKey));
         }
 
         private int GetHotbarSlotPressed()

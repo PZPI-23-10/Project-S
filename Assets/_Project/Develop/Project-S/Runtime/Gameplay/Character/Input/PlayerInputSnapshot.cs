@@ -16,7 +16,11 @@ namespace Project_S.Runtime.Gameplay.Character.Input
             false,
             false,
             false,
-            -1);
+            -1,
+            false,
+            false,
+            false,
+            false);
 
         public PlayerInputSnapshot(
             Vector2 move,
@@ -40,7 +44,11 @@ namespace Project_S.Runtime.Gameplay.Character.Input
                 interactPressed,
                 false,
                 false,
-                -1)
+                -1,
+                false,
+                false,
+                false,
+                false)
         {
         }
 
@@ -57,6 +65,43 @@ namespace Project_S.Runtime.Gameplay.Character.Input
             bool toggleOffhandPressed,
             bool offhandAbilityPressed,
             int hotbarSlotPressed)
+            : this(
+                move,
+                look,
+                sprintHeld,
+                jumpPressed,
+                dodgePressed,
+                blockHeld,
+                lightAttackPressed,
+                heavyAttackPressed,
+                interactPressed,
+                toggleOffhandPressed,
+                offhandAbilityPressed,
+                hotbarSlotPressed,
+                false,
+                false,
+                false,
+                false)
+        {
+        }
+
+        public PlayerInputSnapshot(
+            Vector2 move,
+            Vector2 look,
+            bool sprintHeld,
+            bool jumpPressed,
+            bool dodgePressed,
+            bool blockHeld,
+            bool lightAttackPressed,
+            bool heavyAttackPressed,
+            bool interactPressed,
+            bool toggleOffhandPressed,
+            bool offhandAbilityPressed,
+            int hotbarSlotPressed,
+            bool qteForwardPressed,
+            bool qteBackPressed,
+            bool qteLeftPressed,
+            bool qteRightPressed)
         {
             Move = move;
             Look = look;
@@ -70,6 +115,10 @@ namespace Project_S.Runtime.Gameplay.Character.Input
             ToggleOffhandPressed = toggleOffhandPressed;
             OffhandAbilityPressed = offhandAbilityPressed;
             HotbarSlotPressed = hotbarSlotPressed;
+            QteForwardPressed = qteForwardPressed;
+            QteBackPressed = qteBackPressed;
+            QteLeftPressed = qteLeftPressed;
+            QteRightPressed = qteRightPressed;
         }
 
         public Vector2 Move { get; }
@@ -84,5 +133,9 @@ namespace Project_S.Runtime.Gameplay.Character.Input
         public bool ToggleOffhandPressed { get; }
         public bool OffhandAbilityPressed { get; }
         public int HotbarSlotPressed { get; }
+        public bool QteForwardPressed { get; }
+        public bool QteBackPressed { get; }
+        public bool QteLeftPressed { get; }
+        public bool QteRightPressed { get; }
     }
 }

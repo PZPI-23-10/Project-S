@@ -14,13 +14,16 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
         private InventoryController _inventory;
         private SoulAshWallet _wallet;
-        private BaseResourceStorage _storage;
+        private IItemStorage _storage;
+        private BaseResourceStorage _baseStorage;
         private InventorySlotUI _slotPrefab;
 
         private Transform _slotRoot;
         private TMP_Text _titleText;
         private TMP_Text _soulAshText;
+        private GameObject _soulAshRow;
         private Button _depositResourcesButton;
+        private TMP_Text _depositResourcesButtonText;
         private Button _depositSoulAshButton;
         private Button _withdrawSoulAshButton;
         private bool _built;
@@ -43,7 +46,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
             Refresh();
         }
 
-        public void SetStorage(BaseResourceStorage storage)
+        public void SetStorage(IItemStorage storage)
         {
             if (_storage == storage)
             {
@@ -56,6 +59,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
                 _storage.Changed -= OnStorageChanged;
 
             _storage = storage;
+            _baseStorage = storage as BaseResourceStorage;
 
             if (_storage != null)
                 _storage.Changed += OnStorageChanged;
@@ -81,18 +85,25 @@ namespace Project_S.Runtime.Gameplay.Crafting
             if (_soulAshText != null)
             {
                 int walletAmount = _wallet != null ? _wallet.Amount : 0;
-                int storageAmount = _storage != null ? _storage.SoulAshAmount : 0;
+                int storageAmount = _baseStorage != null ? _baseStorage.SoulAshAmount : 0;
                 _soulAshText.text = $"Soul Ash: {walletAmount} carried / {storageAmount} stored";
+                _soulAshText.gameObject.SetActive(_baseStorage != null);
             }
+
+            if (_soulAshRow != null)
+                _soulAshRow.SetActive(_baseStorage != null);
+
+            if (_depositResourcesButtonText != null)
+                _depositResourcesButtonText.text = _baseStorage != null ? "Deposit Resources" : "Deposit All";
 
             if (_depositResourcesButton != null)
                 _depositResourcesButton.interactable = hasStorage && _inventory != null;
 
             if (_depositSoulAshButton != null)
-                _depositSoulAshButton.interactable = hasStorage && _wallet != null && _wallet.Amount > 0;
+                _depositSoulAshButton.interactable = _baseStorage != null && _wallet != null && _wallet.Amount > 0;
 
             if (_withdrawSoulAshButton != null)
-                _withdrawSoulAshButton.interactable = hasStorage && _wallet != null && _storage.SoulAshAmount > 0;
+                _withdrawSoulAshButton.interactable = _baseStorage != null && _wallet != null && _baseStorage.SoulAshAmount > 0;
 
             int slotCount = hasStorage ? _storage.GetSize() : 0;
             EnsureSlotViews(slotCount);
@@ -119,19 +130,31 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
         private void DepositResources()
         {
-            _storage?.DepositAllResourcesFrom(_inventory);
+            if (_storage == null || _inventory == null)
+                return;
+
+            var slots = _inventory.GetAllSlots();
+            for (int i = 0; i < slots.Length; i++)
+            {
+                var slot = slots[i];
+                if (slot == null || slot.Item == null || slot.Amount <= 0)
+                    continue;
+
+                _storage.TryDepositFromInventory(_inventory, i, slot.Amount);
+            }
+
             Refresh();
         }
 
         private void DepositSoulAsh()
         {
-            _storage?.DepositSoulAshFrom(_wallet);
+            _baseStorage?.DepositSoulAshFrom(_wallet);
             Refresh();
         }
 
         private void WithdrawSoulAsh()
         {
-            _storage?.WithdrawSoulAshTo(_wallet);
+            _baseStorage?.WithdrawSoulAshTo(_wallet);
             Refresh();
         }
 
@@ -193,9 +216,11 @@ namespace Project_S.Runtime.Gameplay.Crafting
             rowLayout.childForceExpandWidth = true;
 
             _depositResourcesButton = CreateButton(buttonRow, "Deposit Resources");
+            _depositResourcesButtonText = _depositResourcesButton.GetComponentInChildren<TMP_Text>();
             _depositResourcesButton.onClick.AddListener(DepositResources);
 
             var soulButtonRow = CreateRect("SoulAshButtonRow", buttonRow);
+            _soulAshRow = soulButtonRow.gameObject;
             soulButtonRow.gameObject.AddComponent<LayoutElement>().preferredHeight = 36f;
             var soulRowLayout = soulButtonRow.gameObject.AddComponent<HorizontalLayoutGroup>();
             soulRowLayout.spacing = 6f;
@@ -309,6 +334,8 @@ namespace Project_S.Runtime.Gameplay.Crafting
         {
             if (_storage != null)
                 _storage.Changed -= OnStorageChanged;
+
+            _baseStorage = null;
 
             if (_wallet != null)
                 _wallet.Changed -= OnWalletChanged;

@@ -1,6 +1,7 @@
 using Project_S.Runtime.Gameplay.Character.Combat;
 using Project_S.Runtime.Gameplay.Character.Input;
 using Project_S.Runtime.Gameplay.Character.Interaction;
+using Project_S.Runtime.Gameplay.Character.Inventory;
 using Project_S.Runtime.Gameplay.Character.Movement;
 using Project_S.Runtime.Gameplay.Character.Phylactery;
 using Project_S.Runtime.Gameplay.Character.Stats;
@@ -14,11 +15,14 @@ namespace Project_S.Runtime.Gameplay.Character.Player
         [SerializeField] private MonoBehaviour _inputSource;
         [SerializeField] private CharacterMotor _motor;
         [SerializeField] private CombatController _combat;
+        [SerializeField] private PoiseController _poise;
         [SerializeField] private PlayerInteractor _interactor;
+        [SerializeField] private EquipmentSlots _equipmentSlots;
         [SerializeField] private HotbarUI _hotbar;
         [SerializeField] private PlayerActionGate _actionGate;
         [SerializeField] private CharacterStats _stats;
         [SerializeField] private PhylacteryController _phylactery;
+        [SerializeField] private PlayerDeathController _deathController;
 
         private IPlayerInput _input;
 
@@ -33,10 +37,13 @@ namespace Project_S.Runtime.Gameplay.Character.Player
                 Debug.LogError($"{nameof(PlayerFacade)} requires an input source implementing {nameof(IPlayerInput)}.", this);
 
             if (_actionGate == null) _actionGate = GetComponent<PlayerActionGate>() ?? gameObject.AddComponent<PlayerActionGate>();
+            if (_deathController == null) _deathController = GetComponent<PlayerDeathController>() ?? gameObject.AddComponent<PlayerDeathController>();
             if (_motor == null) _motor = GetComponent<CharacterMotor>();
             if (_combat == null) _combat = GetComponent<CombatController>();
+            if (_poise == null) _poise = GetComponent<PoiseController>();
             if (_interactor == null) _interactor = GetComponentInChildren<PlayerInteractor>();
             if (_interactor == null) _interactor = FindFirstObjectByType<PlayerInteractor>();
+            if (_equipmentSlots == null) _equipmentSlots = GetComponentInChildren<EquipmentSlots>() ?? GetComponent<EquipmentSlots>();
             if (_hotbar == null) _hotbar = FindFirstObjectByType<HotbarUI>();
         }
 
@@ -46,9 +53,11 @@ namespace Project_S.Runtime.Gameplay.Character.Player
                 return;
 
             var snapshot = _actionGate != null ? _actionGate.Filter(_input.Snapshot) : _input.Snapshot;
+            _poise?.Tick(snapshot);
             _motor?.Tick(snapshot);
             _combat?.Tick(snapshot);
             _interactor?.Tick(snapshot);
+            _equipmentSlots?.Tick(snapshot);
             _hotbar?.Tick(snapshot);
         }
     }

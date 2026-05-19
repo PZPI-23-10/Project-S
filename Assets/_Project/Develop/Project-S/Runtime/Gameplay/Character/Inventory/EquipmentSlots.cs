@@ -39,15 +39,12 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
             SwitchToSlot(0);
         }
 
-        private void Update()
+        public void Tick(PlayerInputSnapshot input)
         {
-            if (_actionGate != null && _actionGate.IsGameplayBlocked) return;
             if (_poise != null && _poise.IsBroken) return;
 
-            // Виправлено: явно вказуємо UnityEngine.Input, щоб уникнути конфлікту імен
-            if (UnityEngine.Input.GetKeyDown(KeyCode.Alpha1)) SwitchToSlot(0);
-            if (UnityEngine.Input.GetKeyDown(KeyCode.Alpha2)) SwitchToSlot(1);
-            if (UnityEngine.Input.GetKeyDown(KeyCode.Alpha3)) SwitchToSlot(2);
+            if (input.HotbarSlotPressed >= 0 && input.HotbarSlotPressed < _slots.Length)
+                SwitchToSlot(input.HotbarSlotPressed);
         }
 
         public void SwitchToSlot(int slotIndex)

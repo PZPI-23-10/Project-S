@@ -4,13 +4,19 @@ namespace Project_S.Runtime.Gameplay.Character.Input
 {
     public class PlayerActionGate : MonoBehaviour
     {
-        private int _uiBlockCount;
+        private bool _inventoryOpen;
+        private bool _deathBlocked;
 
-        public bool IsGameplayBlocked => _uiBlockCount > 0;
+        public bool IsGameplayBlocked => _inventoryOpen || _deathBlocked;
 
         public void SetInventoryOpen(bool open)
         {
-            _uiBlockCount = open ? 1 : 0;
+            _inventoryOpen = open;
+        }
+
+        public void SetDeathBlocked(bool blocked)
+        {
+            _deathBlocked = blocked;
         }
 
         public PlayerInputSnapshot Filter(PlayerInputSnapshot input)
