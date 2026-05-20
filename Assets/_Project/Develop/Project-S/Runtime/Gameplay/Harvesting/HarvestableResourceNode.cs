@@ -1,30 +1,53 @@
 using Project_S.Runtime.Gameplay.Character.Combat;
+using Project_S.Runtime.Gameplay.Character.Interaction;
 using Project_S.Runtime.Gameplay.Character.Inventory;
 using Project_S.Runtime.Gameplay.Crafting;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Harvesting
 {
-    public class HarvestableResourceNode : MonoBehaviour, IDamageReceiver
+    public class HarvestableResourceNode : MonoBehaviour, IDamageReceiver, IInteractable
     {
         [SerializeField] private ResourceNodeData _data;
         [SerializeField] private float _currentHealth;
+        [SerializeField] private bool _createFallbackPresentation = true;
+        [SerializeField] private Color _fallbackColor = new Color(0.34f, 0.28f, 0.18f);
+        [SerializeField] private Color _hitFeedbackColor = new Color(0.9f, 0.72f, 0.35f);
 
         private bool _depleted;
+        private Renderer _feedbackRenderer;
+        private Color _baseFeedbackColor;
+        private float _feedbackUntil;
 
         public ResourceNodeData Data => _data;
         public float CurrentHealth => _currentHealth;
         public bool IsDepleted => _depleted;
+        public string InteractionPrompt => _depleted
+            ? $"{NodeName()} (depleted)"
+            : $"{NodeName()} {Mathf.CeilToInt(_currentHealth)}/{Mathf.CeilToInt(_data != null ? _data.MaxHealth : 1f)}";
 
         public void Configure(ResourceNodeData data)
         {
             _data = data;
             ResetHealth();
+            EnsurePresentation();
         }
 
         private void Awake()
         {
             ResetHealth();
+            EnsurePresentation();
+        }
+
+        private void Update()
+        {
+            if (_feedbackRenderer != null && Time.time >= _feedbackUntil)
+                _feedbackRenderer.material.color = _baseFeedbackColor;
+        }
+
+        public void Interact(PlayerInteractor interactor)
+        {
+            Debug.Log($"[Harvesting] {InteractionPrompt}");
         }
 
         public void ReceiveDamage(DamageRequest request)
@@ -37,6 +60,7 @@ namespace Project_S.Runtime.Gameplay.Harvesting
                 return;
 
             _currentHealth = Mathf.Max(0f, _currentHealth - damage);
+            ShowHitFeedback();
             Debug.Log($"[Harvesting] {NodeName()} took {damage:F1} harvest damage. HP: {_currentHealth:F1}/{_data.MaxHealth:F1}");
 
             if (_currentHealth <= 0f)
@@ -75,6 +99,7 @@ namespace Project_S.Runtime.Gameplay.Harvesting
             }
 
             Debug.Log($"[Harvesting] {NodeName()} harvested.");
+            MarkPresentationDepleted();
             DestroyNode();
         }
 
@@ -122,6 +147,59 @@ namespace Project_S.Runtime.Gameplay.Harvesting
                 Destroy(gameObject);
             else
                 DestroyImmediate(gameObject);
+        }
+
+        private void EnsurePresentation()
+        {
+            if (!_createFallbackPresentation)
+                return;
+
+            if (GetComponent<Collider>() == null)
+                gameObject.AddComponent<BoxCollider>();
+
+            _feedbackRenderer = GetComponentInChildren<Renderer>();
+            if (_feedbackRenderer == null)
+            {
+                var visual = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                visual.name = "MVP Resource Visual";
+                visual.transform.SetParent(transform, false);
+                visual.transform.localPosition = Vector3.zero;
+                visual.transform.localRotation = Quaternion.identity;
+                visual.transform.localScale = Vector3.one;
+
+                var visualCollider = visual.GetComponent<Collider>();
+                if (visualCollider != null)
+                {
+                    if (Application.isPlaying)
+                        Destroy(visualCollider);
+                    else
+                        DestroyImmediate(visualCollider);
+                }
+
+                _feedbackRenderer = visual.GetComponent<Renderer>();
+            }
+
+            if (_feedbackRenderer != null)
+            {
+                _feedbackRenderer.material.color = _fallbackColor;
+                _baseFeedbackColor = _fallbackColor;
+            }
+        }
+
+        private void ShowHitFeedback()
+        {
+            if (_feedbackRenderer == null)
+                return;
+
+            _feedbackRenderer.material.color = _hitFeedbackColor;
+            _feedbackUntil = Time.time + 0.12f;
+        }
+
+        private void MarkPresentationDepleted()
+        {
+            var collider = GetComponent<Collider>();
+            if (collider != null)
+                collider.enabled = false;
         }
     }
 }

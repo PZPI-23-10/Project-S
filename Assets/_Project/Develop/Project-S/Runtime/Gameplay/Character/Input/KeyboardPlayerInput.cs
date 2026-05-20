@@ -12,6 +12,13 @@ namespace Project_S.Runtime.Gameplay.Character.Input
         [SerializeField] private KeyCode _jumpKey = KeyCode.Space;
         [SerializeField] private KeyCode _dodgeKey = KeyCode.LeftAlt;
         [SerializeField] private KeyCode _interactKey = KeyCode.E;
+        [SerializeField] private KeyCode _toggleOffhandKey = KeyCode.G;
+        [SerializeField] private KeyCode _offhandAbilityKey = KeyCode.F;
+        [SerializeField] private KeyCode _qteForwardKey = KeyCode.W;
+        [SerializeField] private KeyCode _qteBackKey = KeyCode.S;
+        [SerializeField] private KeyCode _qteLeftKey = KeyCode.A;
+        [SerializeField] private KeyCode _qteRightKey = KeyCode.D;
+        [SerializeField] private int _hotbarSize = 5;
 
         public PlayerInputSnapshot Snapshot { get; private set; }
 
@@ -26,7 +33,26 @@ namespace Project_S.Runtime.Gameplay.Character.Input
                 UnityEngine.Input.GetMouseButton(1),
                 UnityEngine.Input.GetMouseButtonDown(0),
                 UnityEngine.Input.GetMouseButton(0) && UnityEngine.Input.GetMouseButtonDown(1),
-                UnityEngine.Input.GetKeyDown(_interactKey));
+                UnityEngine.Input.GetKeyDown(_interactKey),
+                UnityEngine.Input.GetKeyDown(_toggleOffhandKey),
+                UnityEngine.Input.GetKeyDown(_offhandAbilityKey),
+                GetHotbarSlotPressed(),
+                UnityEngine.Input.GetKeyDown(_qteForwardKey),
+                UnityEngine.Input.GetKeyDown(_qteBackKey),
+                UnityEngine.Input.GetKeyDown(_qteLeftKey),
+                UnityEngine.Input.GetKeyDown(_qteRightKey));
+        }
+
+        private int GetHotbarSlotPressed()
+        {
+            for (int i = 0; i < _hotbarSize; i++)
+            {
+                if (UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Alpha1 + i))
+                    || UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Keypad1 + i)))
+                    return i;
+            }
+
+            return -1;
         }
     }
 }

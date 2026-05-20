@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Character.Combat
@@ -59,11 +60,23 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             // якщо BlockMitigation = 0.8 (ўит), пропускаЇмо (1 - 0.8) = 20% урону
             float damageMultiplier = 1f - weapon.BlockMitigation;
 
+            var reducedProfile = new List<DamageInstance>();
+            if (request.DamageProfile != null)
+            {
+                foreach (var damage in request.DamageProfile)
+                {
+                    reducedProfile.Add(new DamageInstance
+                    {
+                        Type = damage.Type,
+                        Amount = damage.Amount * damageMultiplier
+                    });
+                }
+            }
+
             return new DamageRequest(
                 request.Source,
-                request.HealthDamage * damageMultiplier,
+                reducedProfile,
                 request.PoiseDamage * damageMultiplier,
-                request.Type,
                 request.Weapon);
         }
     }

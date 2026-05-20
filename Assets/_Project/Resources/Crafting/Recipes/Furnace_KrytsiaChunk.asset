@@ -24,6 +24,6 @@ MonoBehaviour:
     Amount: 1
   SoulAshCost: 0
   RequiredItems: []
-  CraftDurationSeconds: 5
+  CraftDurationSeconds: 0
   FuelSecondsCost: 0
   Description: "Smelt iron ore with charcoal into a krytsia chunk. MVP timer is shortened."

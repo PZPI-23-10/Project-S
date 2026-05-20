@@ -1,4 +1,5 @@
 using Project_S.Runtime.Gameplay.Character.Camera;
+using Project_S.Runtime.Gameplay.Character.Input;
 using Project_S.Runtime.Gameplay.Character.Stats;
 using Project_S.Runtime.Gameplay.HUD;
 using UnityEngine;
@@ -21,6 +22,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         private KeyCode _currentQteButton;
         private float _recoveryBlockedUntil;
         private bool _isQTEActive;
+        private bool _usesExternalInput;
         private Vector3 _knockbackVector;
 
         public bool IsBroken => _isQTEActive;
@@ -35,6 +37,16 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
         private void Update()
         {
+            if (_usesExternalInput)
+                return;
+
+            Tick(PlayerInputSnapshot.Blocked);
+        }
+
+        public void Tick(PlayerInputSnapshot input)
+        {
+            _usesExternalInput = true;
+
             if (_stats == null) return;
 
             float current = _stats.Get(StatType.Poise);
@@ -44,7 +56,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             {
                 if (Time.time >= _recoveryBlockedUntil) { FailQTE(); return; }
 
-                if (UnityEngine.Input.GetKeyDown(_currentQteButton))
+                if (WasQtePressed(_currentQteButton, input))
                 {
                     _stats.Add(StatType.Poise, _poiseGainPerTap);
                     if (_cameraJuice != null) _cameraJuice.PlayImpactShake(0.05f, 0.02f);
@@ -74,6 +86,18 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 // Беремо найсвіжіший ХП після всіх розрахунків
                 _qteUI.UpdateUI(_stats.Get(StatType.Poise), max, _isQTEActive, _currentQteButton);
             }
+        }
+
+        private static bool WasQtePressed(KeyCode key, PlayerInputSnapshot input)
+        {
+            return key switch
+            {
+                KeyCode.W => input.QteForwardPressed,
+                KeyCode.S => input.QteBackPressed,
+                KeyCode.A => input.QteLeftPressed,
+                KeyCode.D => input.QteRightPressed,
+                _ => false
+            };
         }
 
         public void ApplyPoiseDamage(float amount, Vector3 attackerPosition)

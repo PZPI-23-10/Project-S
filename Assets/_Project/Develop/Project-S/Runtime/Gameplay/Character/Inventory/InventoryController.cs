@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Project_S.Runtime.Gameplay.Character.Combat;
 using Project_S.Runtime.Gameplay.Character.Stats;
 using UnityEngine;
 
@@ -10,6 +11,8 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
     {
         public ItemData Item;
         public int Amount;
+
+        public ItemStack() { }
 
         public ItemStack(ItemData item, int amount)
         {
@@ -222,6 +225,18 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
 
             if (_stats != null)
             {
+                if (item.StatEffects != null)
+                {
+                    foreach (var statEffect in item.StatEffects)
+                    {
+                        if (statEffect == null || Mathf.Approximately(statEffect.Amount, 0f))
+                            continue;
+
+                        _stats.Add(statEffect.StatType, statEffect.Amount);
+                        applied = true;
+                    }
+                }
+
                 if (!Mathf.Approximately(item.HealthRestoreAmount, 0f))
                 {
                     _stats.Add(StatType.Health, item.HealthRestoreAmount);
@@ -247,11 +262,40 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
             if (ApplyTimedBuff(item.SecondaryTimedBuffType, item.SecondaryTimedBuffCategory, item.SecondaryTimedBuffMultiplier, item.SecondaryTimedBuffDurationSeconds))
                 applied = true;
 
-            if (item.SpecialEffect == ConsumableSpecialEffectType.HomeTeleport)
+            if (item.TimedBuffs != null)
             {
-                var teleport = GetComponent<HomeTeleportController>() ?? gameObject.AddComponent<HomeTeleportController>();
-                teleport.StartTeleport(item.SpecialEffectDelaySeconds > 0f ? item.SpecialEffectDelaySeconds : 5f);
+                foreach (var timedBuff in item.TimedBuffs)
+                {
+                    if (timedBuff == null)
+                        continue;
+
+                    if (ApplyTimedBuff(timedBuff.Type, timedBuff.Category, timedBuff.Multiplier, timedBuff.DurationSeconds))
+                        applied = true;
+                }
+            }
+
+            if (item.DamageConversions != null)
+            {
+                foreach (var conversion in item.DamageConversions)
+                {
+                    if (ApplyDamageConversion(conversion))
+                        applied = true;
+                }
+            }
+
+            if (ApplySpecialEffect(item.SpecialEffect, item.SpecialEffectDelaySeconds))
                 applied = true;
+
+            if (item.SpecialEffects != null)
+            {
+                foreach (var specialEffect in item.SpecialEffects)
+                {
+                    if (specialEffect == null)
+                        continue;
+
+                    if (ApplySpecialEffect(specialEffect.Type, specialEffect.DelaySeconds))
+                        applied = true;
+                }
             }
 
             return applied;
@@ -267,6 +311,33 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
 
             _buffs.ApplyBuff(type, category, multiplier, durationSeconds);
             return true;
+        }
+
+        private bool ApplyDamageConversion(DamageConversionEffect conversion)
+        {
+            if (conversion == null || !conversion.IsValid())
+                return false;
+
+            if (_buffs == null)
+                _buffs = GetComponent<BuffController>() ?? gameObject.AddComponent<BuffController>();
+
+            _buffs.ApplyDamageConversion(conversion);
+            return true;
+        }
+
+        private bool ApplySpecialEffect(ConsumableSpecialEffectType type, float delaySeconds)
+        {
+            if (type == ConsumableSpecialEffectType.None)
+                return false;
+
+            if (type == ConsumableSpecialEffectType.HomeTeleport)
+            {
+                var teleport = GetComponent<HomeTeleportController>() ?? gameObject.AddComponent<HomeTeleportController>();
+                teleport.StartTeleport(delaySeconds > 0f ? delaySeconds : 5f);
+                return true;
+            }
+
+            return false;
         }
 
         private void AddItemUnchecked(ItemData item, int amountToAdd)

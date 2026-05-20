@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
+using Project_S.Runtime.Gameplay.Character.Combat;
 using Project_S.Runtime.Gameplay.Character.Stats;
 
 namespace Project_S.Runtime.Gameplay.Character.Inventory
@@ -24,6 +27,29 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
     {
         None,
         HomeTeleport
+    }
+
+    [Serializable]
+    public class ConsumableStatEffect
+    {
+        public StatType StatType = StatType.Health;
+        public float Amount;
+    }
+
+    [Serializable]
+    public class ConsumableTimedBuffEffect
+    {
+        public TimedBuffType Type = TimedBuffType.None;
+        public TimedBuffCategory Category = TimedBuffCategory.None;
+        public float Multiplier = 1f;
+        [Min(0f)] public float DurationSeconds;
+    }
+
+    [Serializable]
+    public class ConsumableSpecialEffect
+    {
+        public ConsumableSpecialEffectType Type = ConsumableSpecialEffectType.None;
+        [Min(0f)] public float DelaySeconds;
     }
 
     [CreateAssetMenu(fileName = "NewItem", menuName = "Project-S/Inventory/Item Data")]
@@ -56,6 +82,12 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
         public ConsumableSpecialEffectType SpecialEffect;
         public float SpecialEffectDelaySeconds;
 
+        [Header("Consumable Effects")]
+        public List<ConsumableStatEffect> StatEffects = new List<ConsumableStatEffect>();
+        public List<ConsumableTimedBuffEffect> TimedBuffs = new List<ConsumableTimedBuffEffect>();
+        public List<ConsumableSpecialEffect> SpecialEffects = new List<ConsumableSpecialEffect>();
+        public List<DamageConversionEffect> DamageConversions = new List<DamageConversionEffect>();
+
         [Header("Timed Buff")]
         public TimedBuffType TimedBuffType = TimedBuffType.None;
         public TimedBuffCategory TimedBuffCategory = TimedBuffCategory.None;
@@ -73,6 +105,10 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
             || !Mathf.Approximately(StaminaRestoreAmount, 0f)
             || TimedBuffType != TimedBuffType.None
             || SecondaryTimedBuffType != TimedBuffType.None
-            || SpecialEffect != ConsumableSpecialEffectType.None;
+            || SpecialEffect != ConsumableSpecialEffectType.None
+            || (StatEffects != null && StatEffects.Count > 0)
+            || (TimedBuffs != null && TimedBuffs.Count > 0)
+            || (SpecialEffects != null && SpecialEffects.Count > 0)
+            || (DamageConversions != null && DamageConversions.Count > 0);
     }
 }

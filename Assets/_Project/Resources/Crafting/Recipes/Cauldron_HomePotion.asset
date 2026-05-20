@@ -22,6 +22,6 @@ MonoBehaviour:
     Amount: 1
   SoulAshCost: 150
   RequiredItems: []
-  CraftDurationSeconds: 15
+  CraftDurationSeconds: 0
   FuelSecondsCost: 15
   Description: "MVP station recipe with shortened timer."

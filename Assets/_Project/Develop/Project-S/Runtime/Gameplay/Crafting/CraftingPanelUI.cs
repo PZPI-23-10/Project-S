@@ -31,6 +31,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
         private TMP_Text _craftButtonText;
         private bool _built;
         private bool _subscribed;
+        private GameObject _rootObject;
 
         public void Initialize(InventoryController inventory, SoulAshWallet wallet, CraftingContext context)
         {
@@ -44,6 +45,12 @@ namespace Project_S.Runtime.Gameplay.Crafting
             BuildLayout();
             Subscribe();
             SetContext(context);
+        }
+
+        public void SetPanelVisible(bool visible)
+        {
+            if (_rootObject != null)
+                _rootObject.SetActive(visible);
         }
 
         public void SetContext(CraftingContext context)
@@ -146,7 +153,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             if (IsStationContext(_context))
             {
-                lines.Add($"Time: {Mathf.CeilToInt(recipe.CraftDurationSeconds)}s");
+                lines.Add("Time: 0s");
                 if (_activeStation != null && _activeStation.UsesFuel)
                     lines.Add($"Fuel: {Mathf.CeilToInt(recipe.FuelSecondsCost)}s");
             }
@@ -156,16 +163,16 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             foreach (var ingredient in (recipe.Ingredients ?? Enumerable.Empty<CraftingItemAmount>()).Where(IsValidAmount))
             {
-                int owned = _inventory != null ? _inventory.GetItemCount(ingredient.Item) : 0;
+                int owned = GetOwnedItemCount(ingredient.Item);
                 lines.Add($"{ingredient.Item.ItemName}: {owned}/{ingredient.Amount}");
             }
 
             if (recipe.SoulAshCost > 0)
-                lines.Add($"Soul Ash: {(_wallet != null ? _wallet.Amount : 0)}/{recipe.SoulAshCost}");
+                lines.Add($"Soul Ash: {GetOwnedSoulAsh()}/{recipe.SoulAshCost}");
 
             foreach (var requirement in (recipe.RequiredItems ?? Enumerable.Empty<CraftingItemAmount>()).Where(IsValidAmount))
             {
-                int owned = _inventory != null ? _inventory.GetItemCount(requirement.Item) : 0;
+                int owned = GetOwnedItemCount(requirement.Item);
                 lines.Add($"Requires {requirement.Item.ItemName}: {owned}/{requirement.Amount}");
             }
 
@@ -206,6 +213,21 @@ namespace Project_S.Runtime.Gameplay.Crafting
             }
 
             return _craftingService.Check(recipe);
+        }
+
+        private int GetOwnedItemCount(ItemData item)
+        {
+            int owned = _inventory != null ? _inventory.GetItemCount(item) : 0;
+            if (IsStationContext(_context) && BaseResourceStorage.Active != null)
+                owned += BaseResourceStorage.Active.GetItemCount(item);
+
+            return owned;
+        }
+
+        private int GetOwnedSoulAsh()
+        {
+            return (_wallet != null ? _wallet.Amount : 0)
+                + (IsStationContext(_context) && BaseResourceStorage.Active != null ? BaseResourceStorage.Active.SoulAshAmount : 0);
         }
 
         private void RefreshStationHeader()
@@ -356,6 +378,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
             _built = true;
 
             var root = CreateRect("CraftingRuntimeRoot", transform);
+            _rootObject = root.gameObject;
             root.anchorMin = Vector2.zero;
             root.anchorMax = Vector2.one;
             root.offsetMin = new Vector2(12f, 12f);
