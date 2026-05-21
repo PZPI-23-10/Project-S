@@ -3,7 +3,15 @@ guid: 13411cac07a11434ba5c7843a1074a50
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - _stamina: {instanceID: 0}
+  - _blockController: {instanceID: 0}
+  - _weaponHolder: {instanceID: 0}
+  - _offhandHolder: {instanceID: 0}
+  - _phylacteryPrefab: {instanceID: 0}
+  - _unarmedWeapon: {instanceID: 0}
+  - _currentWeapon: {instanceID: 0}
+  - _equippedOffhandItem: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

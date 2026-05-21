@@ -40,7 +40,9 @@ namespace Project_S.Runtime.Gameplay.Character.Input
                 UnityEngine.Input.GetKeyDown(_qteForwardKey),
                 UnityEngine.Input.GetKeyDown(_qteBackKey),
                 UnityEngine.Input.GetKeyDown(_qteLeftKey),
-                UnityEngine.Input.GetKeyDown(_qteRightKey));
+                UnityEngine.Input.GetKeyDown(_qteRightKey),
+                UnityEngine.Input.GetMouseButton(0) 
+            );
         }
 
         private int GetHotbarSlotPressed()

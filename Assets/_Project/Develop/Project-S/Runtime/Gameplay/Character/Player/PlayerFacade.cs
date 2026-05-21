@@ -23,6 +23,7 @@ namespace Project_S.Runtime.Gameplay.Character.Player
         [SerializeField] private CharacterStats _stats;
         [SerializeField] private PhylacteryController _phylactery;
         [SerializeField] private PlayerDeathController _deathController;
+        [SerializeField] private CameraTilt _cameraTilt;
 
         private IPlayerInput _input;
 
@@ -59,6 +60,9 @@ namespace Project_S.Runtime.Gameplay.Character.Player
             _interactor?.Tick(snapshot);
             _equipmentSlots?.Tick(snapshot);
             _hotbar?.Tick(snapshot);
+            bool isStaggered = _combat.CurrentState == CombatState.Staggered;
+            _cameraTilt.SetEnabled(!isStaggered); 
+            _cameraTilt.Tick(snapshot);
         }
     }
 }

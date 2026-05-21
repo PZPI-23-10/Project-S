@@ -10,7 +10,6 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
         private void Start()
         {
-            // Шукаємо контролер боївки вище по ієрархії (на самому Гравці)
             _combatController = GetComponentInParent<CombatController>();
         }
 
@@ -25,6 +24,15 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         {
             if (_combatController != null)
                 _combatController.AnimEvent_StopHitbox();
+        }
+
+        public void OpenComboWindow() 
+        { 
+            if (_combatController != null) _combatController.AnimEvent_OpenComboWindow(); 
+        }
+        public void TriggerNextCombo() 
+        { 
+            if (_combatController != null) _combatController.AnimEvent_TriggerNextCombo();
         }
     }
 }
