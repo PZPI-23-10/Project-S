@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 0.71
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: f2b5f3f20933f434e850db1b710542fd, type: 2}
+  m_SkyboxMaterial: {fileID: 0}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -585,8 +585,8 @@ Transform:
   - {fileID: 528019245}
   - {fileID: 1484634722}
   - {fileID: 1497770321}
-  - {fileID: 626830324}
   - {fileID: 47609620}
+  - {fileID: 368063912}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &223978472
@@ -679,6 +679,7 @@ MonoBehaviour:
   _draggedItemIcon: {fileID: 1609725584}
   _draggedItemAmount: {fileID: 878402158}
   _defaultInteractionCloseDistance: 3
+  _actionGate: {fileID: 0}
 --- !u!1 &267206955
 GameObject:
   m_ObjectHideFlags: 0
@@ -715,6 +716,89 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1001 &283607752
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 218709689}
+    m_Modifications:
+    - target: {fileID: 5049661958839215772, guid: 2ee960647c74756489aea22c9ff88961,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -910.6788
+      objectReference: {fileID: 0}
+    - target: {fileID: 5049661958839215772, guid: 2ee960647c74756489aea22c9ff88961,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -63.403748
+      objectReference: {fileID: 0}
+    - target: {fileID: 5049661958839215772, guid: 2ee960647c74756489aea22c9ff88961,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1118.1179
+      objectReference: {fileID: 0}
+    - target: {fileID: 5049661958839215772, guid: 2ee960647c74756489aea22c9ff88961,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5049661958839215772, guid: 2ee960647c74756489aea22c9ff88961,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5049661958839215772, guid: 2ee960647c74756489aea22c9ff88961,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5049661958839215772, guid: 2ee960647c74756489aea22c9ff88961,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5049661958839215772, guid: 2ee960647c74756489aea22c9ff88961,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5049661958839215772, guid: 2ee960647c74756489aea22c9ff88961,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5049661958839215772, guid: 2ee960647c74756489aea22c9ff88961,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5049661958839215774, guid: 2ee960647c74756489aea22c9ff88961,
+        type: 3}
+      propertyPath: m_Name
+      value: UniStorm URP System
+      objectReference: {fileID: 0}
+    - target: {fileID: 5049661958839215775, guid: 2ee960647c74756489aea22c9ff88961,
+        type: 3}
+      propertyPath: TabNumber
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5049661958839215775, guid: 2ee960647c74756489aea22c9ff88961,
+        type: 3}
+      propertyPath: urpForwardRendererData
+      value: 
+      objectReference: {fileID: 11400000, guid: e634585d5c4544dd297acaee93dc2beb,
+        type: 2}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5049661960332804820, guid: 2ee960647c74756489aea22c9ff88961,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 928889792}
+  m_SourcePrefab: {fileID: 100100000, guid: 2ee960647c74756489aea22c9ff88961, type: 3}
 --- !u!1 &320454761
 GameObject:
   m_ObjectHideFlags: 0
@@ -1005,6 +1089,12 @@ MonoBehaviour:
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 0
+--- !u!4 &368063912 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5049661958839215772, guid: 2ee960647c74756489aea22c9ff88961,
+    type: 3}
+  m_PrefabInstance: {fileID: 283607752}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &380002153
 GameObject:
   m_ObjectHideFlags: 0
@@ -1396,7 +1486,7 @@ GameObject:
   - component: {fileID: 545051954}
   m_Layer: 7
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1510,6 +1600,13 @@ MonoBehaviour:
   _jumpKey: 32
   _dodgeKey: 308
   _interactKey: 101
+  _toggleOffhandKey: 103
+  _offhandAbilityKey: 102
+  _qteForwardKey: 119
+  _qteBackKey: 115
+  _qteLeftKey: 97
+  _qteRightKey: 100
+  _hotbarSize: 5
 --- !u!114 &545051940
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1666,8 +1763,14 @@ MonoBehaviour:
   _inputSource: {fileID: 545051939}
   _motor: {fileID: 545051942}
   _combat: {fileID: 545051953}
+  _poise: {fileID: 0}
+  _interactor: {fileID: 0}
+  _equipmentSlots: {fileID: 0}
+  _hotbar: {fileID: 0}
+  _actionGate: {fileID: 0}
   _stats: {fileID: 545051941}
   _phylactery: {fileID: 0}
+  _deathController: {fileID: 0}
 --- !u!114 &545051944
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1797,6 +1900,7 @@ MonoBehaviour:
   _fistsObject: {fileID: 3332889258831034580, guid: 17320fc247f21d84f86c2e6c4819d676,
     type: 3}
   _poise: {fileID: 545051949}
+  _actionGate: {fileID: 0}
 --- !u!114 &545051953
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1819,8 +1923,6 @@ MonoBehaviour:
   _equippedOffhandItem: {fileID: 11400000, guid: 8b3146ccc4325cc4995424c49c2ef7c7,
     type: 2}
   _isOffhandSkillUnlocked: 0
-  _toggleOffhandKey: 103
-  _offhandAbilityKey: 102
   _comboResetTime: 1.5
 --- !u!114 &545051954
 MonoBehaviour:
@@ -2090,55 +2192,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9132f53c496b5bb4a91f3ffd2c0c70d8, type: 3}
---- !u!1 &626830322
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 626830324}
-  - component: {fileID: 626830323}
-  m_Layer: 0
-  m_Name: Global Volume
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &626830323
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 626830322}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_IsGlobal: 1
-  priority: 0
-  blendDistance: 0
-  weight: 1
-  sharedProfile: {fileID: 11400000, guid: a6560a915ef98420e9faacc1c7438823, type: 2}
---- !u!4 &626830324
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 626830322}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -884.6788, y: -158.55278, z: -999.11786}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 218709689}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &644066522
 GameObject:
   m_ObjectHideFlags: 0
@@ -2917,6 +2970,35 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 882317934}
   m_CullTransparentMesh: 1
+--- !u!1 &928889790 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5049661960332804820, guid: 2ee960647c74756489aea22c9ff88961,
+    type: 3}
+  m_PrefabInstance: {fileID: 283607752}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &928889792
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 928889790}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Version: 3
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_LightLayerMask: 1
+  m_RenderingLayers: 1
+  m_CustomShadowLayers: 0
+  m_ShadowLayerMask: 1
+  m_ShadowRenderingLayers: 1
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
 --- !u!1 &930680003
 GameObject:
   m_ObjectHideFlags: 0
@@ -5315,8 +5397,7 @@ Transform:
   m_LocalPosition: {x: 844.54, y: 151.422, z: 986.848}
   m_LocalScale: {x: 0.9, y: 0.7, z: 0.9}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  []
+  m_Children: []
   m_Father: {fileID: 8101000000000000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &8101000000000000102
@@ -5404,6 +5485,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _kind: 0
   _runtimeColor: {r: 0.35, g: 0.22, b: 0.12, a: 1}
+--- !u!114 &8101000000000000106
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8101000000000000100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4497f34876e529fa598da97fd477824, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _itemGrants: []
+  _soulAshGrant: 0
+  _grantOnce: 1
+  _interactionPrompt: '[DEBUG] Resource Crate'
 --- !u!1 &8101000000000000110
 GameObject:
   m_ObjectHideFlags: 0
@@ -5437,8 +5534,7 @@ Transform:
   m_LocalPosition: {x: 847.74, y: 151.372, z: 987.448}
   m_LocalScale: {x: 1.6, y: 0.45, z: 0.9}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  []
+  m_Children: []
   m_Father: {fileID: 8101000000000000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &8101000000000000112
@@ -5526,6 +5622,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _kind: 1
   _runtimeColor: {r: 0.22, g: 0.16, b: 0.1, a: 1}
+--- !u!114 &8101000000000000116
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8101000000000000110}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce3d66bd4f327544900846c93cf65bf5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &8101000000000000120
 GameObject:
   m_ObjectHideFlags: 0
@@ -5559,8 +5667,7 @@ Transform:
   m_LocalPosition: {x: 848.64, y: 151.122, z: 988.848}
   m_LocalScale: {x: 0.9, y: 0.2, z: 0.9}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  []
+  m_Children: []
   m_Father: {fileID: 8101000000000000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &8101000000000000122
@@ -5648,6 +5755,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _kind: 2
   _runtimeColor: {r: 0.75, g: 0.24, b: 0.08, a: 1}
+--- !u!114 &8101000000000000126
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8101000000000000120}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a0727ff443f7b67e79cc1490fb1793c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _context: 2
+  _displayName: Station
+  _actionLabel: Craft
+  _usesFuel: 1
+  _fuelItem: {fileID: 0}
+  _secondsPerFuelItem: 300
+  _maxFuelSeconds: 900
+  _fuelSeconds: 0
+  _baseStorage: {fileID: 0}
 --- !u!1 &8101000000000000130
 GameObject:
   m_ObjectHideFlags: 0
@@ -5681,8 +5809,7 @@ Transform:
   m_LocalPosition: {x: 844.54, y: 151.422, z: 988.248}
   m_LocalScale: {x: 0.8, y: 0.65, z: 0.8}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  []
+  m_Children: []
   m_Father: {fileID: 8101000000000000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &8101000000000000132
@@ -5770,6 +5897,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _kind: 3
   _runtimeColor: {r: 0.18, g: 0.33, b: 0.18, a: 1}
+--- !u!114 &8101000000000000136
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8101000000000000130}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4497f34876e529fa598da97fd477824, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _itemGrants: []
+  _soulAshGrant: 0
+  _grantOnce: 1
+  _interactionPrompt: '[DEBUG] Food Crate'
 --- !u!1 &8101000000000000140
 GameObject:
   m_ObjectHideFlags: 0
@@ -5803,8 +5946,7 @@ Transform:
   m_LocalPosition: {x: 847.49, y: 151.072, z: 989.848}
   m_LocalScale: {x: 0.95, y: 0.15, z: 0.95}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  []
+  m_Children: []
   m_Father: {fileID: 8101000000000000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &8101000000000000142
@@ -5892,6 +6034,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _kind: 4
   _runtimeColor: {r: 0.08, g: 0.08, b: 0.075, a: 1}
+--- !u!114 &8101000000000000146
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8101000000000000140}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d5c07d3b3f380ef14b205c70a4d18b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _context: 2
+  _displayName: Station
+  _actionLabel: Craft
+  _usesFuel: 1
+  _fuelItem: {fileID: 0}
+  _secondsPerFuelItem: 300
+  _maxFuelSeconds: 900
+  _fuelSeconds: 0
+  _baseStorage: {fileID: 0}
 --- !u!1 &8101000000000000150
 GameObject:
   m_ObjectHideFlags: 0
@@ -5925,8 +6088,7 @@ Transform:
   m_LocalPosition: {x: 849.79, y: 151.472, z: 989.848}
   m_LocalScale: {x: 0.9, y: 0.65, z: 0.9}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  []
+  m_Children: []
   m_Father: {fileID: 8101000000000000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &8101000000000000152
@@ -6014,6 +6176,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _kind: 5
   _runtimeColor: {r: 0.06, g: 0.09, b: 0.1, a: 1}
+--- !u!114 &8101000000000000156
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8101000000000000150}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f36245d1c64a16f6c9b9327b5238f7a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _context: 2
+  _displayName: Station
+  _actionLabel: Craft
+  _usesFuel: 1
+  _fuelItem: {fileID: 0}
+  _secondsPerFuelItem: 300
+  _maxFuelSeconds: 900
+  _fuelSeconds: 0
+  _baseStorage: {fileID: 0}
 --- !u!1 &8101000000000000160
 GameObject:
   m_ObjectHideFlags: 0
@@ -6047,8 +6230,7 @@ Transform:
   m_LocalPosition: {x: 847.49, y: 151.472, z: 991.048}
   m_LocalScale: {x: 1.05, y: 1.1, z: 0.9}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  []
+  m_Children: []
   m_Father: {fileID: 8101000000000000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &8101000000000000162
@@ -6136,6 +6318,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _kind: 6
   _runtimeColor: {r: 0.18, g: 0.16, b: 0.14, a: 1}
+--- !u!114 &8101000000000000166
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8101000000000000160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a40f730f63a34b068fc049f438745627, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _context: 2
+  _displayName: Station
+  _actionLabel: Craft
+  _usesFuel: 1
+  _fuelItem: {fileID: 0}
+  _secondsPerFuelItem: 300
+  _maxFuelSeconds: 900
+  _fuelSeconds: 0
+  _baseStorage: {fileID: 0}
 --- !u!1 &8101000000000000170
 GameObject:
   m_ObjectHideFlags: 0
@@ -6169,8 +6372,7 @@ Transform:
   m_LocalPosition: {x: 849.79, y: 151.272, z: 991.048}
   m_LocalScale: {x: 1.1, y: 0.45, z: 0.65}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  []
+  m_Children: []
   m_Father: {fileID: 8101000000000000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &8101000000000000172
@@ -6258,6 +6460,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _kind: 7
   _runtimeColor: {r: 0.16, g: 0.17, b: 0.18, a: 1}
+--- !u!114 &8101000000000000176
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8101000000000000170}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e20a6fae52c24000aa2d77d36ce86528, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _context: 2
+  _displayName: Station
+  _actionLabel: Craft
+  _usesFuel: 1
+  _fuelItem: {fileID: 0}
+  _secondsPerFuelItem: 300
+  _maxFuelSeconds: 900
+  _fuelSeconds: 0
+  _baseStorage: {fileID: 0}
 --- !u!1 &8101000000000000180
 GameObject:
   m_ObjectHideFlags: 0
@@ -6291,8 +6514,7 @@ Transform:
   m_LocalPosition: {x: 844.54, y: 151.422, z: 989.648}
   m_LocalScale: {x: 0.85, y: 0.65, z: 0.85}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  []
+  m_Children: []
   m_Father: {fileID: 8101000000000000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &8101000000000000182
@@ -6380,6 +6602,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _kind: 8
   _runtimeColor: {r: 0.22, g: 0.22, b: 0.24, a: 1}
+--- !u!114 &8101000000000000186
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8101000000000000180}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4497f34876e529fa598da97fd477824, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _itemGrants: []
+  _soulAshGrant: 0
+  _grantOnce: 1
+  _interactionPrompt: '[DEBUG] Forge Crate'
 --- !u!1 &8101000000000000190
 GameObject:
   m_ObjectHideFlags: 0
@@ -6413,8 +6651,7 @@ Transform:
   m_LocalPosition: {x: 852.74, y: 151.472, z: 986.648}
   m_LocalScale: {x: 1.05, y: 0.9, z: 1.05}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  []
+  m_Children: []
   m_Father: {fileID: 8101000000000000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &8101000000000000192
@@ -6502,6 +6739,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _kind: 9
   _runtimeColor: {r: 0.12, g: 0.16, b: 0.23, a: 1}
+--- !u!114 &8101000000000000196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8101000000000000190}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43e069fbb4f14491b8052f0b97f3b80a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _interactionPrompt: Base Storage
+  _storageSize: 24
+  _slots: []
+  _soulAshAmount: 0
 --- !u!1 &8101000000000000200
 GameObject:
   m_ObjectHideFlags: 0
@@ -6535,8 +6788,7 @@ Transform:
   m_LocalPosition: {x: 852.74, y: 151.472, z: 988.248}
   m_LocalScale: {x: 1.05, y: 0.9, z: 1.05}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  []
+  m_Children: []
   m_Father: {fileID: 8101000000000000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &8101000000000000202
@@ -6624,142 +6876,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _kind: 10
   _runtimeColor: {r: 0.28, g: 0.18, b: 0.12, a: 1}
---- !u!114 &8101000000000000106
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8101000000000000100}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a4497f34876e529fa598da97fd477824, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _itemGrants: []
-  _soulAshGrant: 0
-  _grantOnce: 1
-  _interactionPrompt: '[DEBUG] Resource Crate'
---- !u!114 &8101000000000000116
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8101000000000000110}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ce3d66bd4f327544900846c93cf65bf5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &8101000000000000126
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8101000000000000120}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4a0727ff443f7b67e79cc1490fb1793c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &8101000000000000136
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8101000000000000130}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a4497f34876e529fa598da97fd477824, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _itemGrants: []
-  _soulAshGrant: 0
-  _grantOnce: 1
-  _interactionPrompt: '[DEBUG] Food Crate'
---- !u!114 &8101000000000000146
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8101000000000000140}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0d5c07d3b3f380ef14b205c70a4d18b9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &8101000000000000156
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8101000000000000150}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6f36245d1c64a16f6c9b9327b5238f7a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &8101000000000000166
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8101000000000000160}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a40f730f63a34b068fc049f438745627, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &8101000000000000176
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8101000000000000170}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e20a6fae52c24000aa2d77d36ce86528, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &8101000000000000186
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8101000000000000180}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a4497f34876e529fa598da97fd477824, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _itemGrants: []
-  _soulAshGrant: 0
-  _grantOnce: 1
-  _interactionPrompt: '[DEBUG] Forge Crate'
---- !u!114 &8101000000000000196
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8101000000000000190}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 43e069fbb4f14491b8052f0b97f3b80a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _interactionPrompt: Base Storage
-  _storageSize: 24
-  _slots: []
-  _soulAshAmount: 0
 --- !u!114 &8101000000000000206
 MonoBehaviour:
   m_ObjectHideFlags: 0
