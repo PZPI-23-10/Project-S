@@ -11500,6 +11500,11 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 11400000, guid: e634585d5c4544dd297acaee93dc2beb,
         type: 2}
+    - target: {fileID: 5049661959791579115, guid: 2ee960647c74756489aea22c9ff88961,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -12225,19 +12230,19 @@ Terrain:
   m_Enabled: 1
   serializedVersion: 6
   m_TerrainData: {fileID: 15600000, guid: 78008e4367245274f89317181626ef9c, type: 2}
-  m_TreeDistance: 1000
-  m_TreeBillboardDistance: 300
+  m_TreeDistance: 500
+  m_TreeBillboardDistance: 150
   m_TreeCrossFadeLength: 5
-  m_TreeMaximumFullLODCount: 50
-  m_DetailObjectDistance: 200
-  m_DetailObjectDensity: 1
+  m_TreeMaximumFullLODCount: 20
+  m_DetailObjectDistance: 150
+  m_DetailObjectDensity: 0.8
   m_HeightmapPixelError: 5
   m_SplatMapDistance: 1000
   m_HeightmapMinimumLODSimplification: 0
   m_HeightmapMaximumLOD: 0
   m_ShadowCastingMode: 2
   m_DrawHeightmap: 1
-  m_DrawInstanced: 0
+  m_DrawInstanced: 1
   m_DrawTreesAndFoliage: 1
   m_StaticShadowCaster: 0
   m_IgnoreQualitySettings: 0
