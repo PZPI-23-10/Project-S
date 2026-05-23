@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class MainMenuController : MonoBehaviour
 {
@@ -10,5 +11,10 @@ public class MainMenuController : MonoBehaviour
 
         // Закриває саму гру (працює тільки у скомпільованій версії, не в редакторі)
         Application.Quit();
+    }
+    public void PlayGame()
+    {
+        // В дужках має бути ТОЧНА назва твоєї ігрової сцени
+        SceneManager.LoadScene("YavWorld");
     }
 }
