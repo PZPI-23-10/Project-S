@@ -11,6 +11,7 @@ namespace Project_S.Runtime.Gameplay.HUD
     public class InventoryUI : MonoBehaviour
     {
         [Header("Panels")]
+        [SerializeField] private GameObject _mainInventoryWindow; // Твоя нова головна коробка!
         [SerializeField] private GameObject _inventoryPanel;
         [SerializeField] private GameObject _contextPanel;
 
@@ -19,6 +20,11 @@ namespace Project_S.Runtime.Gameplay.HUD
         [SerializeField] private InventorySlotUI _slotPrefab;
         [SerializeField] private InventoryController _inventory;
         [SerializeField] private TMP_Text _weightText;
+      
+
+        [Header("Overload Warning")]
+        [Tooltip("Текст попередження 'У тебе перегруз!' на екрані")]
+        [SerializeField] private TMP_Text _overloadHUDText;
 
         [Header("Drag and drop")]
         [SerializeField] private Image _draggedItemIcon;
@@ -41,15 +47,20 @@ namespace Project_S.Runtime.Gameplay.HUD
         private Transform _distanceCloseObserver;
         private float _distanceCloseRange;
         private bool _hasDistanceCloseTarget;
-       
-        public bool IsOpen => _inventoryPanel != null && _inventoryPanel.activeSelf;
+
+        // Оновлена перевірка, чи відкритий інвентар
+        public bool IsOpen => _mainInventoryWindow != null ? _mainInventoryWindow.activeSelf : (_inventoryPanel != null && _inventoryPanel.activeSelf);
         public bool IsStorageOpen => IsOpen && _activeStorage != null;
 
         private void Awake()
         {
-            if (_inventoryPanel != null) _inventoryPanel.SetActive(false);
+            // Вимикаємо головне вікно на старті
+            if (_mainInventoryWindow != null) _mainInventoryWindow.SetActive(false);
+            else if (_inventoryPanel != null) _inventoryPanel.SetActive(false);
+
             if (_contextPanel != null) _contextPanel.SetActive(false);
             SetDraggedIconActive(false);
+            if (_overloadHUDText != null) _overloadHUDText.gameObject.SetActive(false);
         }
 
         private void Start()
@@ -98,8 +109,7 @@ namespace Project_S.Runtime.Gameplay.HUD
 
             if (UnityEngine.Input.GetKeyDown(KeyCode.Tab) || UnityEngine.Input.GetKeyDown(KeyCode.I))
             {
-                bool isOpen = _inventoryPanel != null && _inventoryPanel.activeSelf;
-                SetInventoryOpen(!isOpen, CraftingContext.Hand);
+                SetInventoryOpen(!IsOpen, CraftingContext.Hand);
             }
         }
 
@@ -165,15 +175,44 @@ namespace Project_S.Runtime.Gameplay.HUD
 
             SetInventoryOpenInternal(open, context);
         }
-
         private void SetInventoryOpenInternal(bool open, CraftingContext context)
         {
-            if (_inventoryPanel == null)
+            if (_mainInventoryWindow != null)
+            {
+                _mainInventoryWindow.SetActive(open);
+
+                if (open)
+                {
+                    if (_activeStorage != null)
+                    {
+                        // Якщо це СКРИНЯ: показуємо і інвентар, і саму скриню (обидві панелі)
+                        if (_inventoryPanel != null) _inventoryPanel.SetActive(true);
+                        if (_contextPanel != null) _contextPanel.SetActive(true);
+                    }
+                    else if (context != CraftingContext.Hand)
+                    {
+                        // Якщо це ВЕРСТАК (Campfire, Workbench і т.д.): автоматично вмикаємо вкладку Крафт
+                        if (_inventoryPanel != null) _inventoryPanel.SetActive(false);
+                        if (_contextPanel != null) _contextPanel.SetActive(true);
+                    }
+                    else
+                    {
+                        // Якщо просто натиснули TAB у полі: показуємо базовий Інвентар
+                        if (_inventoryPanel != null) _inventoryPanel.SetActive(true);
+                        if (_contextPanel != null) _contextPanel.SetActive(false);
+                    }
+                }
+            }
+            else // Резервний варіант, якщо коробки немає
+            {
+                if (_inventoryPanel != null) _inventoryPanel.SetActive(open);
+                if (_contextPanel != null) _contextPanel.SetActive(open);
+            }
+
+            if (_inventoryPanel == null && _mainInventoryWindow == null)
                 return;
 
             _currentCraftingContext = context;
-            _inventoryPanel.SetActive(open);
-            if (_contextPanel != null) _contextPanel.SetActive(open);
             ResolveActionGate()?.SetInventoryOpen(open);
 
             if (open)
@@ -184,8 +223,11 @@ namespace Project_S.Runtime.Gameplay.HUD
 
                 bool storageMode = _activeStorage != null;
                 _craftingPanel?.SetPanelVisible(!storageMode);
+
                 if (storageMode)
+                {
                     _storagePanel?.SetStorage(_activeStorage);
+                }
                 else
                 {
                     _storagePanel?.ClearStorage();
@@ -207,7 +249,9 @@ namespace Project_S.Runtime.Gameplay.HUD
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
             }
+            UpdateOverloadHUDVisibility(open);
         }
+
 
         public void OnSlotClicked(int slotIndex, PointerEventData.InputButton button)
         {
@@ -325,8 +369,56 @@ namespace Project_S.Runtime.Gameplay.HUD
                 }
             }
         }
-
         public void Refresh()
+        {
+            if (_inventory == null) return;
+
+            var slots = _inventory.GetAllSlots();
+            if (slots == null) return;
+
+            if (_createdSlots != null)
+            {
+                for (int i = 0; i < _createdSlots.Length; i++)
+                {
+                    if (_createdSlots[i] != null)
+                        _createdSlots[i].UpdateView(i < slots.Length ? slots[i] : null);
+                }
+            }
+
+            // ОНОВЛЕНА ЛОГІКА ВАГИ
+            if (_weightText != null)
+            {
+                float currentWeight = _inventory.GetCurrentWeight();
+                float maxWeight = _inventory.GetMaxWeight();
+
+                _weightText.text = $"Вага: {currentWeight:F1} / {maxWeight:F1}";
+
+                // Якщо перегруз — робимо текст червоним, якщо все ок — білим
+                if (currentWeight > maxWeight)
+                    _weightText.color = new Color(1f, 0.3f, 0.3f);
+                else
+                    _weightText.color = Color.white;
+            }
+
+            _craftingPanel?.Refresh();
+            _storagePanel?.Refresh();
+            _accessoryPanel?.Refresh();
+
+            // Перевіряємо, чи треба показати напис на екрані
+            UpdateOverloadHUDVisibility(IsOpen);
+        }
+
+        // НОВА ФУНКЦІЯ
+        private void UpdateOverloadHUDVisibility(bool isInventoryOpen)
+        {
+            if (_overloadHUDText == null || _inventory == null) return;
+
+            bool isOverloaded = _inventory.GetCurrentWeight() > _inventory.GetMaxWeight();
+
+            // Показуємо напис ТІЛЬКИ коли інвентар ЗАКРИТИЙ і є реальний перегруз
+            _overloadHUDText.gameObject.SetActive(!isInventoryOpen && isOverloaded);
+        }
+        *//*public void Refresh()
         {
             if (_inventory == null) return;
 
@@ -348,7 +440,7 @@ namespace Project_S.Runtime.Gameplay.HUD
             _craftingPanel?.Refresh();
             _storagePanel?.Refresh();
             _accessoryPanel?.Refresh();
-        }
+        }*//*
 
         private void InitializeCraftingPanel()
         {
@@ -605,8 +697,7 @@ namespace Project_S.Runtime.Gameplay.HUD
             return _actionGate;
         }
     }
-}
-*/
+}*/
 
 using Project_S.Runtime.Gameplay.Character.Inventory;
 using Project_S.Runtime.Gameplay.Character.Input;
@@ -621,7 +712,7 @@ namespace Project_S.Runtime.Gameplay.HUD
     public class InventoryUI : MonoBehaviour
     {
         [Header("Panels")]
-        [SerializeField] private GameObject _mainInventoryWindow; // Твоя нова головна коробка!
+        [SerializeField] private GameObject _mainInventoryWindow;
         [SerializeField] private GameObject _inventoryPanel;
         [SerializeField] private GameObject _contextPanel;
 
@@ -630,6 +721,12 @@ namespace Project_S.Runtime.Gameplay.HUD
         [SerializeField] private InventorySlotUI _slotPrefab;
         [SerializeField] private InventoryController _inventory;
         [SerializeField] private TMP_Text _weightText;
+
+        [Header("HUD Elements")] // Нова секція
+        [Tooltip("Текст попередження 'У тебе перегруз!' на екрані")]
+        [SerializeField] private TMP_Text _overloadHUDText;
+        [Tooltip("Об'єкт прицілу (крапка по центру)")] // Наша крапка
+        [SerializeField] private GameObject _crosshairDot;
 
         [Header("Drag and drop")]
         [SerializeField] private Image _draggedItemIcon;
@@ -653,18 +750,22 @@ namespace Project_S.Runtime.Gameplay.HUD
         private float _distanceCloseRange;
         private bool _hasDistanceCloseTarget;
 
-        // Оновлена перевірка, чи відкритий інвентар
         public bool IsOpen => _mainInventoryWindow != null ? _mainInventoryWindow.activeSelf : (_inventoryPanel != null && _inventoryPanel.activeSelf);
         public bool IsStorageOpen => IsOpen && _activeStorage != null;
 
         private void Awake()
         {
-            // Вимикаємо головне вікно на старті
             if (_mainInventoryWindow != null) _mainInventoryWindow.SetActive(false);
             else if (_inventoryPanel != null) _inventoryPanel.SetActive(false);
 
             if (_contextPanel != null) _contextPanel.SetActive(false);
             SetDraggedIconActive(false);
+
+            // Ховаємо попередження на старті
+            if (_overloadHUDText != null) _overloadHUDText.gameObject.SetActive(false);
+
+            // Забезпечуємо, що приціл увімкнений на старті гри
+            if (_crosshairDot != null) _crosshairDot.SetActive(true);
         }
 
         private void Start()
@@ -789,25 +890,22 @@ namespace Project_S.Runtime.Gameplay.HUD
                 {
                     if (_activeStorage != null)
                     {
-                        // Якщо це СКРИНЯ: показуємо і інвентар, і саму скриню (обидві панелі)
                         if (_inventoryPanel != null) _inventoryPanel.SetActive(true);
                         if (_contextPanel != null) _contextPanel.SetActive(true);
                     }
                     else if (context != CraftingContext.Hand)
                     {
-                        // Якщо це ВЕРСТАК (Campfire, Workbench і т.д.): автоматично вмикаємо вкладку Крафт
                         if (_inventoryPanel != null) _inventoryPanel.SetActive(false);
                         if (_contextPanel != null) _contextPanel.SetActive(true);
                     }
                     else
                     {
-                        // Якщо просто натиснули TAB у полі: показуємо базовий Інвентар
                         if (_inventoryPanel != null) _inventoryPanel.SetActive(true);
                         if (_contextPanel != null) _contextPanel.SetActive(false);
                     }
                 }
             }
-            else // Резервний варіант, якщо коробки немає
+            else
             {
                 if (_inventoryPanel != null) _inventoryPanel.SetActive(open);
                 if (_contextPanel != null) _contextPanel.SetActive(open);
@@ -841,6 +939,9 @@ namespace Project_S.Runtime.Gameplay.HUD
                 Refresh();
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
+
+                // ДОДАТИ: Ховаємо крапку при відкритті інвентаря
+                if (_crosshairDot != null) _crosshairDot.SetActive(false);
             }
             else
             {
@@ -852,73 +953,15 @@ namespace Project_S.Runtime.Gameplay.HUD
                 TooltipUI.Instance?.Hide();
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
+
+                // ДОДАТИ: Показуємо крапку назад при закритті
+                if (_crosshairDot != null) _crosshairDot.SetActive(true);
             }
+
+            // Оновлюємо напис перегрузу
+            UpdateOverloadHUDVisibility(open);
         }
-        /*private void SetInventoryOpenInternal(bool open, CraftingContext context)
-        {
-            // ЛОГІКА ДЛЯ НОВОГО ІНТЕРФЕЙСУ З КОРОБКОЮ
-            if (_mainInventoryWindow != null)
-            {
-                _mainInventoryWindow.SetActive(open);
 
-                // Якщо ми просто відкриваємо меню (не скриню) - показуємо тільки інвентар
-                if (open && _activeStorage == null)
-                {
-                    if (_inventoryPanel != null) _inventoryPanel.SetActive(true);
-                    if (_contextPanel != null) _contextPanel.SetActive(false);
-                }
-            }
-            else // Якщо коробки ще немає, працюємо по-старому
-            {
-                if (_inventoryPanel != null) _inventoryPanel.SetActive(open);
-                if (_contextPanel != null) _contextPanel.SetActive(open);
-            }
-
-            // Якщо ми відкрили СКРИНЮ, примусово показуємо обидві панелі
-            if (open && _activeStorage != null)
-            {
-                if (_inventoryPanel != null) _inventoryPanel.SetActive(true);
-                if (_contextPanel != null) _contextPanel.SetActive(true);
-            }
-
-            if (_inventoryPanel == null && _mainInventoryWindow == null)
-                return;
-
-            _currentCraftingContext = context;
-            ResolveActionGate()?.SetInventoryOpen(open);
-
-            if (open)
-            {
-                InitializeCraftingPanel();
-                InitializeStoragePanel();
-                InitializeAccessoryPanel();
-
-                bool storageMode = _activeStorage != null;
-                _craftingPanel?.SetPanelVisible(!storageMode);
-                if (storageMode)
-                    _storagePanel?.SetStorage(_activeStorage);
-                else
-                {
-                    _storagePanel?.ClearStorage();
-                    _craftingPanel?.SetContext(_currentCraftingContext);
-                }
-
-                Refresh();
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
-            else
-            {
-                ClearDistanceCloseTarget();
-                ReturnDraggedStackToInventory();
-                _storagePanel?.ClearStorage();
-                _craftingPanel?.SetPanelVisible(true);
-                _activeStorage = null;
-                TooltipUI.Instance?.Hide();
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            }
-        }*/
 
         public void OnSlotClicked(int slotIndex, PointerEventData.InputButton button)
         {
@@ -1053,12 +1096,33 @@ namespace Project_S.Runtime.Gameplay.HUD
                 }
             }
 
+            // Логіка підсвітки ваги (з минулої задачі)
             if (_weightText != null)
-                _weightText.text = $"Вага: {_inventory.GetCurrentWeight():F1} / {_inventory.GetMaxWeight():F1}";
+            {
+                float currentWeight = _inventory.GetCurrentWeight();
+                float maxWeight = _inventory.GetMaxWeight();
+                _weightText.text = $"Вага: {currentWeight:F1} / {maxWeight:F1}";
+
+                if (currentWeight > maxWeight)
+                    _weightText.color = new Color(1f, 0.3f, 0.3f);
+                else
+                    _weightText.color = Color.white;
+            }
 
             _craftingPanel?.Refresh();
             _storagePanel?.Refresh();
             _accessoryPanel?.Refresh();
+
+            // Перевіряємо перегруз на екрані
+            UpdateOverloadHUDVisibility(IsOpen);
+        }
+
+        // Логіка напису перегрузу (з минулої задачі)
+        private void UpdateOverloadHUDVisibility(bool isInventoryOpen)
+        {
+            if (_overloadHUDText == null || _inventory == null) return;
+            bool isOverloaded = _inventory.GetCurrentWeight() > _inventory.GetMaxWeight();
+            _overloadHUDText.gameObject.SetActive(!isInventoryOpen && isOverloaded);
         }
 
         private void InitializeCraftingPanel()

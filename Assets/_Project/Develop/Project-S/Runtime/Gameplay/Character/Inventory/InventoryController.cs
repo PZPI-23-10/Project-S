@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Project_S.Runtime.Gameplay.Character.Combat;
 using Project_S.Runtime.Gameplay.Character.Stats;
+using Project_S.Runtime.Gameplay.HUD;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Character.Inventory
@@ -30,12 +31,18 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
         private BuffController _buffs;
 
         public Action OnInventoryChanged;
+        public Action<ItemData, int> OnItemAdded;
 
         private void Awake()
         {
             if (_stats == null) _stats = GetComponent<CharacterStats>();
             _buffs = GetComponent<BuffController>();
             EnsureSlots();
+        }
+
+        private void Start()
+        {
+            InventoryItemNotificationUI.GetOrCreate()?.BindInventory(this);
         }
 
         public float GetMaxWeight() => _stats != null ? _stats.Get(StatType.CarryWeight) : 50f;
@@ -81,6 +88,7 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
             }
 
             AddItemUnchecked(item, amountToAdd);
+            NotifyItemAdded(item, amountToAdd);
             NotifyInventoryChanged();
             return true;
         }
@@ -494,6 +502,11 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
         private void NotifyInventoryChanged()
         {
             OnInventoryChanged?.Invoke();
+        }
+
+        private void NotifyItemAdded(ItemData item, int amount)
+        {
+            OnItemAdded?.Invoke(item, amount);
         }
     }
 }
