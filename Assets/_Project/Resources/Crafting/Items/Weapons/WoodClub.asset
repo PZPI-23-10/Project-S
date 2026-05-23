@@ -10,25 +10,43 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 215432127562c5e46812873892628a75, type: 3}
-  m_Name: WoodenSword
+  m_Name: WoodClub
   m_EditorClassIdentifier: 
-  ItemName: "Shaped Cudgel"
+  ItemName: Shaped Cudgel
   Kind: 1
   Weight: 0.8
   IsStackable: 0
   MaxStack: 1
+  MaxInventoryStacks: 0
   Icon: {fileID: 0}
-  Description: "Simple wooden sword for early combat."
-  WeaponPrefab: {fileID: 3942592866433276128, guid: 6e6f288cc1ccdd543b2cd3d632a069ed, type: 3}
+  Description: Simple wooden sword for early combat.
+  WeaponPrefab: {fileID: 7556242366374042803, guid: 05c51f9b78e0663498fa5d2753a415b3,
+    type: 3}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 0
   HealthRestoreAmount: 0
   HungerRestoreAmount: 0
+  StaminaRestoreAmount: 0
+  SpecialEffect: 0
+  SpecialEffectDelaySeconds: 0
+  StatEffects: []
+  TimedBuffs: []
+  SpecialEffects: []
+  DamageConversions: []
+  TimedBuffType: 0
+  TimedBuffCategory: 0
+  TimedBuffMultiplier: 1
+  TimedBuffDurationSeconds: 0
+  SecondaryTimedBuffType: 0
+  SecondaryTimedBuffCategory: 0
+  SecondaryTimedBuffMultiplier: 1
+  SecondaryTimedBuffDurationSeconds: 0
+  IsTwoHanded: 0
   DamageProfile:
-  - Type: 2
+  - Type: 1
     Amount: 18
   PoiseDamage: 10
-  AttackSpeedMultiplier: 1.05
+  AttackSpeedMultiplier: 1
   MaxComboHits: 2
   HitsToChargeHeavy: 3
   HeavyAbility: 0
@@ -36,7 +54,7 @@ MonoBehaviour:
   OffhandAbility: 0
   AbilityCooldown: 8
   BlockMitigation: 0.5
-  ParryWindow: 0.24
-  ParryStaminaReward: 20
+  ParryWindow: 0.2
+  ParryStaminaReward: 15
   ParryPoiseDamage: 40
   HarvestTool: 0
