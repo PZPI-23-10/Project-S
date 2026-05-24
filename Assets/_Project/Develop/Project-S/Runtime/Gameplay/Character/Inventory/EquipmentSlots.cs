@@ -1,4 +1,5 @@
 using Project_S.Runtime.Gameplay.Character.Combat;
+using Project_S.Runtime.Gameplay.Character.Input;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Character.Inventory
@@ -12,6 +13,7 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
         [SerializeField] private Transform _weaponAnchor;
         [SerializeField] private GameObject _fistsObject;
         [SerializeField] private PoiseController _poise;
+        [SerializeField] private PlayerActionGate _actionGate;
 
         private GameObject _spawnedWeapon;
         private int _currentSlot = 0;
@@ -33,17 +35,16 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
 
         private void Start()
         {
+            if (_actionGate == null) _actionGate = GetComponentInParent<PlayerActionGate>();
             SwitchToSlot(0);
         }
 
-        private void Update()
+        public void Tick(PlayerInputSnapshot input)
         {
             if (_poise != null && _poise.IsBroken) return;
 
-            // Виправлено: явно вказуємо UnityEngine.Input, щоб уникнути конфлікту імен
-            if (UnityEngine.Input.GetKeyDown(KeyCode.Alpha1)) SwitchToSlot(0);
-            if (UnityEngine.Input.GetKeyDown(KeyCode.Alpha2)) SwitchToSlot(1);
-            if (UnityEngine.Input.GetKeyDown(KeyCode.Alpha3)) SwitchToSlot(2);
+            if (input.HotbarSlotPressed >= 0 && input.HotbarSlotPressed < _slots.Length)
+                SwitchToSlot(input.HotbarSlotPressed);
         }
 
         public void SwitchToSlot(int slotIndex)

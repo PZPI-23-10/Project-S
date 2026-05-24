@@ -59,29 +59,27 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
             _alreadyHit.Add(other);
 
-            float totalDamage = 0f;
-            DamageType primaryType = DamageType.Blunt;
-
-            if (_weaponData.DamageProfile != null && _weaponData.DamageProfile.Count > 0)
-            {
-                foreach (var damageInstance in _weaponData.DamageProfile)
-                    totalDamage += damageInstance.Amount;
-
-                primaryType = _weaponData.DamageProfile[0].Type;
-            }
-
+            var damageProfile = _weaponData.DamageProfile;
             var buffs = _attacker.GetComponentInParent<BuffController>();
             if (buffs != null)
-                totalDamage *= buffs.AttackDamageMultiplier;
+                damageProfile = buffs.ModifyDamageProfile(damageProfile);
 
             var request = new DamageRequest(
-                _attacker,
-                totalDamage,
-                _weaponData.PoiseDamage,
-                primaryType,
-                _weaponData);
+                            _attacker,
+                            damageProfile,
+                            _weaponData.PoiseDamage,
+                            _weaponData);
 
             receiver.ReceiveDamage(request);
+
+            if (_attacker != null)
+            {
+                var combatController = _attacker.GetComponent<CombatController>();
+                if (combatController != null)
+                {
+                    combatController.AddChargeOnHit();
+                }
+            }
         }
     }
 }

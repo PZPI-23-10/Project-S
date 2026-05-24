@@ -22,6 +22,6 @@ MonoBehaviour:
     Amount: 3
   SoulAshCost: 0
   RequiredItems: []
-  CraftDurationSeconds: 5
+  CraftDurationSeconds: 0
   FuelSecondsCost: 5
   Description: "Roast berries for a short Soul Ash reward buff. MVP timer is shorter than document balance."

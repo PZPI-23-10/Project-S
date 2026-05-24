@@ -1,4 +1,5 @@
 using Project_S.Runtime.Gameplay.Character.Inventory;
+using Project_S.Runtime.Gameplay.Character.Input;
 using Project_S.Runtime.Gameplay.Crafting;
 using UnityEngine;
 using UnityEngine.UI;
@@ -25,10 +26,15 @@ namespace Project_S.Runtime.Gameplay.HUD
 
         [Header("Interaction")]
         [SerializeField] private float _defaultInteractionCloseDistance = 3f;
+        [SerializeField] private PlayerActionGate _actionGate;
 
         private InventorySlotUI[] _createdSlots;
         private ItemStack _draggedStack;
         private CraftingPanelUI _craftingPanel;
+        private StoragePanelUI _storagePanel;
+        private AccessoryPanelUI _accessoryPanel;
+        private AccessorySlotController _accessories;
+        private IItemStorage _activeStorage;
         private SoulAshWallet _soulAshWallet;
         private CraftingContext _currentCraftingContext = CraftingContext.Hand;
         private Transform _distanceCloseTarget;
@@ -37,6 +43,7 @@ namespace Project_S.Runtime.Gameplay.HUD
         private bool _hasDistanceCloseTarget;
 
         public bool IsOpen => _inventoryPanel != null && _inventoryPanel.activeSelf;
+        public bool IsStorageOpen => IsOpen && _activeStorage != null;
 
         private void Awake()
         {
@@ -52,6 +59,7 @@ namespace Project_S.Runtime.Gameplay.HUD
                 _inventory.OnInventoryChanged += Refresh;
                 GenerateSlots();
                 InitializeCraftingPanel();
+                InitializeAccessoryPanel();
             }
         }
 
@@ -59,6 +67,8 @@ namespace Project_S.Runtime.Gameplay.HUD
         {
             if (_inventory != null)
                 _inventory.OnInventoryChanged -= Refresh;
+
+            _storagePanel?.ClearStorage();
         }
 
         private void GenerateSlots()
@@ -95,6 +105,7 @@ namespace Project_S.Runtime.Gameplay.HUD
 
         public void OpenWithCraftingContext(CraftingContext context)
         {
+            _activeStorage = null;
             ClearDistanceCloseTarget();
             SetInventoryOpen(true, context);
         }
@@ -105,8 +116,37 @@ namespace Project_S.Runtime.Gameplay.HUD
             Transform closeObserver,
             float closeDistance)
         {
+            _activeStorage = null;
             SetDistanceCloseTarget(closeTarget, closeObserver, closeDistance);
             SetInventoryOpenInternal(true, context);
+        }
+
+        public void OpenWithStorage(
+            BaseResourceStorage storage,
+            Transform closeTarget,
+            Transform closeObserver,
+            float closeDistance)
+        {
+            if (storage == null)
+                return;
+
+            _activeStorage = storage;
+            SetDistanceCloseTarget(closeTarget, closeObserver, closeDistance);
+            SetInventoryOpenInternal(true, CraftingContext.Hand);
+        }
+
+        public void OpenWithGeneralStorage(
+            GeneralItemStorage storage,
+            Transform closeTarget,
+            Transform closeObserver,
+            float closeDistance)
+        {
+            if (storage == null)
+                return;
+
+            _activeStorage = storage;
+            SetDistanceCloseTarget(closeTarget, closeObserver, closeDistance);
+            SetInventoryOpenInternal(true, CraftingContext.Hand);
         }
 
         public void SetCraftingContext(CraftingContext context)
@@ -118,6 +158,8 @@ namespace Project_S.Runtime.Gameplay.HUD
 
         public void SetInventoryOpen(bool open, CraftingContext context)
         {
+            _activeStorage = null;
+
             if (open)
                 ClearDistanceCloseTarget();
 
@@ -132,12 +174,25 @@ namespace Project_S.Runtime.Gameplay.HUD
             _currentCraftingContext = context;
             _inventoryPanel.SetActive(open);
             if (_contextPanel != null) _contextPanel.SetActive(open);
+            ResolveActionGate()?.SetInventoryOpen(open);
 
             if (open)
             {
                 InitializeCraftingPanel();
+                InitializeStoragePanel();
+                InitializeAccessoryPanel();
+
+                bool storageMode = _activeStorage != null;
+                _craftingPanel?.SetPanelVisible(!storageMode);
+                if (storageMode)
+                    _storagePanel?.SetStorage(_activeStorage);
+                else
+                {
+                    _storagePanel?.ClearStorage();
+                    _craftingPanel?.SetContext(_currentCraftingContext);
+                }
+
                 Refresh();
-                _craftingPanel?.SetContext(_currentCraftingContext);
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
             }
@@ -145,6 +200,9 @@ namespace Project_S.Runtime.Gameplay.HUD
             {
                 ClearDistanceCloseTarget();
                 ReturnDraggedStackToInventory();
+                _storagePanel?.ClearStorage();
+                _craftingPanel?.SetPanelVisible(true);
+                _activeStorage = null;
                 TooltipUI.Instance?.Hide();
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
@@ -154,6 +212,16 @@ namespace Project_S.Runtime.Gameplay.HUD
         public void OnSlotClicked(int slotIndex, PointerEventData.InputButton button)
         {
             ItemStack targetSlotStack = _inventory.GetSlot(slotIndex);
+
+            if (_activeStorage != null
+                && button == PointerEventData.InputButton.Right
+                && _draggedStack == null
+                && targetSlotStack != null)
+            {
+                _activeStorage.TryDepositFromInventory(_inventory, slotIndex, int.MaxValue);
+                Refresh();
+                return;
+            }
 
             if (button == PointerEventData.InputButton.Left)
             {
@@ -233,6 +301,14 @@ namespace Project_S.Runtime.Gameplay.HUD
 
                         UpdateDraggedIcon();
                     }
+                    else if (_draggedStack == null && targetSlotStack.Item is AccessoryItemData)
+                    {
+                        if (ResolveAccessorySlots()?.TryEquipFromInventory(slotIndex) == true)
+                        {
+                            Refresh();
+                            return;
+                        }
+                    }
                     else if (_draggedStack == null)
                     {
                         EquipmentSlots eq = FindFirstObjectByType<EquipmentSlots>();
@@ -252,21 +328,26 @@ namespace Project_S.Runtime.Gameplay.HUD
 
         public void Refresh()
         {
-            if (_inventory == null || _createdSlots == null) return;
+            if (_inventory == null) return;
 
             var slots = _inventory.GetAllSlots();
             if (slots == null) return;
 
-            for (int i = 0; i < _createdSlots.Length; i++)
+            if (_createdSlots != null)
             {
-                if (_createdSlots[i] != null)
-                    _createdSlots[i].UpdateView(i < slots.Length ? slots[i] : null);
+                for (int i = 0; i < _createdSlots.Length; i++)
+                {
+                    if (_createdSlots[i] != null)
+                        _createdSlots[i].UpdateView(i < slots.Length ? slots[i] : null);
+                }
             }
 
             if (_weightText != null)
                 _weightText.text = $"Weight: {_inventory.GetCurrentWeight():F1} / {_inventory.GetMaxWeight():F1}";
 
             _craftingPanel?.Refresh();
+            _storagePanel?.Refresh();
+            _accessoryPanel?.Refresh();
         }
 
         private void InitializeCraftingPanel()
@@ -274,12 +355,7 @@ namespace Project_S.Runtime.Gameplay.HUD
             if (_inventory == null || _contextPanel == null)
                 return;
 
-            if (_soulAshWallet == null)
-            {
-                _soulAshWallet = _inventory.GetComponent<SoulAshWallet>();
-                if (_soulAshWallet == null)
-                    _soulAshWallet = _inventory.gameObject.AddComponent<SoulAshWallet>();
-            }
+            EnsureSoulAshWallet();
 
             if (_craftingPanel == null)
             {
@@ -289,6 +365,93 @@ namespace Project_S.Runtime.Gameplay.HUD
 
                 _craftingPanel.Initialize(_inventory, _soulAshWallet, _currentCraftingContext);
             }
+        }
+
+        private void InitializeStoragePanel()
+        {
+            if (_inventory == null || _contextPanel == null)
+                return;
+
+            EnsureSoulAshWallet();
+
+            if (_storagePanel == null)
+            {
+                _storagePanel = _contextPanel.GetComponentInChildren<StoragePanelUI>(true);
+                if (_storagePanel == null)
+                {
+                    var storageObject = new GameObject("StoragePanel", typeof(RectTransform));
+                    storageObject.transform.SetParent(_contextPanel.transform, false);
+
+                    var rect = (RectTransform)storageObject.transform;
+                    rect.anchorMin = Vector2.zero;
+                    rect.anchorMax = Vector2.one;
+                    rect.offsetMin = Vector2.zero;
+                    rect.offsetMax = Vector2.zero;
+
+                    _storagePanel = storageObject.AddComponent<StoragePanelUI>();
+                }
+
+                _storagePanel.Initialize(_inventory, _soulAshWallet, _slotPrefab);
+                _storagePanel.gameObject.SetActive(false);
+            }
+        }
+
+        private void InitializeAccessoryPanel()
+        {
+            if (_inventory == null || _inventoryPanel == null)
+                return;
+
+            var accessories = ResolveAccessorySlots();
+            if (accessories == null)
+                return;
+
+            if (_accessoryPanel == null)
+            {
+                _accessoryPanel = _inventoryPanel.GetComponentInChildren<AccessoryPanelUI>(true);
+                if (_accessoryPanel == null)
+                {
+                    var accessoryObject = new GameObject("AccessoryPanel", typeof(RectTransform));
+                    accessoryObject.transform.SetParent(_inventoryPanel.transform, false);
+
+                    var rect = (RectTransform)accessoryObject.transform;
+                    rect.anchorMin = new Vector2(0f, 1f);
+                    rect.anchorMax = new Vector2(1f, 1f);
+                    rect.pivot = new Vector2(0.5f, 1f);
+                    rect.offsetMin = Vector2.zero;
+                    rect.offsetMax = Vector2.zero;
+
+                    _accessoryPanel = accessoryObject.AddComponent<AccessoryPanelUI>();
+                }
+
+                _accessoryPanel.Initialize(accessories, _slotPrefab);
+            }
+        }
+
+        private AccessorySlotController ResolveAccessorySlots()
+        {
+            if (_accessories != null)
+                return _accessories;
+
+            if (_inventory != null)
+                _accessories = _inventory.GetComponent<AccessorySlotController>() ?? _inventory.GetComponentInParent<AccessorySlotController>();
+
+            if (_accessories == null && _inventory != null)
+                _accessories = _inventory.gameObject.AddComponent<AccessorySlotController>();
+
+            if (_accessories == null)
+                _accessories = FindFirstObjectByType<AccessorySlotController>();
+
+            return _accessories;
+        }
+
+        private void EnsureSoulAshWallet()
+        {
+            if (_soulAshWallet != null || _inventory == null)
+                return;
+
+            _soulAshWallet = _inventory.GetComponent<SoulAshWallet>();
+            if (_soulAshWallet == null)
+                _soulAshWallet = _inventory.gameObject.AddComponent<SoulAshWallet>();
         }
 
         private void UpdateDraggedItem()
@@ -310,7 +473,7 @@ namespace Project_S.Runtime.Gameplay.HUD
 
             if (_distanceCloseTarget == null || !_distanceCloseTarget.gameObject.activeInHierarchy)
             {
-                SwitchStationContextBackToHand();
+                CloseDistanceBoundContext();
                 return true;
             }
 
@@ -320,7 +483,7 @@ namespace Project_S.Runtime.Gameplay.HUD
 
             if (observer == null)
             {
-                SwitchStationContextBackToHand();
+                CloseDistanceBoundContext();
                 return true;
             }
 
@@ -330,8 +493,19 @@ namespace Project_S.Runtime.Gameplay.HUD
             if (sqrDistance <= closeDistance * closeDistance)
                 return false;
 
-            SwitchStationContextBackToHand();
+            CloseDistanceBoundContext();
             return true;
+        }
+
+        private void CloseDistanceBoundContext()
+        {
+            if (_activeStorage != null)
+            {
+                SetInventoryOpenInternal(false, CraftingContext.Hand);
+                return;
+            }
+
+            SwitchStationContextBackToHand();
         }
 
         private void SwitchStationContextBackToHand()
@@ -415,6 +589,20 @@ namespace Project_S.Runtime.Gameplay.HUD
                 _draggedItemIcon.gameObject.SetActive(active);
                 _draggedItemIcon.raycastTarget = false;
             }
+        }
+
+        private PlayerActionGate ResolveActionGate()
+        {
+            if (_actionGate != null)
+                return _actionGate;
+
+            if (_inventory != null)
+                _actionGate = _inventory.GetComponentInParent<PlayerActionGate>();
+
+            if (_actionGate == null)
+                _actionGate = FindFirstObjectByType<PlayerActionGate>();
+
+            return _actionGate;
         }
     }
 }
