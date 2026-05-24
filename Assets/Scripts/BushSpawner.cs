@@ -19,6 +19,9 @@ public class BushSpawner : MonoBehaviour
     [Tooltip("Which layers to consider as ground/terrain for raycast")]
     public LayerMask terrainLayer = ~0;
 
+    [Tooltip("Шари об'єктів, які БЛОКУЮТЬ спавн (дерева, каміння, інші кущі, будинки)")]
+    public LayerMask obstacleLayers;
+
     [Tooltip("Maximum attempts per bush placement")]
     public int maxAttemptsPerBush = 12;
 
@@ -41,7 +44,8 @@ public class BushSpawner : MonoBehaviour
     void Start()
     {
         if (Application.isPlaying && spawnOnStart)
-            SpawnAll();
+            SpawnAll(); 
+       
     }
 
     void OnValidate()
@@ -75,12 +79,19 @@ public class BushSpawner : MonoBehaviour
             for (int attempt = 0; attempt < maxAttemptsPerBush; attempt++)
             {
                 Vector2 circle = RandomPointInCircle();
-                // Cast from high above to ensure we are above any terrain elevation
                 Vector3 origin = new Vector3(transform.position.x + circle.x, transform.position.y + 200f, transform.position.z + circle.y);
 
-                // increase max distance and layer mask usage
-                if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 1000f, terrainLayer))
+                // 🔥 ВИПРАВЛЕНО: Стріляємо в усі шари, перевіряємо землю
+                if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 1000f))
                 {
+                    if ((terrainLayer.value & (1 << hit.collider.gameObject.layer)) == 0) continue;
+
+                    // 🔥 НОВА ПЕРЕВІРКА сферою на перешкоди
+                    if (Physics.OverlapSphere(hit.point, minDistanceBetweenBushes, obstacleLayers).Length > 0)
+                    {
+                        continue;
+                    }
+
                     Vector3 pos = hit.point;
 
                     bool tooClose = false;
@@ -109,7 +120,6 @@ public class BushSpawner : MonoBehaviour
                     var go = Instantiate(prefab, this.transform);
 #endif
 
-                    // small upward offset to avoid embedding in terrain (and account for prefab pivot)
                     go.transform.position = pos + Vector3.up * 0.02f;
                     go.transform.rotation = Quaternion.Euler(0f, (float)RandomFloat(0f, 360f), 0f);
                     float s = (float)RandomFloat(minScale, maxScale);

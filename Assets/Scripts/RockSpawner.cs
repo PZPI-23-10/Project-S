@@ -19,6 +19,9 @@ public class RockSpawner : MonoBehaviour
     [Tooltip("Which layers to consider as ground/terrain for raycast")]
     public LayerMask terrainLayer = ~0;
 
+    [Tooltip("Шари об'єктів, які БЛОКУЮТЬ спавн (дерева, інші каміння, кущі, будинки)")]
+    public LayerMask obstacleLayers;
+
     [Tooltip("Maximum attempts per rock placement")]
     public int maxAttemptsPerRock = 20;
 
@@ -48,6 +51,7 @@ public class RockSpawner : MonoBehaviour
     {
         if (Application.isPlaying && spawnOnStart)
             SpawnAll();
+        
     }
 
     void OnValidate()
@@ -82,8 +86,17 @@ public class RockSpawner : MonoBehaviour
                 Vector2 circle = RandomPointInCircle();
                 Vector3 origin = new Vector3(transform.position.x + circle.x, transform.position.y + 200f, transform.position.z + circle.y);
 
-                if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 1000f, terrainLayer))
+                // 🔥 ВИПРАВЛЕНО: Стріляємо в усі шари, перевіряємо землю
+                if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 1000f))
                 {
+                    if ((terrainLayer.value & (1 << hit.collider.gameObject.layer)) == 0) continue;
+
+                    // 🔥 НОВА ПЕРЕВІРКА сферою на перешкоди
+                    if (Physics.OverlapSphere(hit.point, minDistanceBetweenRocks, obstacleLayers).Length > 0)
+                    {
+                        continue;
+                    }
+
                     Vector3 pos = hit.point;
 
                     bool tooClose = false;
@@ -112,7 +125,6 @@ public class RockSpawner : MonoBehaviour
                     var go = Instantiate(prefab, this.transform);
 #endif
 
-                    // position and rotation
                     go.transform.position = pos + Vector3.up * verticalOffset;
                     float yaw = (float)RandomFloat(0f, 360f);
                     if (alignToNormal)

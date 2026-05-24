@@ -19,6 +19,9 @@ public class TreeSpawner : MonoBehaviour
     [Tooltip("Which layers to consider as ground/terrain for raycast")]
     public LayerMask terrainLayer = ~0;
 
+    [Tooltip("Шари об'єктів, які БЛОКУЮТЬ спавн (інші дерева, каміння, будинки)")]
+    public LayerMask obstacleLayers;
+
     [Tooltip("Maximum attempts per tree placement")]
     public int maxAttemptsPerTree = 30;
 
@@ -48,6 +51,7 @@ public class TreeSpawner : MonoBehaviour
     {
         if (Application.isPlaying && spawnOnStart)
             SpawnAll();
+       
     }
 
     void OnValidate()
@@ -82,17 +86,22 @@ public class TreeSpawner : MonoBehaviour
                 Vector2 circle = RandomPointInCircle();
                 Vector3 origin = new Vector3(transform.position.x + circle.x, transform.position.y + 200f, transform.position.z + circle.y);
 
-                // ЗМІНА ТУТ: Стріляємо в усі шари, щоб промінь не проходив крізь будинок
                 if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 1000f))
                 {
-                    // ПЕРЕВІРКА: Якщо ми влучили в об'єкт, шар якого НЕ збігається з terrainLayer (наприклад, дах) - пропускаємо!
                     if ((terrainLayer.value & (1 << hit.collider.gameObject.layer)) == 0)
                     {
                         continue;
                     }
 
+                    // 🔥 НОВА ПЕРЕВІРКА: чи є навколо інші ресурси або будинки
+                    if (Physics.OverlapSphere(hit.point, minDistanceBetweenTrees, obstacleLayers).Length > 0)
+                    {
+                        continue; // Знайшли перешкоду - пропускаємо цю точку
+                    }
+
                     Vector3 pos = hit.point;
 
+                    // Залишаємо твою стару перевірку дистанції між деревами цього ж спавнера
                     bool tooClose = false;
                     for (int j = 0; j < placedPositions.Count; j++)
                     {
@@ -122,7 +131,6 @@ public class TreeSpawner : MonoBehaviour
                     go.transform.position = pos + Vector3.up * verticalOffset;
 
                     float yaw = (float)RandomFloat(0f, 360f);
-                    // Змішуємо ідеально рівний вектор (Vector3.up) і нормаль схилу (hit.normal)
                     Vector3 blendedNormal = Vector3.Lerp(Vector3.up, hit.normal, alignToNormal).normalized;
                     go.transform.rotation = Quaternion.FromToRotation(Vector3.up, blendedNormal) * Quaternion.Euler(0f, yaw, 0f);
 
