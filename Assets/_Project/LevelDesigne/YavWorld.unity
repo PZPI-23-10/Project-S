@@ -1626,6 +1626,9 @@ MonoBehaviour:
   terrainLayer:
     serializedVersion: 2
     m_Bits: 256
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 247
   maxAttemptsPerRock: 20
   minDistanceBetweenRocks: 1.5
   minScale: 0.8
@@ -5279,6 +5282,9 @@ MonoBehaviour:
   terrainLayer:
     serializedVersion: 2
     m_Bits: 256
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 247
   maxAttemptsPerTree: 30
   minDistanceBetweenTrees: 2
   minScale: 0.9
@@ -6532,6 +6538,9 @@ MonoBehaviour:
   terrainLayer:
     serializedVersion: 2
     m_Bits: 256
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 247
   maxAttemptsPerBush: 12
   minDistanceBetweenBushes: 1
   minScale: 0.9
