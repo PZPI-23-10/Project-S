@@ -16,6 +16,10 @@ namespace Project_S.Runtime.Gameplay.Enemies
         private const string SkeletonName = "[MVP] Skeleton";
         private const string SkeletonVisualPath = "Enemies/Skeleton/SkeletonVisual";
         private const string SkeletonAnimatorPath = "Enemies/Skeleton/SkeletonAnimator";
+        private const float SkeletonAgentRadius = 0.45f;
+        private const float SkeletonAgentHeight = 2.35f;
+        private const float SkeletonVisualScale = 9.2f;
+        private static readonly Vector3 SkeletonHealthBarOffset = new Vector3(0f, 2.6f, 0f);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
@@ -63,8 +67,8 @@ namespace Project_S.Runtime.Gameplay.Enemies
             config.LoseTargetRange = 13f;
             config.AttackRange = 1.7f;
             config.RotationSpeed = 540f;
-            config.AgentRadius = 0.5f;
-            config.AgentHeight = 2f;
+            config.AgentRadius = SkeletonAgentRadius;
+            config.AgentHeight = SkeletonAgentHeight;
             config.AgentBaseOffset = 0f;
             config.MaxStepHeight = 0.4f;
             config.MaxSlope = 45f;
@@ -93,6 +97,8 @@ namespace Project_S.Runtime.Gameplay.Enemies
                 Debug.LogWarning("[Skeleton] Spawn position is not on the runtime navmesh. Movement will stay disabled until a navmesh point is available.");
 
             var renderer = skeleton.GetComponent<Renderer>();
+            ConfigureHitbox(skeleton, config);
+
             var visual = TryAttachVisual(skeleton.transform);
             if (visual == null && renderer != null)
             {
@@ -124,7 +130,19 @@ namespace Project_S.Runtime.Gameplay.Enemies
             mover.TryWarpToNearestNavMesh(5f);
             controller.Configure(config, target);
             animationController.Configure(controller, attack, health, visual != null ? visual.transform : null, visual != null ? visual.GetComponentInChildren<Animator>() : null);
-            worldHealthBar.Configure("Скелет", new Vector3(0f, 1.45f, 0f));
+            worldHealthBar.Configure("Скелет", SkeletonHealthBarOffset);
+        }
+
+        private static void ConfigureHitbox(GameObject skeleton, EnemyConfig config)
+        {
+            foreach (var collider in skeleton.GetComponents<Collider>())
+                Object.Destroy(collider);
+
+            var hitbox = skeleton.AddComponent<CapsuleCollider>();
+            hitbox.radius = config.AgentRadius;
+            hitbox.height = config.AgentHeight;
+            hitbox.center = new Vector3(0f, config.AgentHeight * 0.5f, 0f);
+            hitbox.direction = 1;
         }
 
         private static GameObject TryAttachVisual(Transform parent)
@@ -137,7 +155,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
             visual.name = "VisualRoot";
             visual.transform.localPosition = Vector3.zero;
             visual.transform.localRotation = Quaternion.identity;
-            visual.transform.localScale = Vector3.one * 8f;
+            visual.transform.localScale = Vector3.one * SkeletonVisualScale;
 
             ConfigureAnimator(visual);
 
