@@ -3108,8 +3108,8 @@ MonoBehaviour:
   _maxSway: 0.06
   _swaySmoothness: 6
   _bobSpeed: 14
-  _bobAmountX: 0.05
-  _bobAmountY: 0.05
+  _bobAmountX: 0.02
+  _bobAmountY: 0.02
 --- !u!1 &1272386984
 GameObject:
   m_ObjectHideFlags: 0

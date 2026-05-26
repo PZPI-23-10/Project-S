@@ -12,24 +12,42 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 215432127562c5e46812873892628a75, type: 3}
   m_Name: FlintAxe
   m_EditorClassIdentifier: 
-  ItemName: "Flint Axe"
+  ItemName: Flint Axe
   Kind: 1
   Weight: 1.9
   IsStackable: 0
   MaxStack: 1
+  MaxInventoryStacks: 0
   Icon: {fileID: 0}
-  Description: "Sharper axe with better attack speed than the stone axe."
-  WeaponPrefab: {fileID: 3942592866433276128, guid: 6e6f288cc1ccdd543b2cd3d632a069ed, type: 3}
+  Description: Sharper axe with better attack speed than the stone axe.
+  WeaponPrefab: {fileID: 6466024910524059122, guid: 2603b7c15c5184e47a028eceaa067730,
+    type: 3}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 0
   HealthRestoreAmount: 0
   HungerRestoreAmount: 0
+  StaminaRestoreAmount: 0
+  SpecialEffect: 0
+  SpecialEffectDelaySeconds: 0
+  StatEffects: []
+  TimedBuffs: []
+  SpecialEffects: []
+  DamageConversions: []
+  TimedBuffType: 0
+  TimedBuffCategory: 0
+  TimedBuffMultiplier: 1
+  TimedBuffDurationSeconds: 0
+  SecondaryTimedBuffType: 0
+  SecondaryTimedBuffCategory: 0
+  SecondaryTimedBuffMultiplier: 1
+  SecondaryTimedBuffDurationSeconds: 0
+  IsTwoHanded: 1
   DamageProfile:
   - Type: 2
-    Amount: 22
+    Amount: 36
   PoiseDamage: 20
   AttackSpeedMultiplier: 0.85
-  MaxComboHits: 1
+  MaxComboHits: 2
   HitsToChargeHeavy: 3
   HeavyAbility: 0
   HeavyAbilityDuration: 0

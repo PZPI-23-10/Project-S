@@ -12,15 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 215432127562c5e46812873892628a75, type: 3}
   m_Name: IronSword
   m_EditorClassIdentifier: 
-  ItemName: "Iron Sword"
+  ItemName: Iron Sword
   Kind: 1
   Weight: 1.3
   IsStackable: 0
   MaxStack: 1
   MaxInventoryStacks: 0
   Icon: {fileID: 0}
-  Description: "Iron-tier sword. Directional slice active ability is deferred; this MVP uses its weapon stats."
-  WeaponPrefab: {fileID: 3942592866433276128, guid: 6e6f288cc1ccdd543b2cd3d632a069ed, type: 3}
+  Description: Iron-tier sword. Directional slice active ability is deferred; this
+    MVP uses its weapon stats.
+  WeaponPrefab: {fileID: 5613771737888652153, guid: 3a7dd7e385d9bb140bec511aa43272a7,
+    type: 3}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 0
   HealthRestoreAmount: 0
@@ -28,6 +30,10 @@ MonoBehaviour:
   StaminaRestoreAmount: 0
   SpecialEffect: 0
   SpecialEffectDelaySeconds: 0
+  StatEffects: []
+  TimedBuffs: []
+  SpecialEffects: []
+  DamageConversions: []
   TimedBuffType: 0
   TimedBuffCategory: 0
   TimedBuffMultiplier: 1
@@ -36,6 +42,7 @@ MonoBehaviour:
   SecondaryTimedBuffCategory: 0
   SecondaryTimedBuffMultiplier: 1
   SecondaryTimedBuffDurationSeconds: 0
+  IsTwoHanded: 0
   DamageProfile:
   - Type: 2
     Amount: 26

@@ -22,7 +22,8 @@ MonoBehaviour:
   Description: Workbench pickaxe. Resource finishing ability is deferred after MVP.
   WeaponPrefab: {fileID: 7817334558654498724, guid: 7c51b549c5b8a6c45ab808f77129e48a,
     type: 3}
-  WorldPickupPrefab: {fileID: 0}
+  WorldPickupPrefab: {fileID: 919132149155446097, guid: e88dda5d517b3b148a9b8c7e48088694,
+    type: 3}
   ConsumableEffect: 0
   HealthRestoreAmount: 0
   HungerRestoreAmount: 0
@@ -41,7 +42,7 @@ MonoBehaviour:
   SecondaryTimedBuffCategory: 0
   SecondaryTimedBuffMultiplier: 1
   SecondaryTimedBuffDurationSeconds: 0
-  IsTwoHanded: 0
+  IsTwoHanded: 1
   DamageProfile:
   - Type: 0
     Amount: 30
