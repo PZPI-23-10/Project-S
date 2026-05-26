@@ -1,15 +1,19 @@
 using Project_S.Runtime.Gameplay.Character.Player;
+using Project_S.Runtime.Gameplay.Navigation;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace Project_S.Runtime.Gameplay.Enemies
 {
     [RequireComponent(typeof(EnemyHealth))]
     [RequireComponent(typeof(EnemyMeleeAttack))]
+    [RequireComponent(typeof(GroundNavMeshMover))]
     public class EnemyController : MonoBehaviour
     {
         [SerializeField] private EnemyConfig _config;
         [SerializeField] private EnemyHealth _health;
         [SerializeField] private EnemyMeleeAttack _meleeAttack;
+        [SerializeField] private GroundNavMeshMover _mover;
         [SerializeField] private Transform _target;
 
         private bool _hasAggro;
@@ -24,6 +28,9 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
             if (_meleeAttack == null)
                 _meleeAttack = GetComponent<EnemyMeleeAttack>();
+
+            if (_mover == null)
+                _mover = GetComponent<GroundNavMeshMover>();
 
             if (_health != null)
                 _health.Died += OnDied;
@@ -45,6 +52,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
             if (_config == null)
                 return;
 
+            ConfigureMover();
             EnsureTarget();
 
             if (_target == null)
@@ -57,12 +65,21 @@ namespace Project_S.Runtime.Gameplay.Enemies
             UpdateAggro(distance);
 
             if (!_hasAggro)
+            {
+                if (_mover != null)
+                    _mover.Stop();
+
                 return;
+            }
 
             RotateToward(toTarget);
 
-            if (distance <= _config.AttackRange)
+            bool canAttack = distance <= _config.AttackRange && (_mover == null || _mover.PathStatus != NavMeshPathStatus.PathInvalid);
+            if (canAttack)
             {
+                if (_mover != null)
+                    _mover.Stop();
+
                 if (_meleeAttack != null)
                     _meleeAttack.TryAttack(_target);
 
@@ -70,9 +87,14 @@ namespace Project_S.Runtime.Gameplay.Enemies
             }
 
             if (_meleeAttack != null && _meleeAttack.IsWindingUp)
-                return;
+            {
+                if (_mover != null)
+                    _mover.Stop();
 
-            MoveToward(toTarget);
+                return;
+            }
+
+            MoveToward(_target.position);
         }
 
         public void Configure(EnemyConfig config, Transform target)
@@ -91,6 +113,8 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
             if (_meleeAttack != null)
                 _meleeAttack.Configure(config);
+
+            ConfigureMover();
         }
 
         private void EnsureTarget()
@@ -127,18 +151,48 @@ namespace Project_S.Runtime.Gameplay.Enemies
             transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, maxDegrees);
         }
 
-        private void MoveToward(Vector3 toTarget)
+        private void MoveToward(Vector3 destination)
         {
-            if (toTarget.sqrMagnitude <= 0.0001f)
+            if (_mover == null)
                 return;
 
-            float step = Mathf.Max(0f, _config.MoveSpeed) * Time.deltaTime;
-            transform.position = Vector3.MoveTowards(transform.position, transform.position + toTarget.normalized, step);
-            IsMoving = step > 0f;
+            if (!_mover.IsReady && !_mover.TryWarpToNearestNavMesh(_config.AgentRadius + 2f))
+                return;
+
+            _mover.SetSpeed(_config.MoveSpeed);
+            _mover.TryMoveTo(destination, _config.AgentRadius + 2f);
+            IsMoving = _mover.IsMoving;
+        }
+
+        private void ConfigureMover()
+        {
+            if (_config == null)
+                return;
+
+            if (_mover == null)
+                _mover = GetComponent<GroundNavMeshMover>();
+
+            if (_mover == null)
+                return;
+
+            float stoppingDistance = Mathf.Max(0f, _config.AttackRange - _config.StoppingDistancePadding);
+            _mover.Configure(
+                _config.MoveSpeed,
+                stoppingDistance,
+                _config.AgentRadius,
+                _config.AgentHeight,
+                _config.AgentBaseOffset,
+                Mathf.Max(8f, _config.MoveSpeed * 4f),
+                _config.RotationSpeed,
+                _config.RepathInterval,
+                50);
         }
 
         private void OnDied(EnemyHealth health)
         {
+            if (_mover != null)
+                _mover.Stop();
+
             enabled = false;
         }
     }

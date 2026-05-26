@@ -2,7 +2,9 @@ using System.Collections;
 using Project_S.Runtime.Gameplay.Character.Combat;
 using Project_S.Runtime.Gameplay.Character.Player;
 using Project_S.Runtime.Gameplay.Enemies;
+using Project_S.Runtime.Gameplay.Navigation;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 
 namespace Project_S.Runtime.Gameplay.Ambient
@@ -92,7 +94,9 @@ namespace Project_S.Runtime.Gameplay.Ambient
             int index)
         {
             Vector2 offset = Random.insideUnitCircle * definition.HerdRadius * 0.7f;
-            Vector3 spawnPosition = NeutralAnimalController.SampleGround(herdCenter + new Vector3(offset.x, 0f, offset.y));
+            Vector3 spawnPosition = SampleNavMeshPosition(
+                NeutralAnimalController.SampleGround(herdCenter + new Vector3(offset.x, 0f, offset.y)),
+                definition.HerdRadius);
             var animal = Object.Instantiate(prefab, spawnPosition, RandomYaw(), parent);
             animal.name = $"{definition.DisplayName} {index + 1}";
 
@@ -107,10 +111,13 @@ namespace Project_S.Runtime.Gameplay.Ambient
             config.DestroyDelayAfterDeath = DeathDestroyDelay;
 
             var health = animal.AddComponent<EnemyHealth>();
+            var mover = animal.AddComponent<GroundNavMeshMover>();
             var controller = animal.AddComponent<NeutralAnimalController>();
             var worldHealthBar = animal.AddComponent<EnemyWorldHealthBar>();
 
             health.Configure(config);
+            mover.Configure(definition.WalkSpeed, 0.15f, definition.ColliderRadius, definition.ColliderHeight, 0f, 8f, 540f, 0.25f, 60);
+            mover.TryWarpToNearestNavMesh(definition.HerdRadius);
             controller.Configure(
                 player,
                 health,
@@ -169,6 +176,14 @@ namespace Project_S.Runtime.Gameplay.Ambient
         private static Quaternion RandomYaw()
         {
             return Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+        }
+
+        private static Vector3 SampleNavMeshPosition(Vector3 position, float searchRadius)
+        {
+            if (NavMesh.SamplePosition(position, out NavMeshHit hit, Mathf.Max(0.5f, searchRadius), NavMesh.AllAreas))
+                return hit.position;
+
+            return position;
         }
 
         private readonly struct AnimalSpawnDefinition
@@ -285,7 +300,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
 
             var boar = new GameObject("Wild Boar 1");
             boar.transform.SetParent(boarGroup.transform);
-            boar.transform.SetPositionAndRotation(homeCenter, RandomYaw());
+            boar.transform.SetPositionAndRotation(SampleNavMeshPosition(homeCenter, 9f), RandomYaw());
 
             var visual = Object.Instantiate(prefab, boar.transform);
             visual.name = "VisualRoot";
@@ -326,11 +341,14 @@ namespace Project_S.Runtime.Gameplay.Ambient
 
             var health = boar.AddComponent<EnemyHealth>();
             var attack = boar.AddComponent<EnemyMeleeAttack>();
+            var mover = boar.AddComponent<GroundNavMeshMover>();
             var controller = boar.AddComponent<RetaliatingBoarController>();
             var worldHealthBar = boar.AddComponent<EnemyWorldHealthBar>();
 
             health.Configure(config);
             attack.Configure(config);
+            mover.Configure(1.1f, Mathf.Max(0.1f, config.AttackRange - 0.05f), 0.55f, 1.15f, 0f, 12f, config.RotationSpeed, 0.18f, 45);
+            mover.TryWarpToNearestNavMesh(9f);
             controller.Configure(
                 player,
                 health,

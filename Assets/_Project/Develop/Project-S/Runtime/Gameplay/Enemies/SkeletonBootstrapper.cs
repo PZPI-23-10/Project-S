@@ -2,7 +2,9 @@ using System.Collections;
 using Project_S.Runtime.Gameplay.Character.Combat;
 using Project_S.Runtime.Gameplay.Character.Player;
 using Project_S.Runtime.Gameplay.Loot;
+using Project_S.Runtime.Gameplay.Navigation;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 
 namespace Project_S.Runtime.Gameplay.Enemies
@@ -61,6 +63,13 @@ namespace Project_S.Runtime.Gameplay.Enemies
             config.LoseTargetRange = 13f;
             config.AttackRange = 1.7f;
             config.RotationSpeed = 540f;
+            config.AgentRadius = 0.5f;
+            config.AgentHeight = 2f;
+            config.AgentBaseOffset = 0f;
+            config.MaxStepHeight = 0.4f;
+            config.MaxSlope = 45f;
+            config.StoppingDistancePadding = 0.05f;
+            config.RepathInterval = 0.2f;
             config.AttackCooldown = 1.8f;
             config.AttackWindup = 0.45f;
             config.AttackRadius = 0.65f;
@@ -77,6 +86,11 @@ namespace Project_S.Runtime.Gameplay.Enemies
             skeleton.transform.SetParent(parent);
             skeleton.transform.position = position;
             skeleton.transform.localScale = Vector3.one * 1.1f;
+
+            if (NavMesh.SamplePosition(position, out NavMeshHit navMeshHit, 5f, NavMesh.AllAreas))
+                skeleton.transform.position = navMeshHit.position;
+            else
+                Debug.LogWarning("[Skeleton] Spawn position is not on the runtime navmesh. Movement will stay disabled until a navmesh point is available.");
 
             var renderer = skeleton.GetComponent<Renderer>();
             var visual = TryAttachVisual(skeleton.transform);
@@ -95,6 +109,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
             var health = skeleton.AddComponent<EnemyHealth>();
             var attack = skeleton.AddComponent<EnemyMeleeAttack>();
+            var mover = skeleton.AddComponent<GroundNavMeshMover>();
             var controller = skeleton.AddComponent<EnemyController>();
             var worldHealthBar = skeleton.AddComponent<EnemyWorldHealthBar>();
             var lootDropper = skeleton.AddComponent<LootDropper>();
@@ -105,6 +120,8 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
             health.Configure(config);
             attack.Configure(config);
+            mover.Configure(config.MoveSpeed, config.AttackRange - config.StoppingDistancePadding, config.AgentRadius, config.AgentHeight, config.AgentBaseOffset, 12f, config.RotationSpeed, config.RepathInterval, 50);
+            mover.TryWarpToNearestNavMesh(5f);
             controller.Configure(config, target);
             animationController.Configure(controller, attack, health, visual != null ? visual.transform : null, visual != null ? visual.GetComponentInChildren<Animator>() : null);
             worldHealthBar.Configure("Скелет", new Vector3(0f, 1.45f, 0f));
