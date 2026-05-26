@@ -20,6 +20,15 @@ namespace Project_S.Runtime.Gameplay.Enemies
         [Min(0f)] public float AttackRange = 1.7f;
         [Min(0f)] public float RotationSpeed = 540f;
 
+        [Header("NavMesh")]
+        [Min(0.01f)] public float AgentRadius = 0.5f;
+        [Min(0.01f)] public float AgentHeight = 2f;
+        public float AgentBaseOffset = 0f;
+        [Min(0f)] public float MaxStepHeight = 0.4f;
+        [Range(0f, 90f)] public float MaxSlope = 45f;
+        [Min(0f)] public float StoppingDistancePadding = 0.05f;
+        [Min(0.02f)] public float RepathInterval = 0.2f;
+
         [Header("Attack")]
         [Min(0f)] public float AttackCooldown = 1.8f;
         [Min(0f)] public float AttackWindup = 0.45f;

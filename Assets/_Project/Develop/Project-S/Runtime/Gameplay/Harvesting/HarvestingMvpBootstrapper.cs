@@ -2,6 +2,7 @@ using Project_S.Runtime.Gameplay.Character.Inventory;
 using Project_S.Runtime.Gameplay.Character.Combat;
 using Project_S.Runtime.Gameplay.Loot;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace Project_S.Runtime.Gameplay.Harvesting
 {
@@ -71,6 +72,7 @@ namespace Project_S.Runtime.Gameplay.Harvesting
                 renderer.material.color = new Color(0.34f, 0.2f, 0.09f);
 
             tree.AddComponent<HarvestableResourceNode>().Configure(data);
+            AddCarvingObstacle(tree, new Vector3(0.9f, 2.5f, 0.9f), Vector3.zero);
         }
 
         private static void SpawnStone(Transform parent, Vector3 position, ResourceNodeData data, string nodeName = "[MVP] Harvestable Stone", Color? color = null)
@@ -86,6 +88,7 @@ namespace Project_S.Runtime.Gameplay.Harvesting
                 renderer.material.color = color ?? new Color(0.38f, 0.4f, 0.42f);
 
             stone.AddComponent<HarvestableResourceNode>().Configure(data);
+            AddCarvingObstacle(stone, new Vector3(1.15f, 0.9f, 1.15f), Vector3.zero);
         }
 
         private static void SpawnIronOre(Transform parent, Vector3 position, ResourceNodeData data)
@@ -101,6 +104,7 @@ namespace Project_S.Runtime.Gameplay.Harvesting
                 renderer.material.color = new Color(0.34f, 0.29f, 0.24f);
 
             ore.AddComponent<IronOreNode>().Configure(data);
+            AddCarvingObstacle(ore, new Vector3(1.25f, 1.1f, 1.05f), Vector3.zero);
         }
 
         private static void SpawnGromovytsia(Transform parent, Vector3 position, ResourceNodeData data)
@@ -116,6 +120,7 @@ namespace Project_S.Runtime.Gameplay.Harvesting
                 renderer.material.color = new Color(0.25f, 0.5f, 0.95f);
 
             node.AddComponent<GromovytsiaNode>().Configure(data);
+            AddCarvingObstacle(node, new Vector3(0.7f, 1.4f, 0.7f), Vector3.zero);
         }
 
         private static void SpawnBerryBush(Transform parent, Vector3 position, ItemData berryItem)
@@ -134,6 +139,7 @@ namespace Project_S.Runtime.Gameplay.Harvesting
                 renderer.material.color = new Color(0.2f, 0.42f, 0.18f);
 
             bush.AddComponent<BerryBushResourceNode>().Configure(berryItem);
+            AddCarvingObstacle(bush, new Vector3(1.1f, 0.75f, 1.1f), Vector3.zero);
         }
 
         private static void SpawnEnemy(
@@ -160,6 +166,16 @@ namespace Project_S.Runtime.Gameplay.Harvesting
             enemy.Health = health;
             enemy.SoulAshReward = fallbackSoulAsh;
             enemyObject.AddComponent<LootDropper>().Configure(lootTable);
+        }
+
+        private static void AddCarvingObstacle(GameObject gameObject, Vector3 size, Vector3 center)
+        {
+            var obstacle = gameObject.AddComponent<NavMeshObstacle>();
+            obstacle.shape = NavMeshObstacleShape.Box;
+            obstacle.size = size;
+            obstacle.center = center;
+            obstacle.carving = true;
+            obstacle.carveOnlyStationary = true;
         }
     }
 }

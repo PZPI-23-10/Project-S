@@ -1,9 +1,12 @@
 using Project_S.Runtime.Gameplay.Character.Player;
 using Project_S.Runtime.Gameplay.Enemies;
+using Project_S.Runtime.Gameplay.Navigation;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace Project_S.Runtime.Gameplay.Ambient
 {
+    [RequireComponent(typeof(GroundNavMeshMover))]
     public class NeutralAnimalController : MonoBehaviour
     {
         private enum AnimalState
@@ -25,6 +28,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
 
         [SerializeField] private Transform _player;
         [SerializeField] private EnemyHealth _health;
+        [SerializeField] private GroundNavMeshMover _mover;
         [SerializeField] private Animator _animator;
         [SerializeField] private Vector3 _herdCenter;
         [SerializeField] private float _herdRadius = 8f;
@@ -104,6 +108,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
             _runSpeed = Mathf.Max(_walkSpeed, runSpeed);
             _scareRadius = Mathf.Max(0.1f, scareRadius);
             ResolveReferences();
+            ConfigureMover(_walkSpeed, 0.15f);
         }
 
         public static Vector3 SampleGround(Vector3 position)
@@ -132,7 +137,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
         {
             MoveToward(_targetPosition, _walkSpeed);
 
-            if (Vector3.Distance(transform.position, _targetPosition) <= 0.15f)
+            if ((_mover != null && _mover.HasArrived(0.15f)) || Vector3.Distance(transform.position, _targetPosition) <= 0.15f)
                 EnterIdle();
         }
 
@@ -147,7 +152,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
         {
             MoveToward(_targetPosition, _runSpeed);
 
-            if (Vector3.Distance(transform.position, _targetPosition) <= 0.25f)
+            if ((_mover != null && _mover.HasArrived(0.25f)) || Vector3.Distance(transform.position, _targetPosition) <= 0.25f)
             {
                 _herdCenter = SampleGround(transform.position);
                 EnterIdle();
@@ -158,6 +163,8 @@ namespace Project_S.Runtime.Gameplay.Ambient
         {
             _state = AnimalState.Idle;
             _stateTimer = Random.Range(1.2f, 3.5f);
+            if (_mover != null)
+                _mover.Stop();
             SetAnimator(0f, 0f);
         }
 
@@ -165,6 +172,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
         {
             _state = AnimalState.Walk;
             _targetPosition = RandomGroundPoint();
+            ConfigureMover(_walkSpeed, 0.15f);
             SetAnimator(0f, 1f);
         }
 
@@ -172,6 +180,8 @@ namespace Project_S.Runtime.Gameplay.Ambient
         {
             _state = AnimalState.Eat;
             _stateTimer = Random.Range(1.8f, 4f);
+            if (_mover != null)
+                _mover.Stop();
             SetAnimator(1f, 0f);
         }
 
@@ -188,16 +198,23 @@ namespace Project_S.Runtime.Gameplay.Ambient
                 away = transform.forward;
 
             float fleeDistance = Mathf.Max(_scareRadius * FleeDistanceMultiplier, _herdRadius * 0.6f);
-            _targetPosition = SampleGround(transform.position + away.normalized * fleeDistance);
+            _targetPosition = SampleNavMeshPosition(transform.position + away.normalized * fleeDistance, _herdRadius);
+            ConfigureMover(_runSpeed, 0.25f);
             SetAnimator(1f, 1f);
         }
 
         private void MoveToward(Vector3 destination, float speed)
         {
-            Vector3 currentPosition = transform.position;
-            transform.position = Vector3.MoveTowards(currentPosition, destination, speed * Time.deltaTime);
+            if (_mover == null)
+                return;
 
-            Vector3 movement = transform.position - currentPosition;
+            if (!_mover.IsReady && !_mover.TryWarpToNearestNavMesh(_herdRadius))
+                return;
+
+            _mover.SetSpeed(speed);
+            _mover.TryMoveTo(destination, Mathf.Max(1f, _herdRadius * 0.35f));
+
+            Vector3 movement = _mover.Velocity;
             if (movement.sqrMagnitude > 0.000001f)
                 RotateToward(movement);
         }
@@ -218,7 +235,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
         private Vector3 RandomGroundPoint()
         {
             Vector2 offset = Random.insideUnitCircle * _herdRadius;
-            return SampleGround(_herdCenter + new Vector3(offset.x, 0f, offset.y));
+            return SampleNavMeshPosition(_herdCenter + new Vector3(offset.x, 0f, offset.y), _herdRadius);
         }
 
         private void SetAnimator(float state, float vert)
@@ -243,6 +260,8 @@ namespace Project_S.Runtime.Gameplay.Ambient
         private void OnDied(EnemyHealth health)
         {
             _state = AnimalState.Dead;
+            if (_mover != null)
+                _mover.Stop();
             SetAnimator(0f, 0f);
 
             foreach (var collider in GetComponentsInChildren<Collider>())
@@ -261,6 +280,9 @@ namespace Project_S.Runtime.Gameplay.Ambient
             if (_health == null)
                 _health = GetComponent<EnemyHealth>();
 
+            if (_mover == null)
+                _mover = GetComponent<GroundNavMeshMover>();
+
             if (_animator == null)
                 _animator = GetComponentInChildren<Animator>();
 
@@ -276,6 +298,25 @@ namespace Project_S.Runtime.Gameplay.Ambient
             var playerFacade = FindFirstObjectByType<PlayerFacade>();
             if (playerFacade != null)
                 _player = playerFacade.transform;
+        }
+
+        private void ConfigureMover(float speed, float stoppingDistance)
+        {
+            if (_mover == null)
+                _mover = GetComponent<GroundNavMeshMover>();
+
+            if (_mover == null)
+                return;
+
+            _mover.Configure(speed, stoppingDistance, 0.45f, 1.4f, 0f, Mathf.Max(8f, speed * 4f), RotationSpeed, 0.25f, 60);
+        }
+
+        private static Vector3 SampleNavMeshPosition(Vector3 position, float sampleRadius)
+        {
+            if (NavMesh.SamplePosition(position, out NavMeshHit hit, Mathf.Max(0.5f, sampleRadius), NavMesh.AllAreas))
+                return hit.position;
+
+            return SampleGround(position);
         }
     }
 }

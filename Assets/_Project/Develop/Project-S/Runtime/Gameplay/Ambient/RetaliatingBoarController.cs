@@ -1,9 +1,12 @@
 using Project_S.Runtime.Gameplay.Character.Player;
 using Project_S.Runtime.Gameplay.Enemies;
+using Project_S.Runtime.Gameplay.Navigation;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace Project_S.Runtime.Gameplay.Ambient
 {
+    [RequireComponent(typeof(GroundNavMeshMover))]
     public class RetaliatingBoarController : MonoBehaviour
     {
         private enum BoarState
@@ -29,6 +32,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
         [SerializeField] private Transform _player;
         [SerializeField] private EnemyHealth _health;
         [SerializeField] private EnemyMeleeAttack _meleeAttack;
+        [SerializeField] private GroundNavMeshMover _mover;
         [SerializeField] private Animator _animator;
         [SerializeField] private Vector3 _homeCenter;
         [SerializeField] private float _wanderRadius = 9f;
@@ -114,6 +118,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
             _attackRange = Mathf.Max(0.1f, attackRange);
             _lastKnownHealth = _health != null ? _health.CurrentHealth : 0f;
             ResolveReferences();
+            ConfigureMover(_walkSpeed, 0.15f);
         }
 
         public static Vector3 SampleGround(Vector3 position)
@@ -137,7 +142,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
                     break;
                 case BoarState.Walk:
                     MoveToward(_targetPosition, _walkSpeed);
-                    if (Vector3.Distance(transform.position, _targetPosition) <= 0.15f)
+                    if ((_mover != null && _mover.HasArrived(0.15f)) || Vector3.Distance(transform.position, _targetPosition) <= 0.15f)
                         EnterIdle();
                     break;
                 default:
@@ -167,6 +172,8 @@ namespace Project_S.Runtime.Gameplay.Ambient
 
             _state = BoarState.Attack;
             PlayState(IdleState, 0.08f);
+            if (_mover != null)
+                _mover.Stop();
             if (_meleeAttack != null && !_meleeAttack.IsWindingUp)
                 _meleeAttack.TryAttack(_player);
         }
@@ -175,6 +182,8 @@ namespace Project_S.Runtime.Gameplay.Ambient
         {
             _state = BoarState.Idle;
             _stateTimer = UnityEngine.Random.Range(1.4f, 3.5f);
+            if (_mover != null)
+                _mover.Stop();
             PlayState(IdleState, 0.12f);
         }
 
@@ -182,6 +191,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
         {
             _state = BoarState.Walk;
             _targetPosition = RandomGroundPoint();
+            ConfigureMover(_walkSpeed, 0.15f);
             PlayState(WalkState, 0.12f);
         }
 
@@ -192,15 +202,22 @@ namespace Project_S.Runtime.Gameplay.Ambient
 
             _isAggro = true;
             _state = BoarState.Chase;
+            ConfigureMover(_runSpeed, Mathf.Max(0.1f, _attackRange - 0.05f));
             PlayState(HitState, 0.04f);
         }
 
         private void MoveToward(Vector3 destination, float speed)
         {
-            Vector3 currentPosition = transform.position;
-            transform.position = Vector3.MoveTowards(currentPosition, destination, speed * Time.deltaTime);
+            if (_mover == null)
+                return;
 
-            Vector3 movement = transform.position - currentPosition;
+            if (!_mover.IsReady && !_mover.TryWarpToNearestNavMesh(_wanderRadius))
+                return;
+
+            _mover.SetSpeed(speed);
+            _mover.TryMoveTo(destination, Mathf.Max(1f, _wanderRadius * 0.35f));
+
+            Vector3 movement = _mover.Velocity;
             if (movement.sqrMagnitude > 0.000001f)
                 RotateToward(movement);
         }
@@ -218,7 +235,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
         private Vector3 RandomGroundPoint()
         {
             Vector2 offset = UnityEngine.Random.insideUnitCircle * _wanderRadius;
-            return SampleGround(_homeCenter + new Vector3(offset.x, 0f, offset.y));
+            return SampleNavMeshPosition(_homeCenter + new Vector3(offset.x, 0f, offset.y), _wanderRadius);
         }
 
         private Vector3 SampleGroundNearPlayer()
@@ -235,12 +252,12 @@ namespace Project_S.Runtime.Gameplay.Ambient
                 if (hit.transform.IsChildOf(_player) || hit.transform.IsChildOf(transform))
                     continue;
 
-                return hit.point;
+                return SampleNavMeshPosition(hit.point, _wanderRadius);
             }
 
             Vector3 fallback = _player.position;
             fallback.y = transform.position.y;
-            return fallback;
+            return SampleNavMeshPosition(fallback, _wanderRadius);
         }
 
         private void PlayState(int stateHash, float transitionDuration)
@@ -277,6 +294,8 @@ namespace Project_S.Runtime.Gameplay.Ambient
         private void OnDied(EnemyHealth health)
         {
             _state = BoarState.Dead;
+            if (_mover != null)
+                _mover.Stop();
             PlayState(DeathState, 0.04f);
 
             foreach (var collider in GetComponentsInChildren<Collider>())
@@ -290,6 +309,9 @@ namespace Project_S.Runtime.Gameplay.Ambient
 
             if (_meleeAttack == null)
                 _meleeAttack = GetComponent<EnemyMeleeAttack>();
+
+            if (_mover == null)
+                _mover = GetComponent<GroundNavMeshMover>();
 
             if (_animator == null)
                 _animator = GetComponentInChildren<Animator>();
@@ -306,6 +328,25 @@ namespace Project_S.Runtime.Gameplay.Ambient
             var playerFacade = FindFirstObjectByType<PlayerFacade>();
             if (playerFacade != null)
                 _player = playerFacade.transform;
+        }
+
+        private void ConfigureMover(float speed, float stoppingDistance)
+        {
+            if (_mover == null)
+                _mover = GetComponent<GroundNavMeshMover>();
+
+            if (_mover == null)
+                return;
+
+            _mover.Configure(speed, stoppingDistance, 0.55f, 1.15f, 0f, Mathf.Max(10f, speed * 4f), RotationSpeed, 0.18f, 45);
+        }
+
+        private static Vector3 SampleNavMeshPosition(Vector3 position, float sampleRadius)
+        {
+            if (NavMesh.SamplePosition(position, out NavMeshHit hit, Mathf.Max(0.5f, sampleRadius), NavMesh.AllAreas))
+                return hit.position;
+
+            return SampleGround(position);
         }
     }
 }
