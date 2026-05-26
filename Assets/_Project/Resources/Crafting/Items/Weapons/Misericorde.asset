@@ -12,15 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 215432127562c5e46812873892628a75, type: 3}
   m_Name: Misericorde
   m_EditorClassIdentifier: 
-  ItemName: "Misericorde"
+  ItemName: Misericorde
   Kind: 1
   Weight: 0.6
   IsStackable: 0
   MaxStack: 1
   MaxInventoryStacks: 0
   Icon: {fileID: 0}
-  Description: "Very fast piercing weapon. Vulnerability active ability is deferred; this MVP uses its weapon stats."
-  WeaponPrefab: {fileID: 3942592866433276128, guid: 6e6f288cc1ccdd543b2cd3d632a069ed, type: 3}
+  Description: Very fast piercing weapon. Vulnerability active ability is deferred;
+    this MVP uses its weapon stats.
+  WeaponPrefab: {fileID: 1265574902619433541, guid: 50d47112134114a4483fca9d26417522,
+    type: 3}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 0
   HealthRestoreAmount: 0
@@ -28,6 +30,10 @@ MonoBehaviour:
   StaminaRestoreAmount: 0
   SpecialEffect: 0
   SpecialEffectDelaySeconds: 0
+  StatEffects: []
+  TimedBuffs: []
+  SpecialEffects: []
+  DamageConversions: []
   TimedBuffType: 0
   TimedBuffCategory: 0
   TimedBuffMultiplier: 1
@@ -36,12 +42,13 @@ MonoBehaviour:
   SecondaryTimedBuffCategory: 0
   SecondaryTimedBuffMultiplier: 1
   SecondaryTimedBuffDurationSeconds: 0
+  IsTwoHanded: 0
   DamageProfile:
   - Type: 0
     Amount: 14
   PoiseDamage: 2
   AttackSpeedMultiplier: 1.65
-  MaxComboHits: 4
+  MaxComboHits: 5
   HitsToChargeHeavy: 3
   HeavyAbility: 0
   HeavyAbilityDuration: 0

@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 215432127562c5e46812873892628a75, type: 3}
+  m_Name: IronAxe
+  m_EditorClassIdentifier: 
+  ItemName: Krytsia Axe
+  Kind: 1
+  Weight: 4
+  IsStackable: 0
+  MaxStack: 1
+  MaxInventoryStacks: 0
+  Icon: {fileID: 0}
+  Description: Iron-tier axe. Structure-breaking active ability is deferred; this
+    MVP uses its weapon stats and axe harvesting type.
+  WeaponPrefab: {fileID: 8784025897927379609, guid: 64092ddaed552de40ace97bdf95b40a0,
+    type: 3}
+  WorldPickupPrefab: {fileID: 0}
+  ConsumableEffect: 0
+  HealthRestoreAmount: 0
+  HungerRestoreAmount: 0
+  StaminaRestoreAmount: 0
+  SpecialEffect: 0
+  SpecialEffectDelaySeconds: 0
+  StatEffects: []
+  TimedBuffs: []
+  SpecialEffects: []
+  DamageConversions: []
+  TimedBuffType: 0
+  TimedBuffCategory: 0
+  TimedBuffMultiplier: 1
+  TimedBuffDurationSeconds: 0
+  SecondaryTimedBuffType: 0
+  SecondaryTimedBuffCategory: 0
+  SecondaryTimedBuffMultiplier: 1
+  SecondaryTimedBuffDurationSeconds: 0
+  IsTwoHanded: 1
+  DamageProfile:
+  - Type: 2
+    Amount: 57
+  PoiseDamage: 35
+  AttackSpeedMultiplier: 0.62
+  MaxComboHits: 2
+  HitsToChargeHeavy: 3
+  HeavyAbility: 0
+  HeavyAbilityDuration: 0
+  OffhandAbility: 0
+  AbilityCooldown: 8
+  BlockMitigation: 0.5
+  ParryWindow: 0.16
+  ParryStaminaReward: 20
+  ParryPoiseDamage: 40
+  HarvestTool: 1
