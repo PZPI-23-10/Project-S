@@ -60,6 +60,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         private bool _nextAttackBuffered = false;
         private bool _isTransitioningToNextCombo = false;
         private int _comboStep = 0;
+        public int ComboStep => _comboStep;
 
         private int _currentHeavyCharge = 0;
         private float _lastAbilityTime = 0f;
@@ -83,6 +84,18 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 return;
             }
 
+            if (_currentWeaponModel != null)
+            {
+                HammerWeapon customWeapon = _currentWeaponModel.GetComponent<HammerWeapon>();
+
+                if (customWeapon != null)
+                {
+                    bool inputHandled = customWeapon.ProcessCustomInput(input, _weaponAnimator, this);
+
+                    if (inputHandled) return;
+                }
+            }
+
             if (input.BlockHeld && CurrentState == CombatState.Idle && !_isOffhandActive) StartBlocking();
             else if (!input.BlockHeld && CurrentState == CombatState.Blocking) StopBlocking();
 
@@ -103,7 +116,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             if (input.OffhandAbilityPressed && _isOffhandActive) PerformOffhandAbility();
         }
 
-        private void PerformLightAttack()
+        public void PerformLightAttack()
         {
             CurrentState = CombatState.Attacking;
             _isComboWindowOpen = false;
@@ -210,8 +223,14 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         {
             CurrentState = CombatState.HeavySkill;
             _currentHeavyCharge = 0;
+
             Debug.Log($"<color=red>[Боївка]</color> ВМІННЯ ПРАВОЇ РУКИ: {ActiveWeapon.HeavyAbility}!");
-            Invoke(nameof(ResetToIdle), 1.0f);
+
+            if (_weaponAnimator != null)
+            {
+                _weaponAnimator.SetInteger("HeavyType", (int)ActiveWeapon.HeavyAbility);
+                _weaponAnimator.SetTrigger("HeavySkill");
+            }
         }
 
         private void PerformOffhandAbility()
@@ -222,9 +241,13 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             if (_equippedOffhandItem != null)
             {
                 Debug.Log($"<color=yellow>[Магія]</color> ЗДІБНІСТЬ ЛІВОЇ РУКИ: {_equippedOffhandItem.OffhandAbility}!");
-            }
 
-            Invoke(nameof(ResetToIdle), 0.8f);
+                if (_weaponAnimator != null)
+                {
+                    _weaponAnimator.SetInteger("OffhandType", (int)_equippedOffhandItem.OffhandAbility);
+                    _weaponAnimator.SetTrigger("OffhandSkill");
+                }
+            }
         }
 
         private void StartBlocking()
@@ -257,6 +280,12 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             }
         }
 
+        public bool DrainStamina(float amount)
+        {
+            if (_stamina == null) return true;
+            return _stamina.Spend(amount);
+        }
+
         // ==========================================
         // ІВЕНТИ АНІМАЦІЙ
         // ==========================================
@@ -274,6 +303,31 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             {
                 _isTransitioningToNextCombo = true;
                 PerformLightAttack();
+            }
+        }
+
+        public void AnimEvent_ExecuteHeavyAbility()
+        {
+            if (_currentWeaponModel != null)
+            {
+                IWeaponActiveAbility activeSkill = _currentWeaponModel.GetComponentInChildren<IWeaponActiveAbility>();
+                if (activeSkill != null)
+                {
+                    activeSkill.ExecuteHeavyAbility(this, _weaponAnimator);
+                }
+            }
+        }
+
+        // Цей івент ти будеш ставити в Аніматорі на кадр застосування лівої руки (щита/магії)
+        public void AnimEvent_ExecuteOffhandAbility()
+        {
+            if (_currentOffhandModel != null)
+            {
+                IOffhandAbility offhandSkill = _currentOffhandModel.GetComponentInChildren<IOffhandAbility>();
+                if (offhandSkill != null)
+                {
+                    offhandSkill.ExecuteOffhandAbility(this, _weaponAnimator);
+                }
             }
         }
 

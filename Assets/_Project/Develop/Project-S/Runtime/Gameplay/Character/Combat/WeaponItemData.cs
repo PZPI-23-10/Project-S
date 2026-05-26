@@ -13,6 +13,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         public float Amount;
     }
 
+    public enum PassiveAbilityType { None, BoneCrusher, TargetFocus, DistanceKeeper }
     public enum HeavyAbilityType { None, PrecisionAim, Fury, DirectionalSlice, AoEKnockback, SingleStrong, ChainForm }
     public enum OffhandAbilityType { None, DamageParry, StunStrike, DoubleSlice, ShieldBash }
 
@@ -21,6 +22,9 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
     {
         [Header("Equip Settings")]
         public bool IsTwoHanded = false;
+
+        [Header("Passive Abilities")]
+        public List<WeaponPassiveData> Passives = new List<WeaponPassiveData>();
 
         [Header("Damage")]
         public List<DamageInstance> DamageProfile = new List<DamageInstance>();
