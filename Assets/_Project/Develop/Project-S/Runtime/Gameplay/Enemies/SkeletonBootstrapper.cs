@@ -135,7 +135,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
             var visual = Object.Instantiate(visualPrefab, parent);
             visual.name = "VisualRoot";
-            visual.transform.localPosition = new Vector3(0f, -1f, 0f);
+            visual.transform.localPosition = Vector3.zero;
             visual.transform.localRotation = Quaternion.identity;
             visual.transform.localScale = Vector3.one * 8f;
 
