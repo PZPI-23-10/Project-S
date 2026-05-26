@@ -1,5 +1,6 @@
 using System.Collections;
 using Project_S.Runtime.Gameplay.Character.Player;
+using Project_S.Runtime.Gameplay.Diagnostics;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -43,7 +44,12 @@ namespace Project_S.Runtime.Gameplay.Ambient
             if (player == null)
                 return false;
 
-            var sparrowPrefab = Resources.Load<GameObject>(SparrowPrefabPath);
+            return NpcStartupDiagnostics.Time("Sparrow flock bootstrap spawn", () => TrySpawnWithPlayer(player));
+        }
+
+        private static bool TrySpawnWithPlayer(PlayerFacade player)
+        {
+            var sparrowPrefab = NpcStartupDiagnostics.LoadResource<GameObject>("SparrowFlock", SparrowPrefabPath);
             if (sparrowPrefab == null)
             {
                 Debug.LogWarning("[SparrowFlock] Sparrow prefab was not found in Resources.");

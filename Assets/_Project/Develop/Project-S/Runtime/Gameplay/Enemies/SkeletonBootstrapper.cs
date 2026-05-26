@@ -1,6 +1,7 @@
 using System.Collections;
 using Project_S.Runtime.Gameplay.Character.Combat;
 using Project_S.Runtime.Gameplay.Character.Player;
+using Project_S.Runtime.Gameplay.Diagnostics;
 using Project_S.Runtime.Gameplay.Loot;
 using Project_S.Runtime.Gameplay.Navigation;
 using UnityEngine;
@@ -14,8 +15,17 @@ namespace Project_S.Runtime.Gameplay.Enemies
         private const string RunnerName = "[MVP] Skeleton Bootstrapper";
         private const string RootName = "[MVP] Enemies";
         private const string SkeletonName = "[MVP] Skeleton";
-        private const string SkeletonVisualPath = "Enemies/Skeleton/SkeletonVisual";
+        private const string SkeletonVisualPath = "Enemies/Skeleton/KBH_Skel";
         private const string SkeletonAnimatorPath = "Enemies/Skeleton/SkeletonAnimator";
+        private const string SkeletonDeathAnimationPath = "Enemies/Skeleton/Skeleton_Death";
+        private const float SkeletonAgentRadius = 0.65f;
+        private const float SkeletonAgentHeight = 2.35f;
+        private const float SkeletonAgentBaseOffset = 0f;
+        private const float SkeletonStoppingDistancePadding = 0.05f;
+        private const float SkeletonRepathInterval = 0.2f;
+        private const float SkeletonVisualScale = 9.2f;
+        private const float SkeletonDestroyDelayAfterDeath = 60f;
+        private static readonly Vector3 SkeletonHealthBarOffset = new Vector3(0f, 2.6f, 0f);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
@@ -37,6 +47,11 @@ namespace Project_S.Runtime.Gameplay.Enemies
             if (player == null)
                 return false;
 
+            return NpcStartupDiagnostics.Time("Skeleton bootstrap spawn", () => TrySpawnWithPlayer(player));
+        }
+
+        private static bool TrySpawnWithPlayer(PlayerFacade player)
+        {
             var root = GameObject.Find(RootName);
             if (root == null)
                 root = new GameObject(RootName);
@@ -46,7 +61,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
             Vector3 spawnPosition = player.transform.position
                 + player.transform.forward * 6f
                 + player.transform.right * 1.25f
-                + Vector3.up * 0.55f;
+                + Vector3.up * 0.85f;
 
             SpawnSkeleton(root.transform, spawnPosition, player.transform, config);
             return true;
@@ -63,19 +78,13 @@ namespace Project_S.Runtime.Gameplay.Enemies
             config.LoseTargetRange = 13f;
             config.AttackRange = 1.7f;
             config.RotationSpeed = 540f;
-            config.AgentRadius = 0.5f;
-            config.AgentHeight = 2f;
-            config.AgentBaseOffset = 0f;
-            config.MaxStepHeight = 0.4f;
-            config.MaxSlope = 45f;
-            config.StoppingDistancePadding = 0.05f;
-            config.RepathInterval = 0.2f;
             config.AttackCooldown = 1.8f;
             config.AttackWindup = 0.45f;
             config.AttackRadius = 0.65f;
             config.HealthDamage = 12f;
             config.PoiseDamage = 8f;
             config.DamageType = DamageType.Blunt;
+            config.DestroyDelayAfterDeath = SkeletonDestroyDelayAfterDeath;
             return config;
         }
 
@@ -93,6 +102,8 @@ namespace Project_S.Runtime.Gameplay.Enemies
                 Debug.LogWarning("[Skeleton] Spawn position is not on the runtime navmesh. Movement will stay disabled until a navmesh point is available.");
 
             var renderer = skeleton.GetComponent<Renderer>();
+            ConfigureHitbox(skeleton);
+
             var visual = TryAttachVisual(skeleton.transform);
             if (visual == null && renderer != null)
             {
@@ -115,29 +126,56 @@ namespace Project_S.Runtime.Gameplay.Enemies
             var lootDropper = skeleton.AddComponent<LootDropper>();
             var animationController = skeleton.AddComponent<EnemyAnimationController>();
 
-            var lootTable = Resources.Load<LootTableData>("Loot/BasicEnemyLoot");
+            var lootTable = NpcStartupDiagnostics.LoadResource<LootTableData>("Skeleton", "Loot/BasicEnemyLoot");
             lootDropper.Configure(lootTable);
 
             health.Configure(config);
             attack.Configure(config);
-            mover.Configure(config.MoveSpeed, config.AttackRange - config.StoppingDistancePadding, config.AgentRadius, config.AgentHeight, config.AgentBaseOffset, 12f, config.RotationSpeed, config.RepathInterval, 50);
+            mover.Configure(
+                config.MoveSpeed,
+                config.AttackRange - SkeletonStoppingDistancePadding,
+                SkeletonAgentRadius,
+                SkeletonAgentHeight,
+                SkeletonAgentBaseOffset,
+                12f,
+                config.RotationSpeed,
+                SkeletonRepathInterval,
+                50);
             mover.TryWarpToNearestNavMesh(5f);
             controller.Configure(config, target);
-            animationController.Configure(controller, attack, health, visual != null ? visual.transform : null, visual != null ? visual.GetComponentInChildren<Animator>() : null);
-            worldHealthBar.Configure("Скелет", new Vector3(0f, 1.45f, 0f));
+            animationController.Configure(
+                controller,
+                attack,
+                health,
+                visual != null ? visual.transform : null,
+                visual != null ? visual.GetComponentInChildren<Animator>() : null,
+                LoadSkeletonDeathClip());
+            worldHealthBar.Configure("Скелет", SkeletonHealthBarOffset);
+        }
+
+        private static void ConfigureHitbox(GameObject skeleton)
+        {
+            foreach (var collider in skeleton.GetComponents<Collider>())
+                Object.Destroy(collider);
+
+            var hitbox = skeleton.AddComponent<CapsuleCollider>();
+            hitbox.radius = SkeletonAgentRadius;
+            hitbox.height = SkeletonAgentHeight;
+            hitbox.center = new Vector3(0f, SkeletonAgentHeight * 0.5f, 0f);
+            hitbox.direction = 1;
         }
 
         private static GameObject TryAttachVisual(Transform parent)
         {
-            var visualPrefab = Resources.Load<GameObject>(SkeletonVisualPath);
+            var visualPrefab = NpcStartupDiagnostics.LoadResource<GameObject>("Skeleton", SkeletonVisualPath);
             if (visualPrefab == null)
                 return null;
 
             var visual = Object.Instantiate(visualPrefab, parent);
             visual.name = "VisualRoot";
-            visual.transform.localPosition = new Vector3(0f, -1f, 0f);
+            visual.transform.localPosition = Vector3.zero;
             visual.transform.localRotation = Quaternion.identity;
-            visual.transform.localScale = Vector3.one * 8f;
+            visual.transform.localScale = Vector3.one * SkeletonVisualScale;
 
             ConfigureAnimator(visual);
 
@@ -153,13 +191,37 @@ namespace Project_S.Runtime.Gameplay.Enemies
             if (animator == null)
                 animator = visual.AddComponent<Animator>();
 
-            var controller = Resources.Load<RuntimeAnimatorController>(SkeletonAnimatorPath);
+            var controller = NpcStartupDiagnostics.LoadResource<RuntimeAnimatorController>("Skeleton", SkeletonAnimatorPath);
             if (controller != null)
                 animator.runtimeAnimatorController = controller;
 
             animator.applyRootMotion = false;
             animator.updateMode = AnimatorUpdateMode.Normal;
             animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
+        }
+
+        private static AnimationClip LoadSkeletonDeathClip()
+        {
+            var clips = NpcStartupDiagnostics.LoadAllResources<AnimationClip>("Skeleton", SkeletonDeathAnimationPath);
+            foreach (var clip in clips)
+            {
+                if (clip == null || clip.name.StartsWith("__preview__"))
+                    continue;
+
+                if (clip.name == "Skeleton_Death")
+                    return clip;
+            }
+
+            foreach (var clip in clips)
+            {
+                if (clip == null || clip.name.StartsWith("__preview__"))
+                    continue;
+
+                return clip;
+            }
+
+            Debug.LogWarning($"[Skeleton] Death animation '{SkeletonDeathAnimationPath}' was not found.");
+            return null;
         }
 
         private sealed class SkeletonBootstrapRunner : MonoBehaviour

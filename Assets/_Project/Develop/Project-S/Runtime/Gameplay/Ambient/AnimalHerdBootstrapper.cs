@@ -1,6 +1,7 @@
 using System.Collections;
 using Project_S.Runtime.Gameplay.Character.Combat;
 using Project_S.Runtime.Gameplay.Character.Player;
+using Project_S.Runtime.Gameplay.Diagnostics;
 using Project_S.Runtime.Gameplay.Enemies;
 using Project_S.Runtime.Gameplay.Navigation;
 using UnityEngine;
@@ -39,6 +40,11 @@ namespace Project_S.Runtime.Gameplay.Ambient
             if (player == null)
                 return false;
 
+            return NpcStartupDiagnostics.Time("Animal herd bootstrap spawn", () => TrySpawnWithPlayer(player));
+        }
+
+        private static bool TrySpawnWithPlayer(PlayerFacade player)
+        {
             var ambientRoot = GameObject.Find(AmbientRootName);
             if (ambientRoot == null)
                 ambientRoot = new GameObject(AmbientRootName);
@@ -61,7 +67,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
             int count,
             float angleOffset)
         {
-            var prefab = Resources.Load<GameObject>(definition.PrefabPath);
+            var prefab = NpcStartupDiagnostics.LoadResource<GameObject>("AnimalHerd", definition.PrefabPath);
             if (prefab == null)
             {
                 Debug.LogWarning($"[Animals] Prefab '{definition.PrefabPath}' was not found.");
@@ -286,7 +292,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
 
         private static void SpawnBoar(Transform parent, Transform player, float angleOffset)
         {
-            var prefab = Resources.Load<GameObject>("Ambient/Animals/BoarPrefab");
+            var prefab = NpcStartupDiagnostics.LoadResource<GameObject>("AnimalHerd", "Ambient/Animals/BoarPrefab");
             if (prefab == null)
             {
                 Debug.LogWarning("[Animals] Prefab 'Ambient/Animals/BoarPrefab' was not found.");

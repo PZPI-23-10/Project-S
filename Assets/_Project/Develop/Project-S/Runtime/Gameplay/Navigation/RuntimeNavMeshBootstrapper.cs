@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using Project_S.Runtime.Gameplay.Character.Player;
+using Project_S.Runtime.Gameplay.Diagnostics;
+using Project_S.Runtime.Gameplay.Enemies;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.SceneManagement;
@@ -16,6 +18,14 @@ namespace Project_S.Runtime.Gameplay.Navigation
         private const float AgentHeight = 2f;
         private const float AgentSlope = 45f;
         private const float AgentClimb = 0.4f;
+        private const int DefaultLayer = 0;
+        private const int GroundLayer = 8;
+        private const int WalkableLayerMask = 1 << GroundLayer;
+        private const int ObstacleLayerMask = 1 << DefaultLayer;
+        private const int NavigationLayerMask = WalkableLayerMask | ObstacleLayerMask;
+        private const int BuildDelayFrames = 3;
+        private static readonly int NotWalkableArea = NavMesh.GetAreaFromName("Not Walkable");
+
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
@@ -35,6 +45,8 @@ namespace Project_S.Runtime.Gameplay.Navigation
             private NavMeshData _navMeshData;
             private NavMeshDataInstance _navMeshDataInstance;
             private Coroutine _buildRoutine;
+            private int _lastSourceSignature;
+            private bool _hasBuiltNavMesh;
 
             private void OnEnable()
             {
@@ -67,12 +79,30 @@ namespace Project_S.Runtime.Gameplay.Navigation
 
             private IEnumerator BuildAfterSceneSettles()
             {
+                for (int frame = 0; frame < BuildDelayFrames; frame++)
+                    yield return null;
+
+                if (ShouldUseExistingNavMesh())
+                {
+                    Debug.Log("[NPC Startup] Runtime NavMesh build skipped; existing NavMesh data is available.");
+                    _buildRoutine = null;
+                    yield break;
+                }
+
+                int sourceSignature = NpcStartupDiagnostics.Time("Runtime NavMesh source signature", CalculateSourceSignature);
+                if (_hasBuiltNavMesh && _navMeshDataInstance.valid && sourceSignature == _lastSourceSignature)
+                {
+                    Debug.Log("[NPC Startup] Runtime NavMesh build skipped; navigation sources are unchanged.");
+                    _buildRoutine = null;
+                    yield break;
+                }
+
                 yield return null;
-                BuildNavMesh();
+                NpcStartupDiagnostics.Time("Runtime NavMesh build total", () => BuildNavMesh(sourceSignature));
                 _buildRoutine = null;
             }
 
-            private void BuildNavMesh()
+            private void BuildNavMesh(int sourceSignature)
             {
                 RemoveNavMeshData();
 
@@ -87,16 +117,24 @@ namespace Project_S.Runtime.Gameplay.Navigation
 
                 _sources.Clear();
                 _markups.Clear();
+                int obstacleCount = MarkStaticObstaclesAsNotWalkable();
                 IgnoreDynamicRoot<PlayerFacade>();
-                NavMeshBuilder.CollectSources(
-                    bounds,
-                    ~0,
-                    NavMeshCollectGeometry.PhysicsColliders,
-                    0,
-                    _markups,
-                    _sources);
+                IgnoreDynamicRoot<GroundNavMeshMover>();
+                IgnoreDynamicRoot<EnemyHealth>();
+                NpcStartupDiagnostics.Time("Runtime NavMesh CollectSources", () =>
+                    NavMeshBuilder.CollectSources(
+                        bounds,
+                        NavigationLayerMask,
+                        NavMeshCollectGeometry.PhysicsColliders,
+                        0,
+                        _markups,
+                        _sources));
 
-                _navMeshData = NavMeshBuilder.BuildNavMeshData(buildSettings, _sources, bounds, Vector3.zero, Quaternion.identity);
+                Debug.Log($"[NPC Startup] Runtime NavMesh sources collected: {_sources.Count}");
+                Debug.Log($"[NPC Startup] Runtime NavMesh static obstacles marked: {obstacleCount}");
+
+                _navMeshData = NpcStartupDiagnostics.Time("Runtime NavMesh BuildNavMeshData", () =>
+                    NavMeshBuilder.BuildNavMeshData(buildSettings, _sources, bounds, Vector3.zero, Quaternion.identity));
                 if (_navMeshData == null)
                 {
                     Debug.LogWarning("[NavMesh] Runtime navmesh build returned no data.");
@@ -105,6 +143,8 @@ namespace Project_S.Runtime.Gameplay.Navigation
 
                 _navMeshData.name = "Runtime Ground NavMesh";
                 _navMeshDataInstance = NavMesh.AddNavMeshData(_navMeshData);
+                _lastSourceSignature = sourceSignature;
+                _hasBuiltNavMesh = true;
             }
 
             private void RemoveNavMeshData()
@@ -119,6 +159,19 @@ namespace Project_S.Runtime.Gameplay.Navigation
                     Destroy(_navMeshData);
                     _navMeshData = null;
                 }
+            }
+
+            private static bool ShouldUseExistingNavMesh()
+            {
+#if UNITY_EDITOR
+                if (HasStaticObstacleColliders())
+                    return false;
+
+                var triangulation = NavMesh.CalculateTriangulation();
+                return triangulation.vertices != null && triangulation.vertices.Length > 0;
+#else
+                return false;
+#endif
             }
 
             private static Bounds CalculateWorldBounds()
@@ -148,7 +201,7 @@ namespace Project_S.Runtime.Gameplay.Navigation
 
                 foreach (var collider in FindObjectsOfType<Collider>())
                 {
-                    if (collider == null || !collider.enabled || collider.isTrigger)
+                    if (!IsNavigationRelevantCollider(collider))
                         continue;
 
                     if (!hasBounds)
@@ -171,6 +224,113 @@ namespace Project_S.Runtime.Gameplay.Navigation
                     bounds.Expand(new Vector3(0f, 0f, DefaultBoundsSize - bounds.size.z));
 
                 return bounds;
+            }
+
+            private static int CalculateSourceSignature()
+            {
+                unchecked
+                {
+                    int hash = 17;
+                    foreach (var terrain in Terrain.activeTerrains)
+                    {
+                        if (terrain == null || terrain.terrainData == null)
+                            continue;
+
+                        hash = hash * 31 + terrain.GetInstanceID();
+                        hash = hash * 31 + terrain.terrainData.GetInstanceID();
+                        hash = hash * 31 + terrain.gameObject.layer;
+                        hash = hash * 31 + Quantize(terrain.transform.position.x);
+                        hash = hash * 31 + Quantize(terrain.transform.position.z);
+                    }
+
+                    foreach (var collider in FindObjectsOfType<Collider>())
+                    {
+                        if (!IsNavigationRelevantCollider(collider))
+                            continue;
+
+                        Bounds bounds = collider.bounds;
+                        hash = hash * 31 + collider.GetInstanceID();
+                        hash = hash * 31 + collider.gameObject.layer;
+                        hash = hash * 31 + Quantize(bounds.center.x);
+                        hash = hash * 31 + Quantize(bounds.center.y);
+                        hash = hash * 31 + Quantize(bounds.center.z);
+                        hash = hash * 31 + Quantize(bounds.size.x);
+                        hash = hash * 31 + Quantize(bounds.size.y);
+                        hash = hash * 31 + Quantize(bounds.size.z);
+                    }
+
+                    return hash;
+                }
+            }
+
+            private static bool IsNavigationCollider(Collider collider)
+            {
+                return IsNavigationRelevantCollider(collider);
+            }
+
+            private static bool IsNavigationRelevantCollider(Collider collider)
+            {
+                if (collider == null || !collider.enabled || collider.isTrigger)
+                    return false;
+
+                if (IsDynamicNavigationCollider(collider))
+                    return false;
+
+                return (NavigationLayerMask & (1 << collider.gameObject.layer)) != 0;
+            }
+
+            private static bool IsStaticObstacleCollider(Collider collider)
+            {
+                if (!IsNavigationRelevantCollider(collider))
+                    return false;
+
+                if ((ObstacleLayerMask & (1 << collider.gameObject.layer)) == 0)
+                    return false;
+
+                return !IsDynamicNavigationCollider(collider);
+            }
+
+            private static bool HasStaticObstacleColliders()
+            {
+                foreach (var collider in FindObjectsOfType<Collider>())
+                {
+                    if (IsStaticObstacleCollider(collider))
+                        return true;
+                }
+
+                return false;
+            }
+
+            private static bool IsDynamicNavigationCollider(Collider collider)
+            {
+                return collider.GetComponentInParent<GroundNavMeshMover>() != null
+                    || collider.GetComponentInParent<EnemyHealth>() != null
+                    || collider.GetComponentInParent<PlayerFacade>() != null;
+            }
+
+            private int MarkStaticObstaclesAsNotWalkable()
+            {
+                int count = 0;
+                foreach (var collider in FindObjectsOfType<Collider>())
+                {
+                    if (!IsStaticObstacleCollider(collider))
+                        continue;
+
+                    _markups.Add(new NavMeshBuildMarkup
+                    {
+                        root = collider.transform,
+                        overrideArea = true,
+                        area = NotWalkableArea
+                    });
+                    count++;
+                }
+
+                return count;
+            }
+
+            private static int Quantize(float value)
+            {
+                return Mathf.RoundToInt(value * 100f);
             }
 
             private void IgnoreDynamicRoot<T>() where T : Component
