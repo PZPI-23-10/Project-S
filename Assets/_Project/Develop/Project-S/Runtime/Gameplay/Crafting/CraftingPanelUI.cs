@@ -15,6 +15,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
         private SoulAshWallet _wallet;
         private CraftingService _craftingService;
         private TimedCraftingStation _activeStation;
+        private ICraftingRecipeProvider _recipeProvider;
         private List<CraftingRecipeData> _allRecipes = new List<CraftingRecipeData>();
         private CraftingContext _context = CraftingContext.Hand;
         private CraftingRecipeData _selectedRecipe;
@@ -33,7 +34,11 @@ namespace Project_S.Runtime.Gameplay.Crafting
         private bool _subscribed;
         private GameObject _rootObject;
 
-        public void Initialize(InventoryController inventory, SoulAshWallet wallet, CraftingContext context)
+        public void Initialize(
+            InventoryController inventory,
+            SoulAshWallet wallet,
+            CraftingContext context,
+            ICraftingRecipeProvider recipeProvider = null)
         {
             Unsubscribe();
 
@@ -41,10 +46,11 @@ namespace Project_S.Runtime.Gameplay.Crafting
             _wallet = wallet;
             _craftingService = new CraftingService(_inventory, _wallet);
             _allRecipes = CraftingService.LoadRecipes();
+            _recipeProvider = recipeProvider;
 
             BuildLayout();
             Subscribe();
-            SetContext(context);
+            SetContext(context, recipeProvider);
         }
 
         public void SetPanelVisible(bool visible)
@@ -53,9 +59,10 @@ namespace Project_S.Runtime.Gameplay.Crafting
                 _rootObject.SetActive(visible);
         }
 
-        public void SetContext(CraftingContext context)
+        public void SetContext(CraftingContext context, ICraftingRecipeProvider recipeProvider = null)
         {
             _context = context;
+            _recipeProvider = recipeProvider;
             ResolveActiveStation();
             Refresh();
         }
@@ -81,8 +88,20 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
         private List<CraftingRecipeData> GetContextRecipes()
         {
-            return _allRecipes
-                .Where(x => x != null && x.Context == _context)
+            if (_context == CraftingContext.Hand)
+            {
+                return _allRecipes
+                    .Where(x => x != null && x.Context == _context)
+                    .OrderBy(x => x.RecipeName)
+                    .ToList();
+            }
+
+            if (_recipeProvider == null || _recipeProvider.Context != _context)
+                return new List<CraftingRecipeData>();
+
+            return (_recipeProvider.AvailableRecipes ?? Enumerable.Empty<CraftingRecipeData>())
+                .Where(x => x != null && _recipeProvider.AllowsRecipe(x))
+                .Distinct()
                 .OrderBy(x => x.RecipeName)
                 .ToList();
         }
@@ -153,7 +172,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             if (IsStationContext(_context))
             {
-                lines.Add("Time: 0s");
+                lines.Add($"Time: {Mathf.CeilToInt(Mathf.Max(0f, recipe.CraftDurationSeconds))}s");
                 if (_activeStation != null && _activeStation.UsesFuel)
                     lines.Add($"Fuel: {Mathf.CeilToInt(recipe.FuelSecondsCost)}s");
             }
@@ -200,6 +219,30 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
         private CraftingCheck CheckRecipe(CraftingRecipeData recipe)
         {
+            if (recipe == null)
+            {
+                var check = new CraftingCheck();
+                check.AddProblem("Recipe is missing.");
+                return check;
+            }
+
+            if (_context != CraftingContext.Hand)
+            {
+                if (_recipeProvider == null || _recipeProvider.Context != _context)
+                {
+                    var check = new CraftingCheck();
+                    check.AddProblem("No crafting station selected.");
+                    return check;
+                }
+
+                if (!_recipeProvider.AllowsRecipe(recipe))
+                {
+                    var check = new CraftingCheck();
+                    check.AddProblem("Recipe is not available at this station.");
+                    return check;
+                }
+            }
+
             if (IsStationContext(_context))
             {
                 if (_activeStation == null)
@@ -282,8 +325,9 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
         private void ResolveActiveStation()
         {
-            var nextStation = IsStationContext(_context) && TimedCraftingStation.Active != null && TimedCraftingStation.Active.Context == _context
-                ? TimedCraftingStation.Active
+            var providerStation = _recipeProvider as TimedCraftingStation;
+            var nextStation = IsStationContext(_context) && providerStation != null && providerStation.Context == _context
+                ? providerStation
                 : null;
 
             if (_activeStation == nextStation)
