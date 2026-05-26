@@ -21,6 +21,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
         private const float GroundProbeHeight = 25f;
         private const float GroundProbeDistance = 80f;
         private const float RotationSpeed = 620f;
+        private const int GroundLayerMask = 1 << 8;
 
         private static readonly int IdleState = Animator.StringToHash("Idle");
         private static readonly int WalkState = Animator.StringToHash("Walk");
@@ -124,8 +125,11 @@ namespace Project_S.Runtime.Gameplay.Ambient
         public static Vector3 SampleGround(Vector3 position)
         {
             Vector3 origin = position + Vector3.up * GroundProbeHeight;
-            if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, GroundProbeDistance, ~0, QueryTriggerInteraction.Ignore))
+            if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, GroundProbeDistance, GroundLayerMask, QueryTriggerInteraction.Ignore))
                 return hit.point;
+
+            if (NavMesh.SamplePosition(position, out NavMeshHit navMeshHit, 4f, NavMesh.AllAreas))
+                return navMeshHit.position;
 
             position.y = 0f;
             return position;
@@ -240,24 +244,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
 
         private Vector3 SampleGroundNearPlayer()
         {
-            Vector3 origin = _player.position + Vector3.up * GroundProbeHeight;
-            var hits = Physics.RaycastAll(origin, Vector3.down, GroundProbeDistance, ~0, QueryTriggerInteraction.Ignore);
-            System.Array.Sort(hits, (left, right) => left.distance.CompareTo(right.distance));
-
-            foreach (var hit in hits)
-            {
-                if (hit.transform == null)
-                    continue;
-
-                if (hit.transform.IsChildOf(_player) || hit.transform.IsChildOf(transform))
-                    continue;
-
-                return SampleNavMeshPosition(hit.point, _wanderRadius);
-            }
-
-            Vector3 fallback = _player.position;
-            fallback.y = transform.position.y;
-            return SampleNavMeshPosition(fallback, _wanderRadius);
+            return SampleNavMeshPosition(SampleGround(_player.position), _wanderRadius);
         }
 
         private void PlayState(int stateHash, float transitionDuration)

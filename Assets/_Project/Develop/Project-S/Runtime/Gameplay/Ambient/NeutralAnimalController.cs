@@ -22,6 +22,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
         private const float GroundProbeDistance = 80f;
         private const float RotationSpeed = 540f;
         private const float FleeDistanceMultiplier = 1.35f;
+        private const int GroundLayerMask = 1 << 8;
 
         private static readonly int StateHash = Animator.StringToHash("State");
         private static readonly int VertHash = Animator.StringToHash("Vert");
@@ -114,8 +115,11 @@ namespace Project_S.Runtime.Gameplay.Ambient
         public static Vector3 SampleGround(Vector3 position)
         {
             Vector3 origin = position + Vector3.up * GroundProbeHeight;
-            if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, GroundProbeDistance, ~0, QueryTriggerInteraction.Ignore))
+            if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, GroundProbeDistance, GroundLayerMask, QueryTriggerInteraction.Ignore))
                 return hit.point;
+
+            if (NavMesh.SamplePosition(position, out NavMeshHit navMeshHit, 4f, NavMesh.AllAreas))
+                return navMeshHit.position;
 
             position.y = 0f;
             return position;
