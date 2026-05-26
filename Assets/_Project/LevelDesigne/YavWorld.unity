@@ -1877,6 +1877,7 @@ MonoBehaviour:
   _sprintKey: 304
   _jumpKey: 32
   _dodgeKey: 308
+  _crouchKey: 306
   _interactKey: 101
   _toggleOffhandKey: 103
   _offhandAbilityKey: 102

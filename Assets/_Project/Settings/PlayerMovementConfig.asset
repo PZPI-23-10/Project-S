@@ -25,3 +25,7 @@ MonoBehaviour:
   <SprintStaminaCostPerSecond>k__BackingField: 8
   <AirAcceleration>k__BackingField: 8
   <AirDrag>k__BackingField: 0.1
+  <CrouchHeight>k__BackingField: 1
+  <CrouchSpeedMultiplier>k__BackingField: 0.55
+  <CrouchViewHeightMultiplier>k__BackingField: 0.5
+  <CrouchTransitionSpeed>k__BackingField: 12

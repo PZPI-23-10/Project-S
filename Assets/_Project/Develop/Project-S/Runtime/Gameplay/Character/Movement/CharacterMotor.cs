@@ -21,11 +21,18 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
         private Vector2 _moveInput;
         private Vector3 _moveInputVector;
         private Vector3 _dodgeVelocity;
+        private readonly Collider[] _uncrouchOverlapBuffer = new Collider[8];
         private float _yaw;
         private float _pitch;
         private float _dodgeUntil;
         private float _dodgeCooldownUntil;
+        private float _standingCapsuleRadius;
+        private float _standingCapsuleHeight;
+        private float _standingCapsuleYOffset;
+        private Vector3 _standingViewLocalPosition;
         private bool _sprintHeld;
+        private bool _crouchHeld;
+        private bool _isCrouching;
         private bool _jumpRequested;
         private bool _jumpConsumed;
 
@@ -37,6 +44,7 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
             _motor = GetComponent<KinematicCharacterMotor>();
             _motor.CharacterController = this;
             _yaw = transform.eulerAngles.y;
+            CacheStandingPose();
 
             ValidateRequiredReferences();
 
@@ -53,6 +61,7 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
                 _moveInput = Vector2.zero;
                 _moveInputVector = Vector3.zero;
                 _sprintHeld = false;
+                _crouchHeld = false;
                 _jumpRequested = false;
                 return;
             }
@@ -60,6 +69,7 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
             _moveInput = Vector2.ClampMagnitude(input.Move, 1f);
             _moveInputVector = BuildMoveDirection(_moveInput);
             _sprintHeld = input.SprintHeld;
+            _crouchHeld = input.CrouchHeld;
 
             if (input.JumpPressed)
             {
@@ -136,7 +146,13 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
             TryApplyJump(ref currentVelocity);
         }
 
-        public void BeforeCharacterUpdate(float deltaTime) { }
+        public void BeforeCharacterUpdate(float deltaTime)
+        {
+            if (_crouchHeld)
+            {
+                EnterCrouch();
+            }
+        }
         public void PostGroundingUpdate(float deltaTime) { }
         public void AfterCharacterUpdate(float deltaTime)
         {
@@ -144,6 +160,13 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
             {
                 _jumpConsumed = false;
             }
+
+            if (_isCrouching && !_crouchHeld)
+            {
+                TryExitCrouch();
+            }
+
+            UpdateCrouchView(deltaTime);
         }
 
         public bool IsColliderValidForCollisions(Collider coll) => true;
@@ -232,9 +255,14 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
             // 2. Затиснутий Shift
             // 3. Немає критичного перевантаження (швидкість не 0)
             // 4. Вдалося витратити стаміну
-            var canSprint = hasMovementInput && _sprintHeld && weightMultiplier > 0f && _stamina.Spend(_config.SprintStaminaCostPerSecond * deltaTime);
+            var canSprint = hasMovementInput && _sprintHeld && !_isCrouching && weightMultiplier > 0f && _stamina.Spend(_config.SprintStaminaCostPerSecond * deltaTime);
 
             float baseSpeed = canSprint ? _stats.Get(StatType.SprintSpeed) : _stats.Get(StatType.MoveSpeed);
+
+            if (_isCrouching)
+            {
+                baseSpeed *= Mathf.Clamp01(_config.CrouchSpeedMultiplier);
+            }
 
             return baseSpeed * weightMultiplier;
         }
@@ -243,6 +271,86 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
         {
             var rotation = Quaternion.Euler(0f, _yaw, 0f);
             return rotation * new Vector3(move.x, 0f, move.y);
+        }
+
+        private void CacheStandingPose()
+        {
+            if (_motor != null && _motor.Capsule != null)
+            {
+                _standingCapsuleRadius = _motor.Capsule.radius;
+                _standingCapsuleHeight = _motor.Capsule.height;
+                _standingCapsuleYOffset = _motor.Capsule.center.y;
+            }
+
+            if (_viewRoot != null)
+            {
+                _standingViewLocalPosition = _viewRoot.localPosition;
+            }
+        }
+
+        private void EnterCrouch()
+        {
+            if (_isCrouching || _config == null || _motor == null || _motor.Capsule == null)
+                return;
+
+            float crouchHeight = GetCrouchCapsuleHeight();
+            _motor.SetCapsuleDimensions(_standingCapsuleRadius, crouchHeight, GetCrouchCapsuleYOffset(crouchHeight));
+            _isCrouching = true;
+        }
+
+        private void TryExitCrouch()
+        {
+            if (_config == null || _motor == null || _motor.Capsule == null)
+                return;
+
+            _motor.SetCapsuleDimensions(_standingCapsuleRadius, _standingCapsuleHeight, _standingCapsuleYOffset);
+
+            int overlaps = _motor.CharacterOverlap(
+                _motor.TransientPosition,
+                _motor.TransientRotation,
+                _uncrouchOverlapBuffer,
+                _motor.CollidableLayers,
+                QueryTriggerInteraction.Ignore);
+
+            if (overlaps > 0)
+            {
+                float crouchHeight = GetCrouchCapsuleHeight();
+                _motor.SetCapsuleDimensions(_standingCapsuleRadius, crouchHeight, GetCrouchCapsuleYOffset(crouchHeight));
+                return;
+            }
+
+            _isCrouching = false;
+        }
+
+        private void UpdateCrouchView(float deltaTime)
+        {
+            if (_viewRoot == null || _config == null)
+                return;
+
+            Vector3 targetPosition = _standingViewLocalPosition;
+
+            if (_isCrouching)
+            {
+                targetPosition.y -= Mathf.Max(0f, _standingCapsuleHeight - GetCrouchCapsuleHeight()) * _config.CrouchViewHeightMultiplier;
+            }
+
+            float transitionSpeed = Mathf.Max(0f, _config.CrouchTransitionSpeed);
+            float t = transitionSpeed <= 0f ? 1f : 1f - Mathf.Exp(-transitionSpeed * deltaTime);
+            _viewRoot.localPosition = Vector3.Lerp(_viewRoot.localPosition, targetPosition, t);
+        }
+
+        private float GetCrouchCapsuleHeight()
+        {
+            if (_config == null)
+                return _standingCapsuleHeight;
+
+            float minHeight = (_standingCapsuleRadius * 2f) + 0.01f;
+            return Mathf.Clamp(_config.CrouchHeight, minHeight, _standingCapsuleHeight);
+        }
+
+        private float GetCrouchCapsuleYOffset(float crouchHeight)
+        {
+            return _standingCapsuleYOffset - ((_standingCapsuleHeight - crouchHeight) * 0.5f);
         }
 
         private void ValidateRequiredReferences()

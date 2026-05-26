@@ -105,7 +105,8 @@ namespace Project_S.Runtime.Gameplay.Character.Input
             bool qteBackPressed,
             bool qteLeftPressed,
             bool qteRightPressed,
-            bool lightAttackHeld = false) // НОВЕ: додано як необов'язковий параметр
+            bool lightAttackHeld = false,
+            bool crouchHeld = false) // НОВЕ: додано як необов'язковий параметр
         {
             Move = move;
             Look = look;
@@ -124,6 +125,7 @@ namespace Project_S.Runtime.Gameplay.Character.Input
             QteLeftPressed = qteLeftPressed;
             QteRightPressed = qteRightPressed;
             LightAttackHeld = lightAttackHeld; // НОВЕ
+            CrouchHeld = crouchHeld;
         }
 
         public Vector2 Move { get; }
@@ -143,5 +145,6 @@ namespace Project_S.Runtime.Gameplay.Character.Input
         public bool QteLeftPressed { get; }
         public bool QteRightPressed { get; }
         public bool LightAttackHeld { get; }
+        public bool CrouchHeld { get; }
     }
 }

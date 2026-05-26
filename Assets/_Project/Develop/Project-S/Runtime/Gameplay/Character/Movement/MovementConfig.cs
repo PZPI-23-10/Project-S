@@ -18,5 +18,9 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
         [field: SerializeField] public float SprintStaminaCostPerSecond { get; private set; } = 8f;
         [field: SerializeField] public float AirAcceleration { get; private set; } = 8f;
         [field: SerializeField] public float AirDrag { get; private set; } = 0.1f;
+        [field: SerializeField] public float CrouchHeight { get; private set; } = 1f;
+        [field: SerializeField] public float CrouchSpeedMultiplier { get; private set; } = 0.55f;
+        [field: SerializeField] public float CrouchViewHeightMultiplier { get; private set; } = 0.5f;
+        [field: SerializeField] public float CrouchTransitionSpeed { get; private set; } = 12f;
     }
 }
