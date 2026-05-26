@@ -21,7 +21,8 @@ namespace Project_S.Runtime.Gameplay.Character.Input
             false,
             false,
             false,
-            false); // НОВЕ: додано false для LightAttackHeld
+            false,
+            false); // НОВЕ: додано false для LightAttackReleased
 
         public PlayerInputSnapshot(
             Vector2 move,
@@ -46,6 +47,7 @@ namespace Project_S.Runtime.Gameplay.Character.Input
                 false,
                 false,
                 -1,
+                false,
                 false,
                 false,
                 false,
@@ -84,6 +86,7 @@ namespace Project_S.Runtime.Gameplay.Character.Input
                 false,
                 false,
                 false,
+                false,
                 false) // НОВЕ
         {
         }
@@ -105,7 +108,8 @@ namespace Project_S.Runtime.Gameplay.Character.Input
             bool qteBackPressed,
             bool qteLeftPressed,
             bool qteRightPressed,
-            bool lightAttackHeld = false) // НОВЕ: додано як необов'язковий параметр
+            bool lightAttackHeld = false,
+            bool lightAttackReleased = false) // НОВЕ: параметр відпускання
         {
             Move = move;
             Look = look;
@@ -123,7 +127,8 @@ namespace Project_S.Runtime.Gameplay.Character.Input
             QteBackPressed = qteBackPressed;
             QteLeftPressed = qteLeftPressed;
             QteRightPressed = qteRightPressed;
-            LightAttackHeld = lightAttackHeld; // НОВЕ
+            LightAttackHeld = lightAttackHeld;
+            LightAttackReleased = lightAttackReleased; // НОВЕ: зберігаємо значення
         }
 
         public Vector2 Move { get; }
@@ -143,5 +148,6 @@ namespace Project_S.Runtime.Gameplay.Character.Input
         public bool QteLeftPressed { get; }
         public bool QteRightPressed { get; }
         public bool LightAttackHeld { get; }
+        public bool LightAttackReleased { get; } // НОВЕ: властивість, щоб читати її в інших скриптах
     }
 }

@@ -13,6 +13,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         private Collider _collider;
 
         private readonly HashSet<Collider> _alreadyHit = new HashSet<Collider>();
+        private readonly HashSet<IDamageReceiver> _alreadyDamagedEnemies = new HashSet<IDamageReceiver>();
 
         private void Awake()
         {
@@ -32,6 +33,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         {
             _isHitboxActive = true;
             _alreadyHit.Clear();
+            _alreadyDamagedEnemies.Clear();
             if (_collider != null) _collider.enabled = true;
         }
 
@@ -39,6 +41,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         {
             _isHitboxActive = false;
             _alreadyHit.Clear();
+            _alreadyDamagedEnemies.Clear();
             if (_collider != null) _collider.enabled = false;
         }
 
@@ -57,28 +60,59 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             if (receiver == null)
                 return;
 
+            if (_alreadyDamagedEnemies.Contains(receiver))
+                return;
+
+            _alreadyDamagedEnemies.Add(receiver); 
+
             _alreadyHit.Add(other);
 
-            var damageProfile = _weaponData.DamageProfile;
+            var currentDamageProfile = new List<DamageInstance>(_weaponData.DamageProfile);
+            float currentPoiseDamage = _weaponData.PoiseDamage;
+
             var buffs = _attacker.GetComponentInParent<BuffController>();
             if (buffs != null)
-                damageProfile = buffs.ModifyDamageProfile(damageProfile);
+                currentDamageProfile = buffs.ModifyDamageProfile(currentDamageProfile);
+
+            var combatController = _attacker.GetComponent<CombatController>();
+
+            // --- ЗМІНЕНО: Читаємо пасивки прямо з WeaponItemData (ScriptableObject) ---
+            if (_weaponData.Passives != null)
+            {
+                foreach (var passive in _weaponData.Passives)
+                {
+                    if (passive != null)
+                    {
+                        passive.OnBeforeHit(combatController, other, ref currentPoiseDamage, ref currentDamageProfile);
+                    }
+                }
+            }
+            // --------------------------------------------------------------------------
 
             var request = new DamageRequest(
                             _attacker,
-                            damageProfile,
-                            _weaponData.PoiseDamage,
+                            currentDamageProfile,
+                            currentPoiseDamage,
                             _weaponData);
 
             receiver.ReceiveDamage(request);
 
-            if (_attacker != null)
+            // --- ЗМІНЕНО: Читаємо пасивки після удару з WeaponItemData ---
+            if (_weaponData.Passives != null)
             {
-                var combatController = _attacker.GetComponent<CombatController>();
-                if (combatController != null)
+                foreach (var passive in _weaponData.Passives)
                 {
-                    combatController.AddChargeOnHit();
+                    if (passive != null)
+                    {
+                        passive.OnAfterHit(combatController, other, receiver);
+                    }
                 }
+            }
+            // -------------------------------------------------------------
+
+            if (combatController != null)
+            {
+                combatController.AddChargeOnHit();
             }
         }
     }

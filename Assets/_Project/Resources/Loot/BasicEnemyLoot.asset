@@ -13,7 +13,11 @@ MonoBehaviour:
   m_Name: BasicEnemyLoot
   m_EditorClassIdentifier: 
   SoulAshReward: 10
-  GuaranteedDrops: []
+  GuaranteedDrops:
+  - Item: {fileID: 0}
+    MinAmount: 1
+    MaxAmount: 1
+    Chance: 1
   ChanceDrops:
   - Item: {fileID: 11400000, guid: 09625741fd81492b33aa7cf8961c324c, type: 2}
     MinAmount: 1
