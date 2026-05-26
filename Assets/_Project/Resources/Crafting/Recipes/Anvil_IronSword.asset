@@ -24,8 +24,6 @@ MonoBehaviour:
     Amount: 3
   - Item: {fileID: 11400000, guid: e5f03bd6ee9e2d044bca9d96e4564966, type: 2}
     Amount: 2
-  - Item: {fileID: 11400000, guid: cd0daeb177f15eacd3fe89886055ad6a, type: 2}
-    Amount: 1
   SoulAshCost: 100
   RequiredItems: []
   CraftDurationSeconds: 0
