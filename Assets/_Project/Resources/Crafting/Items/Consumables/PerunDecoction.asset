@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35381e3f13136374abee8a5ed10dc4aa, type: 3}
   m_Name: PerunDecoction
   m_EditorClassIdentifier: 
-  ItemName: Perun Decoction
+  ItemName: Відвар Перуна
   Kind: 2
   Weight: 0.125
   IsStackable: 1
   MaxStack: 5
   MaxInventoryStacks: 0
   Icon: {fileID: 0}
-  Description: Grants +12% attack speed for this MVP.
+  Description: Гіркий відвар, що ненадовго пришвидшує атаки.
   WeaponPrefab: {fileID: 0}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 0

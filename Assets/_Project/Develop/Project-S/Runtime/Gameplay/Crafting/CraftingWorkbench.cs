@@ -6,7 +6,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
 {
     public class CraftingWorkbench : MonoBehaviour, IInteractable
     {
-        public string InteractionPrompt => "Workbench";
+        public string InteractionPrompt => "Верстак";
 
         public void Interact(PlayerInteractor interactor)
         {

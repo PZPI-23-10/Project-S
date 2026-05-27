@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35381e3f13136374abee8a5ed10dc4aa, type: 3}
   m_Name: MavkaPotion
   m_EditorClassIdentifier: 
-  ItemName: "Mavka Potion"
+  ItemName: Зілля мавки
   Kind: 2
   Weight: 0.2
   IsStackable: 1
   MaxStack: 5
   MaxInventoryStacks: 0
   Icon: {fileID: 0}
-  Description: "Restores 10 stamina and removes stamina costs briefly."
+  Description: Легке зілля, що відновлює витривалість і тимчасово полегшує рух.
   WeaponPrefab: {fileID: 0}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 0

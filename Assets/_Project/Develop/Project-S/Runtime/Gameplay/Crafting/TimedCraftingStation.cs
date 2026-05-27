@@ -8,8 +8,8 @@ namespace Project_S.Runtime.Gameplay.Crafting
     public class TimedCraftingStation : MonoBehaviour, IInteractable
     {
         [SerializeField] private CraftingContext _context = CraftingContext.Campfire;
-        [SerializeField] private string _displayName = "Station";
-        [SerializeField] private string _actionLabel = "Craft";
+        [SerializeField] private string _displayName = "Станція";
+        [SerializeField] private string _actionLabel = "Створити";
         [SerializeField] private bool _usesFuel = true;
         [SerializeField] private ItemData _fuelItem;
         [SerializeField] private float _secondsPerFuelItem = 300f;
@@ -122,19 +122,19 @@ namespace Project_S.Runtime.Gameplay.Crafting
             var check = new CraftingCheck();
 
             if (IsCooking)
-                check.AddProblem($"{_displayName} is already working.");
+                check.AddProblem($"{_displayName} вже працює.");
 
             if (recipe == null)
             {
-                check.AddProblem("Recipe is missing.");
+                check.AddProblem("Рецепт відсутній.");
                 return check;
             }
 
             if (recipe.Context != _context)
-                check.AddProblem($"Recipe is not a {_displayName} recipe.");
+                check.AddProblem($"Цей рецепт не підходить для {_displayName}.");
 
             if (_usesFuel && recipe.FuelSecondsCost > 0f && _fuelSeconds < recipe.FuelSecondsCost)
-                check.AddProblem($"Need {Mathf.CeilToInt(recipe.FuelSecondsCost - _fuelSeconds)} more fuel seconds.");
+                check.AddProblem($"Потрібно ще {Mathf.CeilToInt(recipe.FuelSecondsCost - _fuelSeconds)} с палива.");
 
             var crafting = new CraftingService(inventory, wallet, ResolveBaseStorage());
             var recipeCheck = crafting.Check(recipe);

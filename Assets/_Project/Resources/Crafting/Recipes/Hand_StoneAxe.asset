@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
   m_Name: Hand_StoneAxe
   m_EditorClassIdentifier: 
-  DisplayName: "Stone Axe"
+  DisplayName: Кам'яна сокира
   Context: 0
   Output:
     Item: {fileID: 11400000, guid: 6e2b35595eb3e7cd5aba380d0ec7942e, type: 2}
@@ -24,4 +24,4 @@ MonoBehaviour:
     Amount: 2
   SoulAshCost: 0
   RequiredItems: []
-  Description: "Starter hand-crafted axe."
+  Description: Збирає початкову сокиру для рубання дерева й захисту.

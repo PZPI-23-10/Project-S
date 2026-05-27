@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
   m_Name: Cauldron_BloodYushka
   m_EditorClassIdentifier: 
-  DisplayName: "Blood Yushka"
+  DisplayName: Кривава юшка
   Context: 4
   Output:
     Item: {fileID: 11400000, guid: a435ac8171d75f420f3263225b32acdd, type: 2}
@@ -28,4 +28,4 @@ MonoBehaviour:
   RequiredItems: []
   CraftDurationSeconds: 0
   FuelSecondsCost: 10
-  Description: "MVP station recipe with shortened timer."
+  Description: Варить густу страву, що насичує і додає сили ударам.

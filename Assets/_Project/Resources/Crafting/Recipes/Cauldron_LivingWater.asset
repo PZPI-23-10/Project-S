@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
   m_Name: Cauldron_LivingWater
   m_EditorClassIdentifier: 
-  DisplayName: "Living Water"
+  DisplayName: Жива вода
   Context: 4
   Output:
     Item: {fileID: 11400000, guid: 7cf7ea74370444943f27f143e592b5ba, type: 2}
@@ -26,4 +26,4 @@ MonoBehaviour:
   RequiredItems: []
   CraftDurationSeconds: 0
   FuelSecondsCost: 5
-  Description: "MVP station recipe with shortened timer."
+  Description: Очищує воду, пробуджуючи в ній цілющу силу.

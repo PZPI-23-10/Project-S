@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35381e3f13136374abee8a5ed10dc4aa, type: 3}
   m_Name: LightningGrease
   m_EditorClassIdentifier: 
-  ItemName: "Lightning Grease"
+  ItemName: Громова масть
   Kind: 2
   Weight: 0.2
   IsStackable: 1
   MaxStack: 10
   MaxInventoryStacks: 1
   Icon: {fileID: 0}
-  Description: "MVP weapon grease. Converts part of physical weapon damage into lightning damage for a short duration."
+  Description: Мастило для зброї, що на короткий час додає ударам силу блискавки.
   WeaponPrefab: {fileID: 0}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 0

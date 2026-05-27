@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
   m_Name: Cauldron_HealingPoultice
   m_EditorClassIdentifier: 
-  DisplayName: "Healing Poultice"
+  DisplayName: Цілюща припарка
   Context: 4
   Output:
     Item: {fileID: 11400000, guid: d95faea9925451495edddfd729bb6a53, type: 2}
@@ -28,4 +28,4 @@ MonoBehaviour:
   RequiredItems: []
   CraftDurationSeconds: 0
   FuelSecondsCost: 10
-  Description: "MVP station recipe with shortened timer."
+  Description: Готує трав'яну припарку для швидкого лікування ран.

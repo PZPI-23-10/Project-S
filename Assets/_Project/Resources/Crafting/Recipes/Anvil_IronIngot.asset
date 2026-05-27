@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
   m_Name: Anvil_IronIngot
   m_EditorClassIdentifier: 
-  DisplayName: "Iron Ingot"
+  DisplayName: Залізний зливок
   Context: 6
   Output:
     Item: {fileID: 11400000, guid: 9eb637fe99fc4baf9727225892ec7575, type: 2}
@@ -24,4 +24,4 @@ MonoBehaviour:
   RequiredItems: []
   CraftDurationSeconds: 0
   FuelSecondsCost: 0
-  Description: "Forge krytsia chunks into a refined iron ingot."
+  Description: Викуює шматки криці в очищений залізний зливок.

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
   m_Name: Workbench_BonePickaxe
   m_EditorClassIdentifier: 
-  DisplayName: "Bone Pickaxe"
+  DisplayName: Кістяна кирка
   Context: 1
   Output:
     Item: {fileID: 11400000, guid: 5d19063fa1f13eb3e1acfe2b0cb5083e, type: 2}
@@ -26,4 +26,4 @@ MonoBehaviour:
     Amount: 2
   SoulAshCost: 60
   RequiredItems: []
-  Description: "First workbench pickaxe."
+  Description: Збирає першу кирку для видобутку простих ресурсів.

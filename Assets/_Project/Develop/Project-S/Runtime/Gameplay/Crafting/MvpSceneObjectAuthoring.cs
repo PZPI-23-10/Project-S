@@ -92,7 +92,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
                 new[]
                 {
                     new ItemGrant(LoadItem("Crafting/Items/Consumables/Berry"), 30),
-                    new ItemGrant(LoadItem("Crafting/Items/Consumables/GreyMeat"), 20),
+                    new ItemGrant(LoadItem("Crafting/Items/Consumables/GreyMeat"), 70),
                     new ItemGrant(LoadItem("Crafting/Items/Resources/Bone"), 30),
                     new ItemGrant(LoadItem("Crafting/Items/Resources/Leather"), 10),
                     new ItemGrant(LoadItem("Crafting/Items/Resources/Wood"), 30),

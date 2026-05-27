@@ -8,8 +8,8 @@ namespace Project_S.Runtime.Gameplay.Crafting
         {
             ConfigureStation(
                 CraftingContext.CharcoalPit,
-                "Charcoal Pit",
-                "Burn",
+                "Вуглярня",
+                "Випалити",
                 false,
                 null,
                 0f,

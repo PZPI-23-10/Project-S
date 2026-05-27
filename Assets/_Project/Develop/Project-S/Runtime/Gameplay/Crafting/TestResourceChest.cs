@@ -26,7 +26,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
         [SerializeField] private List<ItemGrant> _itemGrants = new List<ItemGrant>();
         [SerializeField] private int _soulAshGrant = 500;
         [SerializeField] private bool _grantOnce = true;
-        [SerializeField] private string _interactionPrompt = "Resource Chest";
+        [SerializeField] private string _interactionPrompt = "Скриня ресурсів";
 
         private bool _granted;
 

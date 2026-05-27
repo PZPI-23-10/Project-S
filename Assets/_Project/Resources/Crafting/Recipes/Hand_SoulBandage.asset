@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
   m_Name: Hand_SoulBandage
   m_EditorClassIdentifier: 
-  DisplayName: "Soul Bandage"
+  DisplayName: Пов'язка з попелу душ
   Context: 0
   Output:
     Item: {fileID: 11400000, guid: e75fee0d9fca718c2fe14fa20aee2aa0, type: 2}
@@ -22,4 +22,4 @@ MonoBehaviour:
     Amount: 1
   SoulAshCost: 10
   RequiredItems: []
-  Description: "Restores health and consumes Soul Ash."
+  Description: Створює пов'язку, що витрачає попіл душ і відновлює здоров'я.

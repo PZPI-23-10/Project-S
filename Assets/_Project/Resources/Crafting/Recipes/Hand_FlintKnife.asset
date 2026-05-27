@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
   m_Name: Hand_FlintKnife
   m_EditorClassIdentifier: 
-  DisplayName: "Flint Knife"
+  DisplayName: Крем'яний ніж
   Context: 0
   Output:
     Item: {fileID: 11400000, guid: 40b1dd5800a9ec092681b2fc083bc366, type: 2}
@@ -24,4 +24,4 @@ MonoBehaviour:
     Amount: 1
   SoulAshCost: 0
   RequiredItems: []
-  Description: "Fast hand-crafted knife."
+  Description: Швидко збирає простий ніж із кременю та підручних матеріалів.

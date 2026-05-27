@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
   m_Name: Campfire_StrongBoneSoup
   m_EditorClassIdentifier: 
-  DisplayName: "Strong Bone Soup"
+  DisplayName: Міцний кістяний суп
   Context: 2
   Output:
     Item: {fileID: 11400000, guid: a7988f26e73c0e23aa495e932227fa75, type: 2}
@@ -26,4 +26,4 @@ MonoBehaviour:
   RequiredItems: []
   CraftDurationSeconds: 0
   FuelSecondsCost: 5
-  Description: "A simple bone soup batch. MVP timer is shorter than document balance."
+  Description: Варить простий кістяний суп, що добре втамовує голод.

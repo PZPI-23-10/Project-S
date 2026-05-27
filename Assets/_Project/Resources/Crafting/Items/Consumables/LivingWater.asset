@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35381e3f13136374abee8a5ed10dc4aa, type: 3}
   m_Name: LivingWater
   m_EditorClassIdentifier: 
-  ItemName: "Living Water"
+  ItemName: Жива вода
   Kind: 2
   Weight: 0.075
   IsStackable: 1
   MaxStack: 5
   MaxInventoryStacks: 0
   Icon: {fileID: 0}
-  Description: "Restores 40 health."
+  Description: Чиста вода з цілющою силою. Відновлює здоров'я.
   WeaponPrefab: {fileID: 0}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 1

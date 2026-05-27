@@ -10,7 +10,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
     {
         private const int DefaultStorageSize = 24;
 
-        [SerializeField] private string _interactionPrompt = "Storage Chest";
+        [SerializeField] private string _interactionPrompt = "Скриня";
         [SerializeField] private int _storageSize = DefaultStorageSize;
         [SerializeField] private ItemStack[] _slots;
 
@@ -35,7 +35,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             var inventoryUI = FindFirstObjectByType<InventoryUI>();
             if (inventoryUI != null)
-                inventoryUI.OpenWithGeneralStorage(this, transform, interactor.transform, interactor.MenuCloseDistance);
+                inventoryUI.OpenWithStorage(this, transform, interactor.transform, interactor.MenuCloseDistance);
         }
 
         public int GetSize()
@@ -80,11 +80,16 @@ namespace Project_S.Runtime.Gameplay.Crafting
             return count;
         }
 
+        public bool CanStoreItem(ItemData item)
+        {
+            return item != null;
+        }
+
         public bool CanAddItem(ItemData item, int amount)
         {
             EnsureSlots();
 
-            if (item == null || amount <= 0)
+            if (!CanStoreItem(item) || amount <= 0)
                 return false;
 
             int remaining = amount;

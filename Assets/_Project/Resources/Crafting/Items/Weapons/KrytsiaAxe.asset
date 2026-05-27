@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 215432127562c5e46812873892628a75, type: 3}
   m_Name: KrytsiaAxe
   m_EditorClassIdentifier: 
-  ItemName: "Krytsia Axe"
+  ItemName: Крицева сокира
   Kind: 1
   Weight: 4
   IsStackable: 0
   MaxStack: 1
   MaxInventoryStacks: 0
   Icon: {fileID: 0}
-  Description: "Iron-tier axe. Structure-breaking active ability is deferred; this MVP uses its weapon stats and axe harvesting type."
+  Description: Важка сокира з криці. Добре рубає дерево й ворогів.
   WeaponPrefab: {fileID: 3942592866433276128, guid: 6e6f288cc1ccdd543b2cd3d632a069ed, type: 3}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 0

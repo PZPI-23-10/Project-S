@@ -18,8 +18,8 @@ namespace Project_S.Runtime.Gameplay.Crafting
         {
             ConfigureStation(
                 CraftingContext.Cauldron,
-                "Cauldron",
-                "Brew",
+                "Казан",
+                "Зварити",
                 true,
                 woodItem,
                 DefaultSecondsPerWood,

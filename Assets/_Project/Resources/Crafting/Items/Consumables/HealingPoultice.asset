@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35381e3f13136374abee8a5ed10dc4aa, type: 3}
   m_Name: HealingPoultice
   m_EditorClassIdentifier: 
-  ItemName: "Healing Poultice"
+  ItemName: Цілюща припарка
   Kind: 2
   Weight: 0.1
   IsStackable: 1
   MaxStack: 5
   MaxInventoryStacks: 0
   Icon: {fileID: 0}
-  Description: "Cauldron healing item. Restores 60 health in this MVP."
+  Description: Трав'яна припарка для швидкого відновлення здоров'я.
   WeaponPrefab: {fileID: 0}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 1

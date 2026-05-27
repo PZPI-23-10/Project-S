@@ -68,7 +68,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
             ResolveActiveStation();
 
             _titleText.text = GetTitle();
-            _walletText.text = $"Soul Ash: {(_wallet != null ? _wallet.Amount : 0)}";
+            _walletText.text = $"Попіл душ: {(_wallet != null ? _wallet.Amount : 0)}";
             RefreshStationHeader();
 
             var contextRecipes = GetContextRecipes();
@@ -121,7 +121,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
         {
             if (_selectedRecipe == null)
             {
-                _detailsText.text = "No recipes available.";
+                _detailsText.text = "Немає доступних рецептів.";
                 _craftButton.interactable = false;
                 _craftButtonText.text = GetActionLabel();
                 return;
@@ -132,9 +132,9 @@ namespace Project_S.Runtime.Gameplay.Crafting
             _craftButton.interactable = check.CanCraft;
             _craftButtonText.text = _context switch
             {
-                _ when IsStationContext(_context) && _activeStation != null && _activeStation.IsCooking => "Working",
-                _ when IsStationContext(_context) => check.CanCraft ? GetActionLabel() : "Missing",
-                _ => check.CanCraft ? "Craft" : "Missing"
+                _ when IsStationContext(_context) && _activeStation != null && _activeStation.IsCooking => "В роботі",
+                _ when IsStationContext(_context) => check.CanCraft ? GetActionLabel() : "Не вистачає",
+                _ => check.CanCraft ? "Створити" : "Не вистачає"
             };
         }
 
@@ -144,8 +144,8 @@ namespace Project_S.Runtime.Gameplay.Crafting
             {
                 $"<b>{recipe.RecipeName}</b>",
                 recipe.Output != null && recipe.Output.Item != null
-                    ? $"Creates: {recipe.Output.Item.ItemName} x{recipe.Output.Amount}"
-                    : "Creates: not configured"
+                    ? $"Створює: {recipe.Output.Item.ItemName} x{recipe.Output.Amount}"
+                    : "Результат: не налаштовано"
             };
 
             if (!string.IsNullOrWhiteSpace(recipe.Description))
@@ -153,9 +153,9 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             if (IsStationContext(_context))
             {
-                lines.Add("Time: 0s");
+                lines.Add("Час: 0 с");
                 if (_activeStation != null && _activeStation.UsesFuel)
-                    lines.Add($"Fuel: {Mathf.CeilToInt(recipe.FuelSecondsCost)}s");
+                    lines.Add($"Паливо: {Mathf.CeilToInt(recipe.FuelSecondsCost)} с");
             }
 
             lines.Add("");
@@ -168,12 +168,12 @@ namespace Project_S.Runtime.Gameplay.Crafting
             }
 
             if (recipe.SoulAshCost > 0)
-                lines.Add($"Soul Ash: {GetOwnedSoulAsh()}/{recipe.SoulAshCost}");
+                lines.Add($"Попіл душ: {GetOwnedSoulAsh()}/{recipe.SoulAshCost}");
 
             foreach (var requirement in (recipe.RequiredItems ?? Enumerable.Empty<CraftingItemAmount>()).Where(IsValidAmount))
             {
                 int owned = GetOwnedItemCount(requirement.Item);
-                lines.Add($"Requires {requirement.Item.ItemName}: {owned}/{requirement.Amount}");
+                lines.Add($"Потрібно {requirement.Item.ItemName}: {owned}/{requirement.Amount}");
             }
 
             if (!check.CanCraft)
@@ -205,7 +205,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
                 if (_activeStation == null)
                 {
                     var check = new CraftingCheck();
-                    check.AddProblem("No station selected.");
+                    check.AddProblem("Станцію не вибрано.");
                     return check;
                 }
 
@@ -242,34 +242,34 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             if (_activeStation == null)
             {
-                _fuelText.text = "Fuel: no station";
+                _fuelText.text = "Паливо: станцію не вибрано";
                 _progressText.text = "";
                 _addFuelButton.interactable = false;
-                _addFuelButtonText.text = "Add Wood";
+                _addFuelButtonText.text = "Додати деревину";
                 return;
             }
 
             if (_activeStation.UsesFuel)
             {
-                _fuelText.text = $"Fuel: {Mathf.FloorToInt(_activeStation.FuelSeconds)} / {Mathf.FloorToInt(_activeStation.MaxFuelSeconds)}s";
+                _fuelText.text = $"Паливо: {Mathf.FloorToInt(_activeStation.FuelSeconds)} / {Mathf.FloorToInt(_activeStation.MaxFuelSeconds)} с";
                 _addFuelButton.gameObject.SetActive(true);
                 _addFuelButton.interactable = _inventory != null && _activeStation.FuelSeconds < _activeStation.MaxFuelSeconds;
-                _addFuelButtonText.text = "Add Wood";
+                _addFuelButtonText.text = "Додати деревину";
             }
             else
             {
-                _fuelText.text = "Fuel: not required";
+                _fuelText.text = "Паливо не потрібне";
                 _addFuelButton.gameObject.SetActive(false);
             }
 
             if (_activeStation.IsCooking)
             {
-                string recipeName = _activeStation.ActiveRecipe != null ? _activeStation.ActiveRecipe.RecipeName : "Recipe";
-                _progressText.text = $"{GetWorkingLabel()}: {recipeName} {Mathf.CeilToInt(_activeStation.RemainingCraftSeconds)}s ({Mathf.RoundToInt(_activeStation.ActiveProgress01 * 100f)}%)";
+                string recipeName = _activeStation.ActiveRecipe != null ? _activeStation.ActiveRecipe.RecipeName : "Рецепт";
+                _progressText.text = $"{GetWorkingLabel()}: {recipeName} {Mathf.CeilToInt(_activeStation.RemainingCraftSeconds)} с ({Mathf.RoundToInt(_activeStation.ActiveProgress01 * 100f)}%)";
             }
             else
             {
-                _progressText.text = "Ready";
+                _progressText.text = "Готово";
             }
         }
 
@@ -317,13 +317,13 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             return _context switch
             {
-                CraftingContext.Workbench => "Workbench",
-                CraftingContext.Campfire => "Campfire",
-                CraftingContext.CharcoalPit => "Charcoal Pit",
-                CraftingContext.Cauldron => "Cauldron",
-                CraftingContext.Furnace => "Furnace",
-                CraftingContext.Anvil => "Anvil",
-                _ => "Hand Crafting"
+                CraftingContext.Workbench => "Верстак",
+                CraftingContext.Campfire => "Багаття",
+                CraftingContext.CharcoalPit => "Вуглярня",
+                CraftingContext.Cauldron => "Казан",
+                CraftingContext.Furnace => "Піч",
+                CraftingContext.Anvil => "Ковадло",
+                _ => "Ручне ремесло"
             };
         }
 
@@ -334,12 +334,12 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             return _context switch
             {
-                CraftingContext.CharcoalPit => "Burn",
-                CraftingContext.Cauldron => "Brew",
-                CraftingContext.Furnace => "Smelt",
-                CraftingContext.Anvil => "Forge",
-                CraftingContext.Campfire => "Cook",
-                _ => "Craft"
+                CraftingContext.CharcoalPit => "Випалити",
+                CraftingContext.Cauldron => "Зварити",
+                CraftingContext.Furnace => "Переплавити",
+                CraftingContext.Anvil => "Викувати",
+                CraftingContext.Campfire => "Приготувати",
+                _ => "Створити"
             };
         }
 
@@ -349,16 +349,16 @@ namespace Project_S.Runtime.Gameplay.Crafting
             {
                 return _activeStation.ActionLabel switch
                 {
-                    "Cook" => "Cooking",
-                    "Burn" => "Burning",
-                    "Brew" => "Brewing",
-                    "Smelt" => "Smelting",
-                    "Forge" => "Forging",
-                    _ => "Working"
+                    "Приготувати" => "Готується",
+                    "Випалити" => "Випалюється",
+                    "Зварити" => "Вариться",
+                    "Переплавити" => "Плавиться",
+                    "Викувати" => "Кується",
+                    _ => "В роботі"
                 };
             }
 
-            return "Working";
+            return "В роботі";
         }
 
         private static bool IsStationContext(CraftingContext context)
@@ -396,7 +396,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
             _walletText = CreateText(root, "SoulAshText", 16, FontStyles.Normal);
             _fuelText = CreateText(root, "StationFuelText", 16, FontStyles.Normal);
             _progressText = CreateText(root, "StationProgressText", 16, FontStyles.Normal);
-            _addFuelButton = CreateButton(root, "Add Wood");
+            _addFuelButton = CreateButton(root, "Додати деревину");
             _addFuelButtonText = _addFuelButton.GetComponentInChildren<TMP_Text>();
             _addFuelButton.onClick.AddListener(AddStationFuel);
 
@@ -416,7 +416,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
             detailsRect.offsetMax = new Vector2(-10f, -10f);
             _detailsText.alignment = TextAlignmentOptions.TopLeft;
 
-            _craftButton = CreateButton(root, "Craft");
+            _craftButton = CreateButton(root, "Створити");
             _craftButtonText = _craftButton.GetComponentInChildren<TMP_Text>();
             _craftButton.onClick.AddListener(CraftSelected);
         }
@@ -625,7 +625,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             ResolveActiveStation();
             _titleText.text = GetTitle();
-            _walletText.text = $"Soul Ash: {(_wallet != null ? _wallet.Amount : 0)}";
+            _walletText.text = $"Попіл душ: {(_wallet != null ? _wallet.Amount : 0)}";
             RefreshStationHeader();
 
             var contextRecipes = GetContextRecipes();
@@ -687,7 +687,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             if (_selectedRecipe == null)
             {
-                _detailsText.text = "No recipes available.";
+                _detailsText.text = "Немає доступних рецептів.";
                 _craftButton.interactable = false;
                 _craftButtonText.text = GetActionLabel();
                 return;
@@ -699,9 +699,9 @@ namespace Project_S.Runtime.Gameplay.Crafting
             _craftButton.interactable = check.CanCraft;
             _craftButtonText.text = _context switch
             {
-                _ when IsStationContext(_context) && _activeStation != null && _activeStation.IsCooking => "Working",
-                _ when IsStationContext(_context) => check.CanCraft ? GetActionLabel() : "Missing",
-                _ => check.CanCraft ? "Craft" : "Missing"
+                _ when IsStationContext(_context) && _activeStation != null && _activeStation.IsCooking => "В роботі",
+                _ when IsStationContext(_context) => check.CanCraft ? GetActionLabel() : "Не вистачає",
+                _ => check.CanCraft ? "Створити" : "Не вистачає"
             };
 
             if (_ingredientSlotPrefab != null && _ingredientsListRoot != null)
@@ -772,8 +772,8 @@ namespace Project_S.Runtime.Gameplay.Crafting
             var lines = new List<string> { $"<b>{recipe.RecipeName}</b>" };
             if (!string.IsNullOrWhiteSpace(recipe.Description)) lines.Add(recipe.Description);
             if (IsStationContext(_context) && _activeStation != null && _activeStation.UsesFuel)
-                lines.Add($"Time: {Mathf.CeilToInt(recipe.FuelSecondsCost)}s");
-            if (recipe.SoulAshCost > 0) lines.Add($"Soul Ash: {GetOwnedSoulAsh()}/{recipe.SoulAshCost}");
+                lines.Add($"Час: {Mathf.CeilToInt(recipe.FuelSecondsCost)} с");
+            if (recipe.SoulAshCost > 0) lines.Add($"Попіл душ: {GetOwnedSoulAsh()}/{recipe.SoulAshCost}");
             if (!check.CanCraft) lines.Add("<color=#ff8d74>" + check.Message + "</color>");
             return string.Join("\n", lines);
         }
@@ -793,7 +793,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
                 if (_activeStation == null)
                 {
                     var check = new CraftingCheck();
-                    check.AddProblem("No station selected.");
+                    check.AddProblem("Станцію не вибрано.");
                     return check;
                 }
                 return _activeStation.CheckRecipe(recipe, _inventory, _wallet);
@@ -824,34 +824,34 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             if (_activeStation == null)
             {
-                _fuelText.text = "Fuel: no station";
+                _fuelText.text = "Паливо: станцію не вибрано";
                 _progressText.text = "";
                 _addFuelButton.interactable = false;
-                _addFuelButtonText.text = "Add Wood";
+                _addFuelButtonText.text = "Додати деревину";
                 return;
             }
 
             if (_activeStation.UsesFuel)
             {
-                _fuelText.text = $"Fuel: {Mathf.FloorToInt(_activeStation.FuelSeconds)} / {Mathf.FloorToInt(_activeStation.MaxFuelSeconds)}s";
+                _fuelText.text = $"Паливо: {Mathf.FloorToInt(_activeStation.FuelSeconds)} / {Mathf.FloorToInt(_activeStation.MaxFuelSeconds)} с";
                 _addFuelButton.gameObject.SetActive(true);
                 _addFuelButton.interactable = _inventory != null && _activeStation.FuelSeconds < _activeStation.MaxFuelSeconds;
-                _addFuelButtonText.text = "Add Wood";
+                _addFuelButtonText.text = "Додати деревину";
             }
             else
             {
-                _fuelText.text = "Fuel: not required";
+                _fuelText.text = "Паливо не потрібне";
                 _addFuelButton.gameObject.SetActive(false);
             }
 
             if (_activeStation.IsCooking)
             {
-                string recipeName = _activeStation.ActiveRecipe != null ? _activeStation.ActiveRecipe.RecipeName : "Recipe";
-                _progressText.text = $"{GetWorkingLabel()}: {recipeName} {Mathf.CeilToInt(_activeStation.RemainingCraftSeconds)}s ({Mathf.RoundToInt(_activeStation.ActiveProgress01 * 100f)}%)";
+                string recipeName = _activeStation.ActiveRecipe != null ? _activeStation.ActiveRecipe.RecipeName : "Рецепт";
+                _progressText.text = $"{GetWorkingLabel()}: {recipeName} {Mathf.CeilToInt(_activeStation.RemainingCraftSeconds)} с ({Mathf.RoundToInt(_activeStation.ActiveProgress01 * 100f)}%)";
             }
             else
             {
-                _progressText.text = "Ready";
+                _progressText.text = "Готово";
             }
         }
 
@@ -885,22 +885,22 @@ namespace Project_S.Runtime.Gameplay.Crafting
         private string GetTitle()
         {
             if (_activeStation != null) return _activeStation.DisplayName;
-            return _context switch { CraftingContext.Workbench => "Workbench", CraftingContext.Campfire => "Campfire", CraftingContext.CharcoalPit => "Charcoal Pit", CraftingContext.Cauldron => "Cauldron", CraftingContext.Furnace => "Furnace", CraftingContext.Anvil => "Anvil", _ => "Hand Crafting" };
+            return _context switch { CraftingContext.Workbench => "Верстак", CraftingContext.Campfire => "Багаття", CraftingContext.CharcoalPit => "Вуглярня", CraftingContext.Cauldron => "Казан", CraftingContext.Furnace => "Піч", CraftingContext.Anvil => "Ковадло", _ => "Ручне ремесло" };
         }
 
         private string GetActionLabel()
         {
             if (_activeStation != null) return _activeStation.ActionLabel;
-            return _context switch { CraftingContext.CharcoalPit => "Burn", CraftingContext.Cauldron => "Brew", CraftingContext.Furnace => "Smelt", CraftingContext.Anvil => "Forge", CraftingContext.Campfire => "Cook", _ => "Craft" };
+            return _context switch { CraftingContext.CharcoalPit => "Випалити", CraftingContext.Cauldron => "Зварити", CraftingContext.Furnace => "Переплавити", CraftingContext.Anvil => "Викувати", CraftingContext.Campfire => "Приготувати", _ => "Створити" };
         }
 
         private string GetWorkingLabel()
         {
             if (_activeStation != null)
             {
-                return _activeStation.ActionLabel switch { "Cook" => "Cooking", "Burn" => "Burning", "Brew" => "Brewing", "Smelt" => "Smelting", "Forge" => "Forging", _ => "Working" };
+                return _activeStation.ActionLabel switch { "Приготувати" => "Готується", "Випалити" => "Випалюється", "Зварити" => "Вариться", "Переплавити" => "Плавиться", "Викувати" => "Кується", _ => "В роботі" };
             }
-            return "Working";
+            return "В роботі";
         }
 
         private static bool IsStationContext(CraftingContext context)
@@ -932,7 +932,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
             _walletText = CreateText(root, "SoulAshText", 16, FontStyles.Normal);
             _fuelText = CreateText(root, "StationFuelText", 16, FontStyles.Normal);
             _progressText = CreateText(root, "StationProgressText", 16, FontStyles.Normal);
-            _addFuelButton = CreateButton(root, "Add Wood");
+            _addFuelButton = CreateButton(root, "Додати деревину");
             _addFuelButtonText = _addFuelButton.GetComponentInChildren<TMP_Text>();
             _addFuelButton.onClick.AddListener(AddStationFuel);
 
@@ -969,7 +969,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             _ingredientsListRoot = ingredientsRootRect;
 
-            _craftButton = CreateButton(root, "Craft");
+            _craftButton = CreateButton(root, "Створити");
             _craftButtonText = _craftButton.GetComponentInChildren<TMP_Text>();
             _craftButton.onClick.AddListener(CraftSelected);
         }

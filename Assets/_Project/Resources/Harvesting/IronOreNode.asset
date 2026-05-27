@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 24e58db34c6e53c9ce5b4fdaa1bed91e, type: 3}
   m_Name: IronOreNode
   m_EditorClassIdentifier: 
-  DisplayName: "Iron Ore Vein"
+  DisplayName: Жила залізної руди
   MaxHealth: 45
   PreferredTool: 2
   MatchingToolDamageMultiplier: 1

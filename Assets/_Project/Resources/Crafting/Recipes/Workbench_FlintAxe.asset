@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
   m_Name: Workbench_FlintAxe
   m_EditorClassIdentifier: 
-  DisplayName: "Flint Axe"
+  DisplayName: Крем'яна сокира
   Context: 1
   Output:
     Item: {fileID: 11400000, guid: 74a8e33df47a5e47618cc31dde678d6d, type: 2}
@@ -24,4 +24,4 @@ MonoBehaviour:
     Amount: 1
   SoulAshCost: 0
   RequiredItems: []
-  Description: "Workbench axe upgrade."
+  Description: Покращує сокиру гострим крем'яним лезом.

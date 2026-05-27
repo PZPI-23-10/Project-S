@@ -12,15 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 215432127562c5e46812873892628a75, type: 3}
   m_Name: KrytsiaHammer
   m_EditorClassIdentifier: 
-  ItemName: Krytsia Hammer
+  ItemName: Крицевий молот
   Kind: 1
   Weight: 4.9
   IsStackable: 0
   MaxStack: 1
   MaxInventoryStacks: 0
   Icon: {fileID: 0}
-  Description: Very heavy iron-tier hammer. Earthquake active ability is deferred;
-    this MVP uses its weapon stats.
+  Description: Дуже важкий молот із криці. Повільний, але нищівний.
   WeaponPrefab: {fileID: 3942592866433276128, guid: 6e6f288cc1ccdd543b2cd3d632a069ed,
     type: 3}
   WorldPickupPrefab: {fileID: 0}

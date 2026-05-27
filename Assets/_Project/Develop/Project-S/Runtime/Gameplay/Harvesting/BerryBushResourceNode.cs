@@ -9,14 +9,14 @@ namespace Project_S.Runtime.Gameplay.Harvesting
         [SerializeField] private ItemData _berryItem;
         [SerializeField] private int _minAmount = 3;
         [SerializeField] private int _maxAmount = 6;
-        [SerializeField] private string _displayName = "Berry Bush";
+        [SerializeField] private string _displayName = "Ягідний кущ";
 
         private bool _depleted;
 
         public string InteractionPrompt => _depleted ? $"{_displayName} (Empty)" : _displayName;
         public bool IsDepleted => _depleted;
 
-        public void Configure(ItemData berryItem, int minAmount = 3, int maxAmount = 6, string displayName = "Berry Bush")
+        public void Configure(ItemData berryItem, int minAmount = 3, int maxAmount = 6, string displayName = "Ягідний кущ")
         {
             _berryItem = berryItem;
             _minAmount = Mathf.Max(0, minAmount);

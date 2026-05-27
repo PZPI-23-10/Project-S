@@ -199,7 +199,7 @@ namespace Project_S.Runtime.Gameplay.HUD
             layout.childForceExpandHeight = false;
 
             var title = CreateText(blockObject.transform, "ItemName", 16, FontStyles.Bold);
-            title.text = string.IsNullOrWhiteSpace(item.ItemName) ? "Item" : item.ItemName;
+            title.text = string.IsNullOrWhiteSpace(item.ItemName) ? "Предмет" : item.ItemName;
             title.enableWordWrapping = false;
             title.overflowMode = TextOverflowModes.Ellipsis;
 

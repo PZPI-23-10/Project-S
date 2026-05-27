@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+/*using System.Collections.Generic;
 using Project_S.Runtime.Gameplay.Character.Inventory;
 using Project_S.Runtime.Gameplay.HUD;
 using TMPro;
@@ -13,6 +13,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
         private readonly List<InventorySlotUI> _slotViews = new List<InventorySlotUI>();
 
         private InventoryController _inventory;
+        private InventoryUI _owner;
         private SoulAshWallet _wallet;
         private IItemStorage _storage;
         private BaseResourceStorage _baseStorage;
@@ -22,15 +23,14 @@ namespace Project_S.Runtime.Gameplay.Crafting
         private TMP_Text _titleText;
         private TMP_Text _soulAshText;
         private GameObject _soulAshRow;
-        private Button _depositResourcesButton;
-        private TMP_Text _depositResourcesButtonText;
+        private Button _takeAllButton;
         private Button _depositSoulAshButton;
         private Button _withdrawSoulAshButton;
         private bool _built;
 
         public bool HasStorage => _storage != null;
 
-        public void Initialize(InventoryController inventory, SoulAshWallet wallet, InventorySlotUI slotPrefab)
+        public void Initialize(InventoryController inventory, SoulAshWallet wallet, InventorySlotUI slotPrefab, InventoryUI owner)
         {
             if (_wallet != null)
                 _wallet.Changed -= OnWalletChanged;
@@ -38,6 +38,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
             _inventory = inventory;
             _wallet = wallet;
             _slotPrefab = slotPrefab;
+            _owner = owner;
 
             if (_wallet != null)
                 _wallet.Changed += OnWalletChanged;
@@ -80,24 +81,21 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             bool hasStorage = _storage != null;
             if (_titleText != null)
-                _titleText.text = hasStorage ? _storage.InteractionPrompt : "Storage";
+                _titleText.text = hasStorage ? _storage.InteractionPrompt : "Сховище";
 
             if (_soulAshText != null)
             {
                 int walletAmount = _wallet != null ? _wallet.Amount : 0;
                 int storageAmount = _baseStorage != null ? _baseStorage.SoulAshAmount : 0;
-                _soulAshText.text = $"Soul Ash: {walletAmount} carried / {storageAmount} stored";
+                _soulAshText.text = $"Попіл душ: {walletAmount} з собою / {storageAmount} у сховищі";
                 _soulAshText.gameObject.SetActive(_baseStorage != null);
             }
 
             if (_soulAshRow != null)
                 _soulAshRow.SetActive(_baseStorage != null);
 
-            if (_depositResourcesButtonText != null)
-                _depositResourcesButtonText.text = _baseStorage != null ? "Deposit Resources" : "Deposit All";
-
-            if (_depositResourcesButton != null)
-                _depositResourcesButton.interactable = hasStorage && _inventory != null;
+            if (_takeAllButton != null)
+                _takeAllButton.interactable = hasStorage && _inventory != null;
 
             if (_depositSoulAshButton != null)
                 _depositSoulAshButton.interactable = _baseStorage != null && _wallet != null && _wallet.Amount > 0;
@@ -120,30 +118,46 @@ namespace Project_S.Runtime.Gameplay.Crafting
             if (_storage == null || _inventory == null)
                 return;
 
-            if (button == PointerEventData.InputButton.Left)
-                _storage.TryWithdrawToInventory(slotIndex, int.MaxValue, _inventory);
-            else if (button == PointerEventData.InputButton.Right)
-                _storage.TryWithdrawToInventory(slotIndex, 1, _inventory);
-
-            Refresh();
+            _owner?.OnStorageSlotClicked(slotIndex, button);
         }
 
-        private void DepositResources()
+        private void TakeAll()
         {
             if (_storage == null || _inventory == null)
                 return;
 
-            var slots = _inventory.GetAllSlots();
-            for (int i = 0; i < slots.Length; i++)
+            int slotCount = _storage.GetSize();
+            for (int i = 0; i < slotCount; i++)
             {
-                var slot = slots[i];
+                var slot = _storage.GetSlot(i);
                 if (slot == null || slot.Item == null || slot.Amount <= 0)
                     continue;
 
-                _storage.TryDepositFromInventory(_inventory, i, slot.Amount);
+                int transferAmount = FindTransferAmountThatFits(slot.Item, slot.Amount);
+                if (transferAmount > 0)
+                    _storage.TryWithdrawToInventory(i, transferAmount, _inventory);
             }
 
-            Refresh();
+            _owner?.Refresh();
+        }
+
+        private int FindTransferAmountThatFits(ItemData item, int maxAmount)
+        {
+            if (_inventory == null || item == null || maxAmount <= 0)
+                return 0;
+
+            int low = 0;
+            int high = maxAmount;
+            while (low < high)
+            {
+                int mid = (low + high + 1) / 2;
+                if (_inventory.CanAddItem(item, mid))
+                    low = mid;
+                else
+                    high = mid - 1;
+            }
+
+            return low;
         }
 
         private void DepositSoulAsh()
@@ -215,9 +229,8 @@ namespace Project_S.Runtime.Gameplay.Crafting
             rowLayout.childForceExpandHeight = false;
             rowLayout.childForceExpandWidth = true;
 
-            _depositResourcesButton = CreateButton(buttonRow, "Deposit Resources");
-            _depositResourcesButtonText = _depositResourcesButton.GetComponentInChildren<TMP_Text>();
-            _depositResourcesButton.onClick.AddListener(DepositResources);
+            _takeAllButton = CreateButton(buttonRow, "Забрати все");
+            _takeAllButton.onClick.AddListener(TakeAll);
 
             var soulButtonRow = CreateRect("SoulAshButtonRow", buttonRow);
             _soulAshRow = soulButtonRow.gameObject;
@@ -229,9 +242,9 @@ namespace Project_S.Runtime.Gameplay.Crafting
             soulRowLayout.childForceExpandHeight = false;
             soulRowLayout.childForceExpandWidth = true;
 
-            _depositSoulAshButton = CreateButton(soulButtonRow, "Deposit Soul Ash");
+            _depositSoulAshButton = CreateButton(soulButtonRow, "Внести попіл душ");
             _depositSoulAshButton.onClick.AddListener(DepositSoulAsh);
-            _withdrawSoulAshButton = CreateButton(soulButtonRow, "Withdraw Soul Ash");
+            _withdrawSoulAshButton = CreateButton(soulButtonRow, "Забрати попіл душ");
             _withdrawSoulAshButton.onClick.AddListener(WithdrawSoulAsh);
 
             var scroll = CreateSlotScrollArea(root, "StorageSlots", 260f);
@@ -339,6 +352,210 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             if (_wallet != null)
                 _wallet.Changed -= OnWalletChanged;
+        }
+    }
+}
+*/
+
+using System.Collections.Generic;
+using Project_S.Runtime.Gameplay.Character.Inventory;
+using Project_S.Runtime.Gameplay.HUD;
+using TMPro;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+
+namespace Project_S.Runtime.Gameplay.Crafting
+{
+    public class StoragePanelUI : MonoBehaviour
+    {
+        [Header("UI References")]
+        [SerializeField] private Transform _slotRoot;
+        [SerializeField] private TMP_Text _titleText;
+        [SerializeField] private TMP_Text _soulAshText;
+        [SerializeField] private Button _takeAllButton;
+        [SerializeField] private Button _depositSoulAshButton;
+        [SerializeField] private Button _withdrawSoulAshButton;
+
+        private readonly List<InventorySlotUI> _slotViews = new List<InventorySlotUI>();
+
+        private InventoryController _inventory;
+        private InventoryUI _owner;
+        private SoulAshWallet _wallet;
+        private IItemStorage _storage;
+        private BaseResourceStorage _baseStorage;
+        private InventorySlotUI _slotPrefab;
+
+        public bool HasStorage => _storage != null;
+
+        private void Awake()
+        {
+            if (_takeAllButton != null) _takeAllButton.onClick.AddListener(TakeAll);
+            if (_depositSoulAshButton != null) _depositSoulAshButton.onClick.AddListener(DepositSoulAsh);
+            if (_withdrawSoulAshButton != null) _withdrawSoulAshButton.onClick.AddListener(WithdrawSoulAsh);
+        }
+
+        public void Initialize(InventoryController inventory, SoulAshWallet wallet, InventorySlotUI slotPrefab, InventoryUI owner)
+        {
+            if (_wallet != null) _wallet.Changed -= OnWalletChanged;
+
+            _inventory = inventory;
+            _wallet = wallet;
+            _slotPrefab = slotPrefab;
+            _owner = owner;
+
+            if (_wallet != null) _wallet.Changed += OnWalletChanged;
+
+            Refresh();
+        }
+
+        public void SetStorage(IItemStorage storage)
+        {
+            if (_storage == storage)
+            {
+                gameObject.SetActive(storage != null);
+                Refresh();
+                return;
+            }
+
+            if (_storage != null) _storage.Changed -= OnStorageChanged;
+
+            _storage = storage;
+            _baseStorage = storage as BaseResourceStorage;
+
+            if (_storage != null) _storage.Changed += OnStorageChanged;
+
+            gameObject.SetActive(_storage != null);
+            Refresh();
+        }
+
+        public void ClearStorage()
+        {
+            SetStorage(null);
+        }
+
+        public void Refresh()
+        {
+            bool hasStorage = _storage != null;
+            bool isSoulAshStorage = _baseStorage != null; // Перевіряємо, чи це скриня для душ
+
+            if (_titleText != null)
+                _titleText.text = hasStorage ? _storage.InteractionPrompt : "Сховище";
+
+            // ЖОРСТКО ВМИКАЄМО АБО ВИМИКАЄМО ЕЛЕМЕНТИ ДУШ
+            if (_soulAshText != null) _soulAshText.gameObject.SetActive(isSoulAshStorage);
+            if (_depositSoulAshButton != null) _depositSoulAshButton.gameObject.SetActive(isSoulAshStorage);
+            if (_withdrawSoulAshButton != null) _withdrawSoulAshButton.gameObject.SetActive(isSoulAshStorage);
+
+            // Оновлюємо логіку тільки якщо це скриня з душами
+            if (isSoulAshStorage)
+            {
+                int walletAmount = _wallet != null ? _wallet.Amount : 0;
+                int storageAmount = _baseStorage != null ? _baseStorage.SoulAshAmount : 0;
+                if (_soulAshText != null) _soulAshText.text = $"Попіл душ: {walletAmount} з собою / {storageAmount} у сховищі";
+
+                if (_depositSoulAshButton != null)
+                    _depositSoulAshButton.interactable = _wallet != null && _wallet.Amount > 0;
+
+                if (_withdrawSoulAshButton != null)
+                    _withdrawSoulAshButton.interactable = _baseStorage.SoulAshAmount > 0;
+            }
+
+            if (_takeAllButton != null)
+                _takeAllButton.interactable = hasStorage && _inventory != null;
+
+            int slotCount = hasStorage ? _storage.GetSize() : 0;
+            EnsureSlotViews(slotCount);
+
+            for (int i = 0; i < _slotViews.Count; i++)
+            {
+                if (_slotViews[i] != null)
+                    _slotViews[i].UpdateView(hasStorage && i < slotCount ? _storage.GetSlot(i) : null);
+            }
+        }
+
+        private void OnStorageSlotClicked(int slotIndex, PointerEventData.InputButton button)
+        {
+            if (_storage == null || _inventory == null) return;
+            _owner?.OnStorageSlotClicked(slotIndex, button);
+        }
+
+        private void TakeAll()
+        {
+            if (_storage == null || _inventory == null) return;
+
+            int slotCount = _storage.GetSize();
+            for (int i = 0; i < slotCount; i++)
+            {
+                var slot = _storage.GetSlot(i);
+                if (slot == null || slot.Item == null || slot.Amount <= 0) continue;
+
+                int transferAmount = FindTransferAmountThatFits(slot.Item, slot.Amount);
+                if (transferAmount > 0)
+                    _storage.TryWithdrawToInventory(i, transferAmount, _inventory);
+            }
+
+            _owner?.Refresh();
+        }
+
+        private int FindTransferAmountThatFits(ItemData item, int maxAmount)
+        {
+            if (_inventory == null || item == null || maxAmount <= 0) return 0;
+
+            int low = 0;
+            int high = maxAmount;
+            while (low < high)
+            {
+                int mid = (low + high + 1) / 2;
+                if (_inventory.CanAddItem(item, mid)) low = mid;
+                else high = mid - 1;
+            }
+
+            return low;
+        }
+
+        private void DepositSoulAsh()
+        {
+            _baseStorage?.DepositSoulAshFrom(_wallet);
+            Refresh();
+        }
+
+        private void WithdrawSoulAsh()
+        {
+            _baseStorage?.WithdrawSoulAshTo(_wallet);
+            Refresh();
+        }
+
+        private void EnsureSlotViews(int slotCount)
+        {
+            if (_slotRoot == null || _slotPrefab == null) return;
+
+            while (_slotViews.Count < slotCount)
+            {
+                int index = _slotViews.Count;
+                var slot = Instantiate(_slotPrefab, _slotRoot);
+                slot.Init(index, null, OnStorageSlotClicked);
+                _slotViews.Add(slot);
+            }
+
+            while (_slotViews.Count > slotCount)
+            {
+                int lastIndex = _slotViews.Count - 1;
+                var slot = _slotViews[lastIndex];
+                _slotViews.RemoveAt(lastIndex);
+
+                if (slot != null) Destroy(slot.gameObject);
+            }
+        }
+
+        private void OnStorageChanged() => Refresh();
+        private void OnWalletChanged(int amount) => Refresh();
+
+        private void OnDestroy()
+        {
+            if (_storage != null) _storage.Changed -= OnStorageChanged;
+            _baseStorage = null;
+            if (_wallet != null) _wallet.Changed -= OnWalletChanged;
         }
     }
 }
