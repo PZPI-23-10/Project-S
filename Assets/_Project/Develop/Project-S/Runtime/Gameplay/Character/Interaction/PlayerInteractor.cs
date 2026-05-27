@@ -45,6 +45,7 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
         private InventoryUI _inventoryUI;
         private InteractionHoverInfo _currentHover;
         private bool _hasCurrentHover;
+        private IHoverableInteractable _hoveredInteractable;
 
         public InventoryController Inventory => _inventory;
         public float InteractDistance => _interactDistance;
@@ -127,6 +128,7 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
         {
             if (TryGetHoverInfo(out var hoverInfo))
             {
+                UpdateHoveredInteractable(hoverInfo.Interactable);
                 _currentHover = hoverInfo;
                 _hasCurrentHover = true;
                 WorldInteractionPromptUI.GetOrCreate()?.Show(
@@ -138,6 +140,7 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
             }
 
             _hasCurrentHover = false;
+            UpdateHoveredInteractable(null);
             WorldInteractionPromptUI.Instance?.Hide();
         }
 
@@ -157,7 +160,19 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
             }
 
             _hasCurrentHover = false;
+            UpdateHoveredInteractable(null);
             WorldInteractionPromptUI.Instance?.Hide();
+        }
+
+        private void UpdateHoveredInteractable(IInteractable interactable)
+        {
+            var hoverable = interactable as IHoverableInteractable;
+            if (ReferenceEquals(_hoveredInteractable, hoverable))
+                return;
+
+            _hoveredInteractable?.SetHovered(false);
+            _hoveredInteractable = hoverable;
+            _hoveredInteractable?.SetHovered(true);
         }
 
         private bool ShouldSuppressHover()

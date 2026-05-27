@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 24e58db34c6e53c9ce5b4fdaa1bed91e, type: 3}
-  m_Name: IronOreNode
+  m_Name: StoneSmallNode
   m_EditorClassIdentifier: 
-  DisplayName: "Iron Ore Vein"
-  MaxHealth: 300
-  BaseYieldItem: {fileID: 11400000, guid: 7ad799469e2b4710ab4f55ea130f7f21, type: 2}
-  HealthPerBaseYield: 100
+  DisplayName: "Small Stone"
+  MaxHealth: 100
+  BaseYieldItem: {fileID: 11400000, guid: 2b27167344e89f6b1257e31646d0c795, type: 2}
+  HealthPerBaseYield: 50
   BaseYieldAmount: 1
   PreferredTool: 2
   MatchingToolDamageMultiplier: 1
@@ -31,14 +31,14 @@ MonoBehaviour:
   - Type: 4
     Multiplier: 0.2
   - Type: 1
-    Multiplier: 0.2
-  SoulAshReward: 10
+    Multiplier: 0.5
+  SoulAshReward: 3
   Drops:
-  - Item: {fileID: 11400000, guid: 7ad799469e2b4710ab4f55ea130f7f21, type: 2}
+  - Item: {fileID: 11400000, guid: 2b27167344e89f6b1257e31646d0c795, type: 2}
     MinAmount: 3
     MaxAmount: 3
     Chance: 1
   - Item: {fileID: 11400000, guid: 02b7080157078c848857cba96908cdf9, type: 2}
     MinAmount: 1
     MaxAmount: 1
-    Chance: 0.2
+    Chance: 0.06

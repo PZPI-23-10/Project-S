@@ -7,21 +7,40 @@ namespace Project_S.Runtime.Gameplay.Harvesting
     public class BerryBushResourceNode : MonoBehaviour, IInteractable
     {
         [SerializeField] private ItemData _berryItem;
-        [SerializeField] private int _minAmount = 3;
-        [SerializeField] private int _maxAmount = 6;
+        [SerializeField] private int _minAmount = 1;
+        [SerializeField] private int _maxAmount = 2;
+        [SerializeField] private int _minHarvests = 1;
+        [SerializeField] private int _maxHarvests = 2;
         [SerializeField] private string _displayName = "Berry Bush";
 
         private bool _depleted;
+        private int _remainingHarvests;
 
         public string InteractionPrompt => _depleted ? $"{_displayName} (Empty)" : _displayName;
         public bool IsDepleted => _depleted;
+        public int RemainingHarvests => _remainingHarvests;
 
-        public void Configure(ItemData berryItem, int minAmount = 3, int maxAmount = 6, string displayName = "Berry Bush")
+        public void Configure(
+            ItemData berryItem,
+            int minAmount = 1,
+            int maxAmount = 2,
+            string displayName = "Berry Bush",
+            int minHarvests = 1,
+            int maxHarvests = 2)
         {
             _berryItem = berryItem;
             _minAmount = Mathf.Max(0, minAmount);
             _maxAmount = Mathf.Max(_minAmount, maxAmount);
             _displayName = displayName;
+            _minHarvests = Mathf.Max(1, minHarvests);
+            _maxHarvests = Mathf.Max(_minHarvests, maxHarvests);
+            ResetHarvests();
+        }
+
+        private void Awake()
+        {
+            if (_remainingHarvests <= 0)
+                ResetHarvests();
         }
 
         public void Interact(PlayerInteractor interactor)
@@ -35,8 +54,21 @@ namespace Project_S.Runtime.Gameplay.Harvesting
 
             InventoryController inventory = interactor != null ? interactor.Inventory : null;
             WorldItemDropUtility.GrantOrDrop(_berryItem, amount, inventory, transform.position, "[Harvesting]");
-            _depleted = true;
-            MarkDepleted();
+            _remainingHarvests = Mathf.Max(0, _remainingHarvests - 1);
+
+            if (_remainingHarvests <= 0)
+            {
+                _depleted = true;
+                MarkDepleted();
+            }
+        }
+
+        private void ResetHarvests()
+        {
+            int minHarvests = Mathf.Max(1, _minHarvests);
+            int maxHarvests = Mathf.Max(minHarvests, _maxHarvests);
+            _remainingHarvests = Random.Range(minHarvests, maxHarvests + 1);
+            _depleted = false;
         }
 
         private void MarkDepleted()

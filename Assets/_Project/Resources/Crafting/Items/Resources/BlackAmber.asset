@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35381e3f13136374abee8a5ed10dc4aa, type: 3}
   m_Name: BlackAmber
   m_EditorClassIdentifier: 
-  ItemName: Item
+  ItemName: Black Amber
   Kind: 0
   Weight: 0.05
   IsStackable: 1
