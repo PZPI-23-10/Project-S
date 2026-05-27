@@ -12,14 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35381e3f13136374abee8a5ed10dc4aa, type: 3}
   m_Name: MavkaPotion
   m_EditorClassIdentifier: 
-  ItemName: Зілля мавки
+  ItemName: "\u0417\u0456\u043B\u043B\u044F \u043C\u0430\u0432\u043A\u0438"
   Kind: 2
   Weight: 0.2
   IsStackable: 1
   MaxStack: 5
   MaxInventoryStacks: 0
-  Icon: {fileID: 0}
-  Description: Легке зілля, що відновлює витривалість і тимчасово полегшує рух.
+  Icon: {fileID: 21300000, guid: f1050c0838d28fa41ac5821f3de0bd37, type: 3}
+  Description: "\u041B\u0435\u0433\u043A\u0435 \u0437\u0456\u043B\u043B\u044F, \u0449\u043E
+    \u0432\u0456\u0434\u043D\u043E\u0432\u043B\u044E\u0454 \u0432\u0438\u0442\u0440\u0438\u0432\u0430\u043B\u0456\u0441\u0442\u044C
+    \u0456 \u0442\u0438\u043C\u0447\u0430\u0441\u043E\u0432\u043E \u043F\u043E\u043B\u0435\u0433\u0448\u0443\u0454
+    \u0440\u0443\u0445."
   WeaponPrefab: {fileID: 0}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 0
@@ -28,6 +31,10 @@ MonoBehaviour:
   StaminaRestoreAmount: 10
   SpecialEffect: 0
   SpecialEffectDelaySeconds: 0
+  StatEffects: []
+  TimedBuffs: []
+  SpecialEffects: []
+  DamageConversions: []
   TimedBuffType: 4
   TimedBuffCategory: 3
   TimedBuffMultiplier: 0
