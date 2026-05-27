@@ -10,8 +10,12 @@ public class CaveSpawner : MonoBehaviour
     [Tooltip("Список префабів (каміння, кристали, руда) для печер")]
     public List<GameObject> cavePrefabs = new List<GameObject>();
 
-    [Tooltip("Скільки об'єктів спробувати заспавнити")]
-    public int spawnCount = 40;
+    [Header("Кількість спавну (Діапазон)")]
+    [Tooltip("Мінімальна кількість об'єктів для спавну")]
+    public int minSpawnCount = 20;
+
+    [Tooltip("Максимальна кількість об'єктів для спавну")]
+    public int maxSpawnCount = 40;
 
     [Tooltip("Радіус сфери навколо цього об'єкта, де будуть з'являтися ресурси")]
     public float radius = 15f;
@@ -21,6 +25,10 @@ public class CaveSpawner : MonoBehaviour
 
     [Tooltip("Шари, які блокують спавн (інші камені, ресурси, гравець)")]
     public LayerMask obstacleLayers;
+
+    [Header("Спеціальні налаштування")]
+    [Tooltip("Пропустити найпершу знайдену точку спавну")]
+    public bool skipFirstSpawn = true;
 
     [Tooltip("Максимальна кількість спроб для розміщення одного об'єкта")]
     public int maxAttemptsPerRock = 20;
@@ -55,7 +63,8 @@ public class CaveSpawner : MonoBehaviour
 
     void OnValidate()
     {
-        spawnCount = Mathf.Max(0, spawnCount);
+        minSpawnCount = Mathf.Max(0, minSpawnCount);
+        maxSpawnCount = Mathf.Max(minSpawnCount, maxSpawnCount);
         radius = Mathf.Max(0f, radius);
         maxAttemptsPerRock = Mathf.Max(1, maxAttemptsPerRock);
         minDistanceBetweenRocks = Mathf.Max(0f, minDistanceBetweenRocks);
@@ -74,10 +83,16 @@ public class CaveSpawner : MonoBehaviour
 
         if (useSeed) rng = new System.Random(randomSeed); else rng = new System.Random();
 
+        // Визначаємо фінальну кількість об'єктів для цього конкретного запуску
+        int targetSpawnCount = useSeed ? rng.Next(minSpawnCount, maxSpawnCount + 1) : Random.Range(minSpawnCount, maxSpawnCount + 1);
+
         var placedPositions = new List<Vector3>();
         int spawned = 0;
 
-        for (int i = 0; i < spawnCount; i++)
+        // Прапорець для перевірки, чи пропустили ми перший спавн
+        bool hasSkippedFirst = !skipFirstSpawn;
+
+        for (int i = 0; i < targetSpawnCount; i++)
         {
             bool placed = false;
             for (int attempt = 0; attempt < maxAttemptsPerRock; attempt++)
@@ -88,7 +103,7 @@ public class CaveSpawner : MonoBehaviour
                 // Стріляємо променем з центру спавнера на заданий радіус
                 if (Physics.Raycast(transform.position, direction, out RaycastHit hit, radius))
                 {
-                    // 🔥 ВИПРАВЛЕННЯ: Ігноруємо попадання, які сталися ближче ніж 0.5 метра 
+                    // Ігноруємо попадання, які сталися ближче ніж 0.5 метра 
                     // (щоб не спавнило каміння в повітрі на самому об'єкті спавнера)
                     if (hit.distance < 0.5f) continue;
 
@@ -110,6 +125,13 @@ public class CaveSpawner : MonoBehaviour
                         if (Vector3.Distance(placedPositions[j], pos) < minDistanceBetweenRocks) { tooClose = true; break; }
                     }
                     if (tooClose) continue;
+
+                    // 🔥 ЛОГІКА ПРОПУСКУ ПЕРШОГО СПАВНУ
+                    if (!hasSkippedFirst)
+                    {
+                        hasSkippedFirst = true;
+                        continue; // Викидаємо цю ідеальну точку і йдемо шукати іншу
+                    }
 
                     GameObject prefab = cavePrefabs[RandomIndex(0, cavePrefabs.Count)];
                     if (prefab == null) continue;
@@ -157,7 +179,7 @@ public class CaveSpawner : MonoBehaviour
             if (!placed) continue;
         }
 
-        Debug.Log($"CaveSpawner: заспавнено {spawned} об'єктів у печері (спроб {spawnCount}).");
+        Debug.Log($"CaveSpawner: заспавнено {spawned} об'єктів у печері (було заплановано рандомом: {targetSpawnCount}).");
     }
 
     [ContextMenu("Clear Spawned Rocks")]
