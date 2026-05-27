@@ -6,6 +6,9 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
     {
         public ItemData Item;
         public int Amount = 1;
+        [SerializeField] private string _interactionActionText = "E - Подобрать";
+
+        public string InteractionActionText => _interactionActionText;
 
         public void Collect(InventoryController inventory)
         {

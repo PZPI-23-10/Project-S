@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Harvesting
 {
-    public class BerryBushResourceNode : MonoBehaviour, IInteractable
+    public class BerryBushResourceNode : MonoBehaviour, IInteractable, IInteractionActionText
     {
         [SerializeField] private ItemData _berryItem;
         [SerializeField] private int _minAmount = 1;
@@ -12,11 +12,13 @@ namespace Project_S.Runtime.Gameplay.Harvesting
         [SerializeField] private int _minHarvests = 1;
         [SerializeField] private int _maxHarvests = 2;
         [SerializeField] private string _displayName = "Berry Bush";
+        [SerializeField] private string _interactionActionText = "E - Подобрать";
 
         private bool _depleted;
         private int _remainingHarvests;
 
         public string InteractionPrompt => _depleted ? $"{_displayName} (Empty)" : _displayName;
+        public string InteractionActionText => _interactionActionText;
         public bool IsDepleted => _depleted;
         public int RemainingHarvests => _remainingHarvests;
 
@@ -35,12 +37,20 @@ namespace Project_S.Runtime.Gameplay.Harvesting
             _minHarvests = Mathf.Max(1, minHarvests);
             _maxHarvests = Mathf.Max(_minHarvests, maxHarvests);
             ResetHarvests();
+            EnsureTriggerColliders();
         }
 
         private void Awake()
         {
             if (_remainingHarvests <= 0)
                 ResetHarvests();
+
+            EnsureTriggerColliders();
+        }
+
+        private void OnValidate()
+        {
+            EnsureTriggerColliders();
         }
 
         public void Interact(PlayerInteractor interactor)
@@ -76,6 +86,12 @@ namespace Project_S.Runtime.Gameplay.Harvesting
             var renderer = GetComponentInChildren<Renderer>();
             if (renderer != null)
                 renderer.material.color = new Color(0.18f, 0.24f, 0.16f);
+        }
+
+        private void EnsureTriggerColliders()
+        {
+            foreach (var collider in GetComponentsInChildren<Collider>(true))
+                collider.isTrigger = true;
         }
     }
 }

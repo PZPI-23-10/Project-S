@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 24e58db34c6e53c9ce5b4fdaa1bed91e, type: 3}
   m_Name: TreeMediumNode
   m_EditorClassIdentifier: 
-  DisplayName: "Medium Tree"
+  DisplayName: Medium Tree
   MaxHealth: 480
   BaseYieldItem: {fileID: 11400000, guid: a66c7b8131eafd3450dd8a325ad07a46, type: 2}
   HealthPerBaseYield: 80
@@ -21,17 +21,7 @@ MonoBehaviour:
   MatchingToolDamageMultiplier: 1
   MismatchedToolDamageMultiplier: 1
   MismatchedYieldMultiplier: 0.9
-  DamageMultipliers:
-  - Type: 3
-    Multiplier: 0
-  - Type: 1
-    Multiplier: 0.3
-  - Type: 0
-    Multiplier: 0.4
-  - Type: 5
-    Multiplier: 1.1
-  - Type: 4
-    Multiplier: 1.2
+  DamageMultipliers: []
   SoulAshReward: 3
   Drops:
   - Item: {fileID: 11400000, guid: a66c7b8131eafd3450dd8a325ad07a46, type: 2}

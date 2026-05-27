@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Harvesting
 {
-    public class HarvestableResourceNode : MonoBehaviour, IDamageReceiver, IInteractable, IHoverableInteractable
+    public class HarvestableResourceNode : MonoBehaviour, IDamageReceiver, IHoverableInteractable
     {
         [SerializeField] private ResourceNodeData _data;
         [SerializeField] private float _currentHealth;
@@ -33,10 +33,6 @@ namespace Project_S.Runtime.Gameplay.Harvesting
         public float MaxHealth => _data != null ? Mathf.Max(1f, _data.MaxHealth) : 1f;
         public float NormalizedHealth => Mathf.Clamp01(_currentHealth / MaxHealth);
         public bool IsDepleted => _depleted;
-        public string InteractionPrompt => _depleted
-            ? $"{NodeName()} (depleted)"
-            : $"{NodeName()} {Mathf.CeilToInt(_currentHealth)}/{Mathf.CeilToInt(MaxHealth)}";
-
         public void Configure(ResourceNodeData data)
         {
             _data = data;
@@ -56,11 +52,6 @@ namespace Project_S.Runtime.Gameplay.Harvesting
                 _feedbackRenderer.material.color = _baseFeedbackColor;
         }
 
-        public void Interact(PlayerInteractor interactor)
-        {
-            Debug.Log($"[Harvesting] {InteractionPrompt}");
-        }
-
         public void SetHovered(bool isHovered)
         {
             if (_healthBar == null)
@@ -72,12 +63,24 @@ namespace Project_S.Runtime.Gameplay.Harvesting
 
         public void ReceiveDamage(DamageRequest request)
         {
-            if (_depleted || _data == null)
+            if (_depleted)
                 return;
+
+            if (_data == null)
+            {
+                Debug.LogWarning($"[Harvesting] {name} ignored damage because ResourceNodeData is missing.", this);
+                return;
+            }
 
             float damage = CalculateHarvestDamage(request);
             if (damage <= 0f)
+            {
+                Debug.Log(
+                    $"[Harvesting] {NodeName()} ignored hit from {WeaponName(request)}: calculated harvest damage is 0. " +
+                    $"PrimaryType={request.Type}, WeaponTool={WeaponToolName(request)}, PreferredTool={_data.PreferredTool}.",
+                    this);
                 return;
+            }
 
             float previousHealth = _currentHealth;
             _currentHealth = Mathf.Max(0f, _currentHealth - damage);
@@ -117,6 +120,16 @@ namespace Project_S.Runtime.Gameplay.Harvesting
                 : _data.MismatchedToolDamageMultiplier;
 
             return Mathf.Max(0f, damage * Mathf.Max(0f, toolMultiplier));
+        }
+
+        private static string WeaponName(DamageRequest request)
+        {
+            return request.Weapon != null ? request.Weapon.ItemName : "None";
+        }
+
+        private static string WeaponToolName(DamageRequest request)
+        {
+            return request.Weapon != null ? request.Weapon.HarvestTool.ToString() : HarvestToolType.None.ToString();
         }
 
         private bool IsMatchingTool(DamageRequest request)

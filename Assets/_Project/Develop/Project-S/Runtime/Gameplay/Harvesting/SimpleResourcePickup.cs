@@ -4,11 +4,12 @@ using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Harvesting
 {
-    public class SimpleResourcePickup : MonoBehaviour, IInteractable
+    public class SimpleResourcePickup : MonoBehaviour, IInteractable, IInteractionActionText
     {
         [SerializeField] private ItemData _item;
         [SerializeField] private int _amount = 1;
         [SerializeField] private string _displayName;
+        [SerializeField] private string _interactionActionText = "E - Подобрать";
 
         private bool _collected;
 
@@ -23,6 +24,8 @@ namespace Project_S.Runtime.Gameplay.Harvesting
                 return _amount > 1 ? $"{itemName} x{_amount}" : itemName;
             }
         }
+
+        public string InteractionActionText => _interactionActionText;
 
         public void Configure(ItemData item, int amount = 1, string displayName = null)
         {

@@ -8,7 +8,10 @@ namespace Project_S.Runtime.Gameplay.Harvesting
     public class ResourceWorldHealthBar : MonoBehaviour
     {
         [SerializeField] private HarvestableResourceNode _node;
-        [SerializeField] private Vector3 _worldOffset = new Vector3(0f, 1.35f, 0f);
+        [SerializeField] private float _topPadding = 0.35f;
+        [SerializeField] private float _maxHeightAboveCamera = 0.7f;
+        [SerializeField] private float _minHeightAboveCamera = -0.45f;
+        [SerializeField] private float _cameraPullForward = 0.18f;
         [SerializeField] private Vector2 _barSize = new Vector2(96f, 8f);
 
         private Transform _uiRoot;
@@ -44,8 +47,8 @@ namespace Project_S.Runtime.Gameplay.Harvesting
             if (_uiRoot == null || !_uiRoot.gameObject.activeSelf)
                 return;
 
-            _uiRoot.position = transform.position + _worldOffset;
             EnsureCamera();
+            _uiRoot.position = CalculateWorldPosition();
 
             if (_camera != null)
                 _uiRoot.rotation = Quaternion.LookRotation(_uiRoot.position - _camera.transform.position);
@@ -68,7 +71,6 @@ namespace Project_S.Runtime.Gameplay.Harvesting
             var canvasObject = new GameObject("ResourceWorldHealthBar", typeof(RectTransform), typeof(Canvas));
             canvasObject.transform.SetParent(transform, false);
             _uiRoot = canvasObject.transform;
-            _uiRoot.localPosition = _worldOffset;
 
             var canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
@@ -80,6 +82,72 @@ namespace Project_S.Runtime.Gameplay.Harvesting
 
             _nameText = CreateNameText(canvasRect);
             _fillRect = CreateHealthBar(canvasRect);
+        }
+
+        private Vector3 CalculateWorldPosition()
+        {
+            Bounds bounds = CalculateBounds();
+            float preferredY = bounds.max.y + _topPadding;
+
+            if (_camera != null)
+            {
+                float minVisibleY = Mathf.Max(bounds.min.y + _topPadding, _camera.transform.position.y + _minHeightAboveCamera);
+                float maxComfortY = Mathf.Max(minVisibleY, _camera.transform.position.y + _maxHeightAboveCamera);
+                preferredY = Mathf.Clamp(preferredY, minVisibleY, maxComfortY);
+            }
+
+            Vector3 position = new Vector3(bounds.center.x, preferredY, bounds.center.z);
+
+            if (_camera != null)
+            {
+                Vector3 toCamera = _camera.transform.position - position;
+                toCamera.y = 0f;
+
+                if (toCamera.sqrMagnitude > 0.001f)
+                    position += toCamera.normalized * _cameraPullForward;
+            }
+
+            return position;
+        }
+
+        private Bounds CalculateBounds()
+        {
+            bool hasBounds = false;
+            Bounds bounds = new Bounds(transform.position, Vector3.zero);
+
+            foreach (var renderer in GetComponentsInChildren<Renderer>())
+            {
+                if (renderer == null || !renderer.enabled)
+                    continue;
+
+                if (!hasBounds)
+                {
+                    bounds = renderer.bounds;
+                    hasBounds = true;
+                }
+                else
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+            }
+
+            foreach (var collider in GetComponentsInChildren<Collider>())
+            {
+                if (collider == null || !collider.enabled)
+                    continue;
+
+                if (!hasBounds)
+                {
+                    bounds = collider.bounds;
+                    hasBounds = true;
+                }
+                else
+                {
+                    bounds.Encapsulate(collider.bounds);
+                }
+            }
+
+            return bounds;
         }
 
         private TMP_Text CreateNameText(RectTransform parent)
