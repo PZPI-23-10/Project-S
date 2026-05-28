@@ -17,13 +17,18 @@ namespace Project_S.Runtime.Gameplay.Harvesting
         [SerializeField] private Color _hitFeedbackColor = new Color(0.9f, 0.72f, 0.35f);
 
         private bool _depleted;
-        private Renderer _feedbackRenderer;
-        private Color _baseFeedbackColor;
+        private Renderer[] _feedbackRenderers;
+        private MaterialPropertyBlock _feedbackBlock;
         private float _feedbackUntil;
+        private bool _feedbackActive;
         private float _baseYieldHealth;
         private ResourceWorldHealthBar _healthBar;
 
         private readonly Dictionary<ItemData, float> _yieldFractions = new Dictionary<ItemData, float>();
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int ColorId = Shader.PropertyToID("_Color");
+        private static readonly int TintColorId = Shader.PropertyToID("_TintColor");
+        private static readonly int HueVariationId = Shader.PropertyToID("_HueVariation");
 
         public event Action<HarvestableResourceNode> HealthChanged;
         public event Action<HarvestableResourceNode> HarvestCompleted;
@@ -44,12 +49,13 @@ namespace Project_S.Runtime.Gameplay.Harvesting
         {
             ResetHealth();
             EnsurePresentation();
+            enabled = false;
         }
 
         private void Update()
         {
-            if (_feedbackRenderer != null && Time.time >= _feedbackUntil)
-                _feedbackRenderer.material.color = _baseFeedbackColor;
+            if (_feedbackActive && Time.time >= _feedbackUntil)
+                ClearHitFeedback();
         }
 
         public void SetHovered(bool isHovered)
@@ -276,8 +282,8 @@ namespace Project_S.Runtime.Gameplay.Harvesting
             if (_createFallbackPresentation && GetComponent<Collider>() == null)
                 gameObject.AddComponent<BoxCollider>();
 
-            _feedbackRenderer = GetComponentInChildren<Renderer>();
-            if (_feedbackRenderer == null && _createFallbackPresentation)
+            _feedbackRenderers = GetComponentsInChildren<Renderer>();
+            if ((_feedbackRenderers == null || _feedbackRenderers.Length == 0) && _createFallbackPresentation)
             {
                 var visual = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 visual.name = "MVP Resource Visual";
@@ -295,28 +301,62 @@ namespace Project_S.Runtime.Gameplay.Harvesting
                         DestroyImmediate(visualCollider);
                 }
 
-                _feedbackRenderer = visual.GetComponent<Renderer>();
-            }
-
-            if (_feedbackRenderer != null)
-            {
-                if (_feedbackRenderer.sharedMaterial != null)
-                    _baseFeedbackColor = _feedbackRenderer.sharedMaterial.color;
-                else
-                    _baseFeedbackColor = _fallbackColor;
-
-                if (_feedbackRenderer.sharedMaterial == null)
-                    _feedbackRenderer.material.color = _fallbackColor;
+                _feedbackRenderers = new[] { visual.GetComponent<Renderer>() };
             }
         }
 
         private void ShowHitFeedback()
         {
-            if (_feedbackRenderer == null)
+            if (_feedbackRenderers == null || _feedbackRenderers.Length == 0)
                 return;
 
-            _feedbackRenderer.material.color = _hitFeedbackColor;
+            if (_feedbackBlock == null)
+                _feedbackBlock = new MaterialPropertyBlock();
+
+            foreach (var renderer in _feedbackRenderers)
+            {
+                if (renderer == null)
+                    continue;
+
+                int materialCount = renderer.sharedMaterials != null ? renderer.sharedMaterials.Length : 0;
+                for (int i = 0; i < materialCount; i++)
+                {
+                    renderer.GetPropertyBlock(_feedbackBlock, i);
+                    ApplyFeedbackColor(_feedbackBlock);
+                    renderer.SetPropertyBlock(_feedbackBlock, i);
+                }
+            }
+
+            _feedbackActive = true;
             _feedbackUntil = Time.time + 0.12f;
+            enabled = true;
+        }
+
+        private void ClearHitFeedback()
+        {
+            if (_feedbackRenderers == null)
+                return;
+
+            foreach (var renderer in _feedbackRenderers)
+            {
+                if (renderer == null)
+                    continue;
+
+                int materialCount = renderer.sharedMaterials != null ? renderer.sharedMaterials.Length : 0;
+                for (int i = 0; i < materialCount; i++)
+                    renderer.SetPropertyBlock(null, i);
+            }
+
+            _feedbackActive = false;
+            enabled = false;
+        }
+
+        private void ApplyFeedbackColor(MaterialPropertyBlock block)
+        {
+            block.SetColor(BaseColorId, _hitFeedbackColor);
+            block.SetColor(ColorId, _hitFeedbackColor);
+            block.SetColor(TintColorId, _hitFeedbackColor);
+            block.SetColor(HueVariationId, _hitFeedbackColor);
         }
 
         private void MarkPresentationDepleted()
