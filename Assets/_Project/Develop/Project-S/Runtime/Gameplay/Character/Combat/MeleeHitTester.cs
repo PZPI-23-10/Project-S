@@ -130,7 +130,10 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
             if (combatController != null)
             {
-                combatController.AddChargeOnHit();
+                if (_attacker.GetComponent<MaceRageBuff>() == null)
+                {
+                    combatController.AddChargeOnHit();
+                }
             }
         }
 
