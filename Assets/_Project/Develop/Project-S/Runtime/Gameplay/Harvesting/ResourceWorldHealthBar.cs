@@ -24,8 +24,7 @@ namespace Project_S.Runtime.Gameplay.Harvesting
             if (_node == null)
                 _node = GetComponent<HarvestableResourceNode>();
 
-            CreateUi();
-            SetHovered(false);
+            enabled = false;
         }
 
         private void OnEnable()
@@ -40,6 +39,9 @@ namespace Project_S.Runtime.Gameplay.Harvesting
         {
             if (_node != null)
                 _node.HealthChanged -= OnHealthChanged;
+
+            if (_uiRoot != null)
+                _uiRoot.gameObject.SetActive(false);
         }
 
         private void LateUpdate()
@@ -56,10 +58,23 @@ namespace Project_S.Runtime.Gameplay.Harvesting
 
         public void SetHovered(bool isHovered)
         {
-            if (_uiRoot != null)
-                _uiRoot.gameObject.SetActive(isHovered);
+            if (!isHovered)
+            {
+                if (_uiRoot != null)
+                    _uiRoot.gameObject.SetActive(false);
 
-            if (isHovered)
+                enabled = false;
+                return;
+            }
+
+            CreateUi();
+
+            if (_uiRoot != null)
+                _uiRoot.gameObject.SetActive(true);
+
+            if (!enabled)
+                enabled = true;
+            else
                 Refresh();
         }
 
