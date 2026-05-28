@@ -50,8 +50,8 @@ MonoBehaviour:
   PoiseDamage: 15
   AttackSpeedMultiplier: 1
   MaxComboHits: 3
-  HitsToChargeHeavy: 3
-  HeavyAbility: 0
+  HitsToChargeHeavy: 1
+  HeavyAbilityData: {fileID: 11400000, guid: 1fe7dcd767a32f0409ad36adff6311af, type: 2}
   HeavyAbilityDuration: 0
   OffhandAbility: 0
   AbilityCooldown: 8

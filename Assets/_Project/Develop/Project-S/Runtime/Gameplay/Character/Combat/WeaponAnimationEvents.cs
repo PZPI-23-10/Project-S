@@ -13,7 +13,12 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             _combatController = GetComponentInParent<CombatController>();
         }
 
-        // Ці методи тепер побачить вікно Animation
+        public void ExecuteHeavyAbility()
+        {
+            if (_combatController != null) 
+                _combatController.AnimEvent_ExecuteHeavyAbility();
+        }
+
         public void StartHitbox()
         {
             if (_combatController != null)

@@ -13,10 +13,6 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         public float Amount;
     }
 
-    public enum PassiveAbilityType { None, BoneCrusher, TargetFocus, DistanceKeeper }
-    public enum HeavyAbilityType { None, PrecisionAim, Fury, DirectionalSlice, AoEKnockback, SingleStrong, ChainForm }
-    public enum OffhandAbilityType { None, DamageParry, StunStrike, DoubleSlice, ShieldBash }
-
     [CreateAssetMenu(fileName = "New Weapon", menuName = "Project-S/Items/Weapon")]
     public class WeaponItemData : ItemData
     {
@@ -37,11 +33,10 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
         [Header("Heavy ability")]
         public int HitsToChargeHeavy = 3;
-        public HeavyAbilityType HeavyAbility;
+        public WeaponActiveData HeavyAbilityData;
         public float HeavyAbilityDuration = 0f;
 
         [Header("Offhand ability")]
-        public OffhandAbilityType OffhandAbility;
         public float AbilityCooldown = 8f;
 
         [Header("Defense")]
