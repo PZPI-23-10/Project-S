@@ -219,7 +219,7 @@ namespace Project_S.Runtime.Gameplay.HUD
             _activeCraftingRecipeProvider = null;
             _currentCraftingContext = context;
             if (_craftingPanel != null)
-                _craftingPanel.SetContext(context, null);
+                _craftingPanel.SetContext(context);
         }
 
         public void SetInventoryOpen(bool open, CraftingContext context)
@@ -307,7 +307,7 @@ namespace Project_S.Runtime.Gameplay.HUD
                 else
                 {
                     _storagePanel?.ClearStorage();
-                    _craftingPanel?.SetContext(_currentCraftingContext, _activeCraftingRecipeProvider);
+                    _craftingPanel.SetContext(_currentCraftingContext);
                 }
 
                 Refresh();
@@ -658,7 +658,7 @@ namespace Project_S.Runtime.Gameplay.HUD
                 if (_craftingPanel == null)
                     _craftingPanel = _contextPanel.AddComponent<CraftingPanelUI>();
 
-                _craftingPanel.Initialize(_inventory, _soulAshWallet, _currentCraftingContext, _activeCraftingRecipeProvider);
+                _craftingPanel.Initialize(_inventory, _soulAshWallet, _currentCraftingContext);
             }
         }
 

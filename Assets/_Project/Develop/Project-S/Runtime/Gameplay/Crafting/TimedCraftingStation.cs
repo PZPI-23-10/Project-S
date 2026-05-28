@@ -65,10 +65,12 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
         public bool AllowsRecipe(CraftingRecipeData recipe)
         {
-            return recipe != null
-                && recipe.Context == _context
-                && _availableRecipes != null
-                && _availableRecipes.Contains(recipe);
+            if (recipe == null || recipe.Context != _context)
+                return false;
+
+            return _availableRecipes == null
+                || _availableRecipes.Count == 0
+                || _availableRecipes.Contains(recipe);
         }
 
         public void ConfigureRecipes(IEnumerable<CraftingRecipeData> recipes)

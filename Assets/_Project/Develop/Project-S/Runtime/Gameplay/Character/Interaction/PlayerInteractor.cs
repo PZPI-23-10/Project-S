@@ -39,8 +39,8 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
         [SerializeField] private InventoryController _inventory;
         [SerializeField] private float _promptWorldYOffset = 0.35f;
         [SerializeField] private float _menuCloseDistanceBuffer = 0.5f;
-        [SerializeField] private string _pickupActionText = DefaultPickupActionText;
-        [SerializeField] private string _interactActionText = DefaultInteractActionText;
+        [SerializeField] private string _pickupActionText = PickupActionText;
+        [SerializeField] private string _interactActionText = InteractActionText;
 
         private UnityEngine.Camera _cam;
         private SoulAshWallet _soulAshWallet;
@@ -205,8 +205,8 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
                 return pickup.InteractionActionText;
 
             return !string.IsNullOrWhiteSpace(_pickupActionText)
-                ? _pickupActionText
-                : DefaultPickupActionText;
+                    ? _pickupActionText
+                    : PickupActionText; // <-- прибрали Default
         }
 
         private string ResolveInteractActionText(IInteractable interactable)
@@ -219,7 +219,7 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
 
             return !string.IsNullOrWhiteSpace(_interactActionText)
                 ? _interactActionText
-                : DefaultInteractActionText;
+                : InteractActionText; // <-- прибрали Default
         }
 
         private bool ShouldSuppressHover()
