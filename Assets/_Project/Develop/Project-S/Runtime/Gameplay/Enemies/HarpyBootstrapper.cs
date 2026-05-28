@@ -1,6 +1,7 @@
 using System.Collections;
 using Project_S.Runtime.Gameplay.Character.Combat;
 using Project_S.Runtime.Gameplay.Character.Player;
+using Project_S.Runtime.Gameplay.Diagnostics;
 using Project_S.Runtime.Gameplay.Loot;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -40,6 +41,11 @@ namespace Project_S.Runtime.Gameplay.Enemies
             if (player == null)
                 return false;
 
+            return NpcStartupDiagnostics.Time("Harpy bootstrap spawn", () => TrySpawnWithPlayer(player));
+        }
+
+        private static bool TrySpawnWithPlayer(PlayerFacade player)
+        {
             var root = GameObject.Find(RootName);
             if (root == null)
                 root = new GameObject(RootName);
@@ -109,7 +115,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
             var lootDropper = harpy.AddComponent<LootDropper>();
             var animationController = harpy.AddComponent<HarpyAnimationController>();
 
-            var lootTable = Resources.Load<LootTableData>("Loot/BasicEnemyLoot");
+            var lootTable = NpcStartupDiagnostics.LoadResource<LootTableData>("Harpy", "Loot/BasicEnemyLoot");
             lootDropper.Configure(lootTable);
 
             health.Configure(config);
@@ -121,7 +127,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
         private static GameObject TryAttachVisual(Transform parent)
         {
-            var visualPrefab = Resources.Load<GameObject>(HarpyVisualPath);
+            var visualPrefab = NpcStartupDiagnostics.LoadResource<GameObject>("Harpy", HarpyVisualPath);
             if (visualPrefab == null)
                 return null;
 
@@ -146,7 +152,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
             if (animator == null)
                 animator = visual.AddComponent<Animator>();
 
-            var animatorController = Resources.Load<RuntimeAnimatorController>(HarpyAnimatorPath);
+            var animatorController = NpcStartupDiagnostics.LoadResource<RuntimeAnimatorController>("Harpy", HarpyAnimatorPath);
             if (animatorController != null)
                 animator.runtimeAnimatorController = animatorController;
 

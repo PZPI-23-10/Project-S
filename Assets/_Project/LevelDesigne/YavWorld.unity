@@ -1943,13 +1943,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _stats:
   - _type: 0
-    _baseValue: 1000
+    _baseValue: 9999999
     _minValue: 0
-    _maxValue: 1000
+    _maxValue: 9999999
   - _type: 1
-    _baseValue: 1000
+    _baseValue: 999999
     _minValue: 0
-    _maxValue: 1000
+    _maxValue: 999999
   - _type: 2
     _baseValue: 100
     _minValue: 0

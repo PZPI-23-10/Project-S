@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Animations;
+using UnityEngine.Playables;
 
 namespace Project_S.Runtime.Gameplay.Enemies
 {
@@ -18,11 +20,16 @@ namespace Project_S.Runtime.Gameplay.Enemies
         [SerializeField] private EnemyHealth _health;
         [SerializeField] private Transform _visualRoot;
         [SerializeField] private Animator _animator;
+        [SerializeField] private AnimationClip _deathClip;
 
         private readonly HashSet<int> _parameters = new HashSet<int>();
+        private PlayableGraph _deathGraph;
         private Quaternion _baseLocalRotation;
+        private Vector3 _baseLocalPosition;
+        private float _deathGroundY;
         private float _swingDuration = 0.45f;
         private float _swingRemaining;
+        private bool _isDead;
 
         private void Awake()
         {
@@ -47,6 +54,8 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
         private void OnDisable()
         {
+            StopDeathPlayable();
+
             if (_meleeAttack != null)
             {
                 _meleeAttack.AttackStarted -= OnAttackStarted;
@@ -57,6 +66,11 @@ namespace Project_S.Runtime.Gameplay.Enemies
                 _health.Died -= OnDied;
         }
 
+        private void OnDestroy()
+        {
+            StopDeathPlayable();
+        }
+
         private void Update()
         {
             UpdateAnimatorParameters();
@@ -65,6 +79,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
         private void LateUpdate()
         {
             UpdateProceduralSwing(Time.deltaTime);
+            KeepDeadVisualRootAnchored();
         }
 
         public void Configure(
@@ -72,13 +87,15 @@ namespace Project_S.Runtime.Gameplay.Enemies
             EnemyMeleeAttack meleeAttack,
             EnemyHealth health,
             Transform visualRoot,
-            Animator animator)
+            Animator animator,
+            AnimationClip deathClip = null)
         {
             _controller = controller;
             _meleeAttack = meleeAttack;
             _health = health;
             _visualRoot = visualRoot;
             _animator = animator;
+            _deathClip = deathClip;
 
             ResolveReferences();
             CacheAnimatorParameters();
@@ -117,12 +134,15 @@ namespace Project_S.Runtime.Gameplay.Enemies
         private void CacheBasePose()
         {
             if (_visualRoot != null)
+            {
                 _baseLocalRotation = _visualRoot.localRotation;
+                _baseLocalPosition = _visualRoot.localPosition;
+            }
         }
 
         private void UpdateAnimatorParameters()
         {
-            if (_animator == null)
+            if (_animator == null || _isDead)
                 return;
 
             bool isMoving = _controller != null && _controller.IsMoving;
@@ -172,7 +192,109 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
         private void OnDied(EnemyHealth health)
         {
-            SetTrigger(DieHash);
+            _isDead = true;
+            _swingRemaining = 0f;
+            _deathGroundY = transform.position.y;
+
+            if (_visualRoot != null)
+            {
+                _visualRoot.localRotation = _baseLocalRotation;
+                _visualRoot.localPosition = _baseLocalPosition;
+            }
+
+            if (!PlayDeathClip())
+                SetTrigger(DieHash);
+        }
+
+        private bool PlayDeathClip()
+        {
+            if (_animator == null)
+            {
+                Debug.LogWarning($"[Skeleton] Cannot play death animation for '{name}': Animator is missing.");
+                return false;
+            }
+
+            if (_deathClip == null)
+            {
+                Debug.LogWarning($"[Skeleton] Cannot play death animation for '{name}': death clip is missing.");
+                return false;
+            }
+
+            StopDeathPlayable();
+            _animator.enabled = true;
+
+            _deathGraph = PlayableGraph.Create($"{name}_DeathAnimation");
+            _deathGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
+
+            var clipPlayable = AnimationClipPlayable.Create(_deathGraph, _deathClip);
+            clipPlayable.SetApplyFootIK(false);
+            clipPlayable.SetApplyPlayableIK(false);
+            clipPlayable.SetDuration(_deathClip.length);
+
+            var output = AnimationPlayableOutput.Create(_deathGraph, "Death", _animator);
+            output.SetSourcePlayable(clipPlayable);
+
+            _deathGraph.Play();
+            _deathGraph.Evaluate(0f);
+            AnchorDeadVisualToGround();
+            return true;
+        }
+
+        private void KeepDeadVisualRootAnchored()
+        {
+            if (!_isDead || _visualRoot == null)
+                return;
+
+            var localPosition = _visualRoot.localPosition;
+            localPosition.x = _baseLocalPosition.x;
+            localPosition.z = _baseLocalPosition.z;
+            _visualRoot.localPosition = localPosition;
+            AnchorDeadVisualToGround();
+        }
+
+        private void AnchorDeadVisualToGround()
+        {
+            if (_visualRoot == null)
+                return;
+
+            if (!TryGetVisualBounds(out Bounds bounds))
+                return;
+
+            float deltaY = _deathGroundY - bounds.min.y;
+            if (Mathf.Abs(deltaY) < 0.005f)
+                return;
+
+            _visualRoot.position += Vector3.up * deltaY;
+        }
+
+        private bool TryGetVisualBounds(out Bounds bounds)
+        {
+            bounds = default;
+            bool hasBounds = false;
+
+            foreach (var renderer in _visualRoot.GetComponentsInChildren<Renderer>())
+            {
+                if (renderer == null || !renderer.enabled)
+                    continue;
+
+                if (!hasBounds)
+                {
+                    bounds = renderer.bounds;
+                    hasBounds = true;
+                }
+                else
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+            }
+
+            return hasBounds;
+        }
+
+        private void StopDeathPlayable()
+        {
+            if (_deathGraph.IsValid())
+                _deathGraph.Destroy();
         }
 
         private void SetBool(int hash, bool value)
