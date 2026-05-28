@@ -11,8 +11,8 @@ namespace Project_S.Runtime.Gameplay.Harvesting
         [SerializeField] private int _maxAmount = 2;
         [SerializeField] private int _minHarvests = 1;
         [SerializeField] private int _maxHarvests = 2;
-        [SerializeField] private string _displayName = "Berry Bush";
-        [SerializeField] private string _interactionActionText = "E - Подобрать";
+        [SerializeField] private string _displayName = "Ягідний кущ";
+        [SerializeField] private string _interactionActionText = "E - Зібрати";
 
         private bool _depleted;
         private int _remainingHarvests;
@@ -26,7 +26,7 @@ namespace Project_S.Runtime.Gameplay.Harvesting
             ItemData berryItem,
             int minAmount = 1,
             int maxAmount = 2,
-            string displayName = "Berry Bush",
+            string displayName = "Ягідний кущ",
             int minHarvests = 1,
             int maxHarvests = 2)
         {

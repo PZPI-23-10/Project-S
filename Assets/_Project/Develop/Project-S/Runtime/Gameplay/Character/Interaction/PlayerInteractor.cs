@@ -32,8 +32,8 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
 
     public class PlayerInteractor : MonoBehaviour
     {
-        private const string DefaultPickupActionText = "E - Подобрать";
-        private const string DefaultInteractActionText = "E - Взаимодействовать";
+        private const string PickupActionText = "E - Підняти";
+        private const string InteractActionText = "E - Взаємодіяти";
 
         [SerializeField] private float _interactDistance = 2.5f;
         [SerializeField] private InventoryController _inventory;

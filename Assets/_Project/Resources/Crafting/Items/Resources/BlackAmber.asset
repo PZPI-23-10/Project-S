@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35381e3f13136374abee8a5ed10dc4aa, type: 3}
   m_Name: BlackAmber
   m_EditorClassIdentifier: 
-  ItemName: Black Amber
+  ItemName: Чорний бурштин
   Kind: 0
   Weight: 0.05
   IsStackable: 1
   MaxStack: 20
   MaxInventoryStacks: 0
-  Icon: {fileID: 0}
-  Description: Rare looting resource
+  Icon: {fileID: 21300000, guid: 402ea59653b8fd94d898de3a9831b5b2, type: 3}
+  Description: Рідкісний темний бурштин. Цінується в небезпечних ремеслах.
   WeaponPrefab: {fileID: 0}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 0
@@ -28,6 +28,10 @@ MonoBehaviour:
   StaminaRestoreAmount: 0
   SpecialEffect: 0
   SpecialEffectDelaySeconds: 0
+  StatEffects: []
+  TimedBuffs: []
+  SpecialEffects: []
+  DamageConversions: []
   TimedBuffType: 0
   TimedBuffCategory: 0
   TimedBuffMultiplier: 1

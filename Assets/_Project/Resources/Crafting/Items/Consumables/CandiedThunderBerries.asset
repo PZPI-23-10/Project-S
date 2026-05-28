@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35381e3f13136374abee8a5ed10dc4aa, type: 3}
   m_Name: CandiedThunderBerries
   m_EditorClassIdentifier: 
-  ItemName: "Candied Thunder Berries"
+  ItemName: Зацукровані громові ягоди
   Kind: 2
   Weight: 0.1
   IsStackable: 1
   MaxStack: 6
   MaxInventoryStacks: 0
-  Icon: {fileID: 0}
-  Description: "Advanced food. Restores 30 hunger and grants +15% Soul Ash rewards for this MVP."
+  Icon: {fileID: 21300000, guid: b4e43dfc90a97334282727c9c731db7f, type: 3}
+  Description: Солодкі ягоди з іскрою грози. Втамовують голод і збільшують здобуток попелу душ.
   WeaponPrefab: {fileID: 0}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 2
@@ -28,6 +28,10 @@ MonoBehaviour:
   StaminaRestoreAmount: 0
   SpecialEffect: 0
   SpecialEffectDelaySeconds: 0
+  StatEffects: []
+  TimedBuffs: []
+  SpecialEffects: []
+  DamageConversions: []
   TimedBuffType: 2
   TimedBuffCategory: 1
   TimedBuffMultiplier: 1.15

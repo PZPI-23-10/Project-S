@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35381e3f13136374abee8a5ed10dc4aa, type: 3}
   m_Name: RoastedBerries
   m_EditorClassIdentifier: 
-  ItemName: "Roasted Berries"
+  ItemName: Печені ягоди
   Kind: 2
   Weight: 0.05
   IsStackable: 1
   MaxStack: 10
   MaxInventoryStacks: 0
-  Icon: {fileID: 0}
-  Description: "Campfire food. Restores 15 hunger and grants +10% Soul Ash rewards for this MVP."
+  Icon: {fileID: 21300000, guid: 4666b1b52e4a5394395dfc16246f6a1a, type: 3}
+  Description: Підігріті ягоди. Краще втамовують голод і підтримують дух.
   WeaponPrefab: {fileID: 0}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 2
@@ -28,6 +28,10 @@ MonoBehaviour:
   StaminaRestoreAmount: 0
   SpecialEffect: 0
   SpecialEffectDelaySeconds: 0
+  StatEffects: []
+  TimedBuffs: []
+  SpecialEffects: []
+  DamageConversions: []
   TimedBuffType: 2
   TimedBuffCategory: 1
   TimedBuffMultiplier: 1.1

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
   m_Name: Workbench_FlintSpear
   m_EditorClassIdentifier: 
-  DisplayName: "Flint Spear"
+  DisplayName: Крем'яний спис
   Context: 1
   Output:
     Item: {fileID: 11400000, guid: 702aa237c36ac31f2865a96597eed871, type: 2}
@@ -24,4 +24,4 @@ MonoBehaviour:
     Amount: 3
   SoulAshCost: 0
   RequiredItems: []
-  Description: "Light workbench spear."
+  Description: Збирає легкий спис із довшим радіусом атаки.

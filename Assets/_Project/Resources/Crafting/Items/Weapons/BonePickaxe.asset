@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 215432127562c5e46812873892628a75, type: 3}
   m_Name: BonePickaxe
   m_EditorClassIdentifier: 
-  ItemName: Bone Pickaxe
+  ItemName: Кістяна кирка
   Kind: 1
   Weight: 3
   IsStackable: 0
   MaxStack: 1
   MaxInventoryStacks: 0
-  Icon: {fileID: 0}
-  Description: Workbench pickaxe. Resource finishing ability is deferred after MVP.
+  Icon: {fileID: 21300000, guid: 0ae9a86cdfc23f14a992b57c7f0746f9, type: 3}
+  Description: Проста кирка з кістки та дерева. Підходить для видобутку м'яких порід.
   WeaponPrefab: {fileID: 7817334558654498724, guid: 7c51b549c5b8a6c45ab808f77129e48a,
     type: 3}
   WorldPickupPrefab: {fileID: 919132149155446097, guid: e88dda5d517b3b148a9b8c7e48088694,

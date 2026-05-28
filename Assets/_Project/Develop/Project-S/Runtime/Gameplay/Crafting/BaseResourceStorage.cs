@@ -10,7 +10,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
     {
         private const int DefaultStorageSize = 24;
 
-        [SerializeField] private string _interactionPrompt = "Base Storage";
+        [SerializeField] private string _interactionPrompt = "Сховище ресурсів";
         [SerializeField] private int _storageSize = DefaultStorageSize;
         [SerializeField] private ItemStack[] _slots;
         [SerializeField] private int _soulAshAmount;
@@ -106,11 +106,16 @@ namespace Project_S.Runtime.Gameplay.Crafting
             return count;
         }
 
+        public bool CanStoreItem(ItemData item)
+        {
+            return CanStore(item);
+        }
+
         public bool CanAddItem(ItemData item, int amount)
         {
             EnsureSlots();
 
-            if (item == null || amount <= 0 || !CanStore(item))
+            if (item == null || amount <= 0 || !CanStoreItem(item))
                 return false;
 
             int remaining = amount;

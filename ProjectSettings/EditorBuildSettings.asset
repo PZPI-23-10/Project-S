@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/_Project/Scenes/Boot.unity
     guid: d1517967d5f6a264d8112046d3207802
   - enabled: 1
+    path: Assets/UI_Maksym/MainMenu.unity
+    guid: d86cd859f687a874e85fcaf84111da27
+  - enabled: 1
     path: Assets/_Project/Scenes/Core.unity
     guid: 44171bf7ea307fd458e728948e005a34
   - enabled: 1

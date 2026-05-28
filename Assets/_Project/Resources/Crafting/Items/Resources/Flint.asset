@@ -12,15 +12,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35381e3f13136374abee8a5ed10dc4aa, type: 3}
   m_Name: Flint
   m_EditorClassIdentifier: 
-  ItemName: "Flint"
+  ItemName: Кремінь
   Kind: 0
   Weight: 0.2
   IsStackable: 1
   MaxStack: 20
-  Icon: {fileID: 0}
-  Description: "Sharp stone for cutting tools and spear tips."
+  MaxInventoryStacks: 0
+  Icon: {fileID: 21300000, guid: adef6fe2ae5d6524780e8c3bd8c3ef9b, type: 3}
+  Description: Гострий камінь для лез, наконечників і простих інструментів.
   WeaponPrefab: {fileID: 0}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 0
   HealthRestoreAmount: 0
   HungerRestoreAmount: 0
+  StaminaRestoreAmount: 0
+  SpecialEffect: 0
+  SpecialEffectDelaySeconds: 0
+  StatEffects: []
+  TimedBuffs: []
+  SpecialEffects: []
+  DamageConversions: []
+  TimedBuffType: 0
+  TimedBuffCategory: 0
+  TimedBuffMultiplier: 1
+  TimedBuffDurationSeconds: 0
+  SecondaryTimedBuffType: 0
+  SecondaryTimedBuffCategory: 0
+  SecondaryTimedBuffMultiplier: 1
+  SecondaryTimedBuffDurationSeconds: 0

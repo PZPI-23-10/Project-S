@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
   m_Name: Anvil_IronAxe
   m_EditorClassIdentifier: 
-  DisplayName: Iron Axe
+  DisplayName: Крицева сокира
   Context: 6
   Output:
     Item: {fileID: 11400000, guid: 8926870f0ec34b49a0c191aaf94de407, type: 2}
@@ -26,4 +26,4 @@ MonoBehaviour:
   RequiredItems: []
   CraftDurationSeconds: 0
   FuelSecondsCost: 0
-  Description: Forge an iron-tier axe. Its active ability is deferred.
+  Description: Викуює важку крицеву сокиру для рубання й бою.

@@ -14,8 +14,8 @@ namespace Project_S.Runtime.Gameplay.Crafting
         {
             ConfigureStation(
                 CraftingContext.Campfire,
-                "Campfire",
-                "Cook",
+                "Багаття",
+                "Приготувати",
                 true,
                 woodItem,
                 DefaultSecondsPerWood,

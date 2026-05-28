@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 24e58db34c6e53c9ce5b4fdaa1bed91e, type: 3}
   m_Name: FlintStoneNode
   m_EditorClassIdentifier: 
-  DisplayName: "Flint Stone"
+  DisplayName: Крем'яний камінь
   MaxHealth: 36
   PreferredTool: 2
   MatchingToolDamageMultiplier: 1

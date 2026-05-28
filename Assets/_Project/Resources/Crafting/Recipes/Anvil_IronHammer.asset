@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
   m_Name: Anvil_IronHammer
   m_EditorClassIdentifier: 
-  DisplayName: Iron Hammer
+  DisplayName: Крицевий молот
   Context: 6
   Output:
     Item: {fileID: 11400000, guid: d2710335674c4c51a9336d558356d0fa, type: 2}
@@ -30,4 +30,4 @@ MonoBehaviour:
   RequiredItems: []
   CraftDurationSeconds: 0
   FuelSecondsCost: 0
-  Description: Forge a very heavy iron-tier hammer. Its active ability is deferred.
+  Description: Викуює масивний молот із криці для нищівних ударів.

@@ -14,7 +14,7 @@ namespace Project_S.Runtime.Gameplay.HUD
         [SerializeField] private CombatController _combatController;
         [SerializeField] private InventorySlotUI _slotPrefab;
         [SerializeField] private Transform _hotbarGrid;
-        [SerializeField] private int _hotbarSize = 5;
+        [SerializeField] private int _hotbarSize = 6; // За замовчуванням тепер 6
         [SerializeField] private Vector2 _slotSize = new Vector2(72f, 72f);
         [SerializeField] private float _slotSpacing = 10f;
         [SerializeField] private Vector2 _panelPadding = new Vector2(12f, 10f);
@@ -37,8 +37,48 @@ namespace Project_S.Runtime.Gameplay.HUD
                 _inventory.OnInventoryChanged -= RefreshHotbar;
         }
 
+        // НОВИЙ БЛОК: Читаємо мишку і клавіатуру прямо тут
+        private void Update()
+        {
+            // МАГІЯ ТУТ: Якщо курсор на екрані (відкритий інвентар/крафт), блокуємо хотбар!
+            if (Cursor.visible) return;
+
+            // 1. Коліщатко мишки
+            float scroll = Input.GetAxis("Mouse ScrollWheel");
+            if (scroll > 0f)
+                SelectPreviousSlot();
+            else if (scroll < 0f)
+                SelectNextSlot();
+
+            // 2. Кнопки від 1 до 9
+            for (int i = 0; i < Mathf.Min(_hotbarSize, 9); i++)
+            {
+                if (Input.GetKeyDown(KeyCode.Alpha1 + i))
+                {
+                    SelectSlot(i);
+                }
+            }
+        }
+
+        // НОВА ФУНКЦІЯ: Наступний слот (з перекиданням на початок)
+        private void SelectNextSlot()
+        {
+            int nextIndex = _currentSelectedIndex + 1;
+            if (nextIndex >= _hotbarSize) nextIndex = 0;
+            SelectSlot(nextIndex);
+        }
+
+        // НОВА ФУНКЦІЯ: Попередній слот (з перекиданням у кінець)
+        private void SelectPreviousSlot()
+        {
+            int prevIndex = _currentSelectedIndex - 1;
+            if (prevIndex < 0) prevIndex = _hotbarSize - 1;
+            SelectSlot(prevIndex);
+        }
+
         public void Tick(PlayerInputSnapshot input)
         {
+            // Стара логіка вводу (залишаємо про всяк випадок)
             if (input.HotbarSlotPressed >= 0)
                 SelectSlot(input.HotbarSlotPressed);
         }

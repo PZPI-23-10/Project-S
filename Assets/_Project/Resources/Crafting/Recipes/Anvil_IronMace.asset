@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
   m_Name: Anvil_IronMace
   m_EditorClassIdentifier: 
-  DisplayName: Iron Mace
+  DisplayName: Залізний зливок
   Context: 6
   Output:
     Item: {fileID: 11400000, guid: 2cdeb6d5cdc8d514ea4bf7360be76904, type: 2}
@@ -26,4 +26,4 @@ MonoBehaviour:
   RequiredItems: []
   CraftDurationSeconds: 0
   FuelSecondsCost: 0
-  Description: iron mace
+  Description: Викуює шматки криці в очищений залізний зливок.
