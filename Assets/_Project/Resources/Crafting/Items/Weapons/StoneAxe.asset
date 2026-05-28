@@ -29,6 +29,10 @@ MonoBehaviour:
   StaminaRestoreAmount: 0
   SpecialEffect: 0
   SpecialEffectDelaySeconds: 0
+  StatEffects: []
+  TimedBuffs: []
+  SpecialEffects: []
+  DamageConversions: []
   TimedBuffType: 0
   TimedBuffCategory: 0
   TimedBuffMultiplier: 1
@@ -38,14 +42,15 @@ MonoBehaviour:
   SecondaryTimedBuffMultiplier: 1
   SecondaryTimedBuffDurationSeconds: 0
   IsTwoHanded: 1
+  Passives: []
   DamageProfile:
   - Type: 2
     Amount: 40
   PoiseDamage: 28
   AttackSpeedMultiplier: 0.75
   MaxComboHits: 1
-  HitsToChargeHeavy: 3
-  HeavyAbility: 0
+  HitsToChargeHeavy: 0
+  HeavyAbilityData: {fileID: 0}
   HeavyAbilityDuration: 0
   OffhandAbility: 0
   AbilityCooldown: 8

@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24e58db34c6e53c9ce5b4fdaa1bed91e, type: 3}
+  m_Name: StoneMediumNode
+  m_EditorClassIdentifier: 
+  DisplayName: "Medium Stone"
+  MaxHealth: 300
+  BaseYieldItem: {fileID: 11400000, guid: 2b27167344e89f6b1257e31646d0c795, type: 2}
+  HealthPerBaseYield: 50
+  BaseYieldAmount: 1
+  PreferredTool: 2
+  MatchingToolDamageMultiplier: 1
+  MismatchedToolDamageMultiplier: 1
+  MismatchedYieldMultiplier: 0.9
+  DamageMultipliers:
+  - Type: 2
+    Multiplier: 0
+  - Type: 3
+    Multiplier: 0
+  - Type: 5
+    Multiplier: 0.2
+  - Type: 4
+    Multiplier: 0.2
+  - Type: 1
+    Multiplier: 0.5
+  SoulAshReward: 8
+  Drops:
+  - Item: {fileID: 11400000, guid: 2b27167344e89f6b1257e31646d0c795, type: 2}
+    MinAmount: 9
+    MaxAmount: 9
+    Chance: 1
+  - Item: {fileID: 11400000, guid: 02b7080157078c848857cba96908cdf9, type: 2}
+    MinAmount: 1
+    MaxAmount: 1
+    Chance: 0.12

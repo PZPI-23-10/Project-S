@@ -11,6 +11,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         private GameObject _attacker;
         private bool _isHitboxActive;
         private Collider _collider;
+        private Rigidbody _rigidbody;
 
         private readonly HashSet<Collider> _alreadyHit = new HashSet<Collider>();
         private readonly HashSet<IDamageReceiver> _alreadyDamagedEnemies = new HashSet<IDamageReceiver>();
@@ -19,6 +20,8 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         {
             _collider = GetComponent<Collider>();
             if (_collider != null) _collider.enabled = false;
+
+            EnsureRigidbody();
         }
 
         public void Setup(WeaponItemData data, GameObject attacker)
@@ -27,6 +30,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             _attacker = attacker;
 
             if (_collider != null) _collider.isTrigger = true;
+            EnsureRigidbody();
         }
 
         public void StartHitDetection()
@@ -35,6 +39,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             _alreadyHit.Clear();
             _alreadyDamagedEnemies.Clear();
             if (_collider != null) _collider.enabled = true;
+            Physics.SyncTransforms();
         }
 
         public void StopHitDetection()
@@ -47,7 +52,20 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
         private void OnTriggerEnter(Collider other)
         {
+            TryDamage(other);
+        }
+
+        private void OnTriggerStay(Collider other)
+        {
+            TryDamage(other);
+        }
+
+        private void TryDamage(Collider other)
+        {
             if (!_isHitboxActive || _weaponData == null || _attacker == null)
+                return;
+
+            if (other == null)
                 return;
 
             if (other.transform.root == _attacker.transform.root)
@@ -112,8 +130,24 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
             if (combatController != null)
             {
-                combatController.AddChargeOnHit();
+                if (_attacker.GetComponent<MaceRageBuff>() == null)
+                {
+                    combatController.AddChargeOnHit();
+                }
             }
+        }
+
+        private void EnsureRigidbody()
+        {
+            if (_rigidbody == null)
+                _rigidbody = GetComponent<Rigidbody>();
+
+            if (_rigidbody == null)
+                _rigidbody = gameObject.AddComponent<Rigidbody>();
+
+            _rigidbody.isKinematic = true;
+            _rigidbody.useGravity = false;
+            _rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
         }
     }
 }

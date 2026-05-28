@@ -6,20 +6,20 @@ using Project_S.Runtime.Gameplay.Character.Stats;
 
 public class HammerWeapon : MonoBehaviour
 {
-    [Header("Налаштування зарядки")]
+    [Header("Налаштування зарядки (Легка атака)")]
     public float minChargeTime = 0.4f;
     private float currentChargeTime = 0f;
 
     [Header("Стаміна")]
-    public float staminaDrainRate = 15f; // Скільки стаміни витрачається за ОДНУ секунду утримання!
+    public float staminaDrainRate = 15f;
 
-    [Header("Налаштування вибуху (Фізика)")]
+    [Header("Налаштування вибуху (Фізика легкої атаки)")]
     public Transform hitPoint;
     public float explosionRadius = 5f;
     public float explosionForce = 1000f;
     public float upwardModifier = 2f;
 
-    [Header("Налаштування вибуху (Урон)")]
+    [Header("Налаштування вибуху (Урон легкої атаки)")]
     public bool useIndependentDamage = true;
     public List<DamageInstance> explosionDamageProfile = new List<DamageInstance>();
     public float explosionPoiseDamage = 15f;
@@ -42,26 +42,23 @@ public class HammerWeapon : MonoBehaviour
                 currentChargeTime = 0f;
             }
 
-            // Якщо ми у стані зарядки (молот нагорі)
             if (anim.GetBool("IsCharging"))
             {
                 currentChargeTime += Time.deltaTime;
 
-                // Витрачаємо стаміну плавно (множимо на Time.deltaTime)
                 bool hasStamina = combatCtrl.DrainStamina(staminaDrainRate * Time.deltaTime);
 
-                // Якщо гравець перетримав і сили закінчились повністю!
                 if (!hasStamina)
                 {
                     anim.SetBool("IsCharging", false);
-                    anim.SetTrigger("CancelCharge"); // Спускаємо молот без удару
+                    anim.SetTrigger("CancelCharge");
                     combatCtrl.ForceResetToIdle();
                     Debug.Log("<color=red>[Молот]</color> Сили закінчились! Зарядку скасовано.");
                 }
             }
             return true;
         }
-        // 2. ВІДПУСТИЛИ КНОПКУ (і сили ще були)
+        // 2. ВІДПУСТИЛИ КНОПКУ
         else if (anim.GetBool("IsCharging"))
         {
             anim.SetBool("IsCharging", false);
@@ -82,6 +79,7 @@ public class HammerWeapon : MonoBehaviour
         return false;
     }
 
+    // Цей метод можна викликати через Animation Event для звичайних атак
     public void SmashGround()
     {
         if (dustEffect != null) dustEffect.Play();

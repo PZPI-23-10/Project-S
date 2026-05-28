@@ -2,7 +2,7 @@ using KinematicCharacterController;
 using Project_S.Runtime.Gameplay.Character.Combat;
 using Project_S.Runtime.Gameplay.Character.Input;
 using Project_S.Runtime.Gameplay.Character.Stats;
-using Project_S.Runtime.Gameplay.Character.Inventory; // ÄÎÄÀÍÎ ÄËß ²ÍÂÅÍÒÀÐÞ
+using Project_S.Runtime.Gameplay.Character.Inventory;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Character.Movement
@@ -15,7 +15,7 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
         [SerializeField] private CharacterStats _stats;
         [SerializeField] private StaminaController _stamina;
         [SerializeField] private PoiseController _poiseController;
-        [SerializeField] private InventoryController _inventory; // ÄÎÄÀÍÎ ÏÎÑÈËÀÍÍß ÍÀ ²ÍÂÅÍÒÀÐ
+        [SerializeField] private InventoryController _inventory;
 
         private KinematicCharacterMotor _motor;
         private Vector2 _moveInput;
@@ -36,6 +36,14 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
         private bool _jumpRequested;
         private bool _jumpConsumed;
 
+        // --- ÇÌ²ÍÍ² ÄËß ÐÈÂÊÀ Ç ÄÐÈÔÒÎÌ ---
+        private float _attackDashUntil;
+        private float _attackDashSpeed;
+        private float _attackDashTurnSpeed;
+        private float _attackDashCurrentYaw;
+        public bool IsAttackDashing => Time.time < _attackDashUntil;
+        // ------------------------------------
+
         public bool IsDodging => Time.time < _dodgeUntil;
         public bool IsGrounded => _motor != null && _motor.GroundingStatus.IsStableOnGround;
 
@@ -51,6 +59,21 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
         }
+
+        // --- ÔÓÍÊÖ²¯ ÄËß ÐÈÂÊÀ ---
+        public void ForceAttackDash(float speed, float duration, float turnSpeed)
+        {
+            _attackDashSpeed = speed;
+            _attackDashTurnSpeed = turnSpeed;
+            _attackDashCurrentYaw = _yaw; // Çàïàì'ÿòîâóºìî êóò, êóäè äèâèëèñÿ íà ñòàðò³
+            _attackDashUntil = Time.time + duration;
+        }
+
+        public void StopAttackDash()
+        {
+            _attackDashUntil = 0f;
+        }
+        // --------------------------
 
         public void Tick(PlayerInputSnapshot input)
         {
@@ -81,8 +104,6 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
 
         public void UpdateRotation(ref Quaternion currentRotation, float deltaTime)
         {
-            // ÏÐÈÁÐÀÍÎ ÁËÎÊÓÂÀÍÍß ÊÀÌÅÐÈ Ï²Ä ×ÀÑ ÄÅØÓ
-            // Ðàí³øå òóò áóëî: if (IsDodging) return;
             currentRotation = Quaternion.Euler(0f, _yaw, 0f);
         }
 
@@ -108,6 +129,19 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
                 return;
             }
 
+            // --- ÐÈÂÎÊ ²Ç ÄÐÈÔÒÎÌ ---
+            if (IsAttackDashing)
+            {
+                // Ïëàâíî ïîâåðòàºìî ïîòî÷íèé êóò ðèâêà äî êóòà êàìåðè (_yaw)
+                _attackDashCurrentYaw = Mathf.MoveTowardsAngle(_attackDashCurrentYaw, _yaw, _attackDashTurnSpeed * deltaTime);
+
+                // Íàïðàâëÿºìî âåêòîð øâèäêîñò³ çà íîâèì ïëàâíèì êóòîì
+                Vector3 steerDirection = Quaternion.Euler(0f, _attackDashCurrentYaw, 0f) * Vector3.forward;
+                currentVelocity = steerDirection * _attackDashSpeed;
+                return;
+            }
+            // ------------------------
+
             if (IsDodging)
             {
                 currentVelocity = _dodgeVelocity;
@@ -129,11 +163,8 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
             }
             else
             {
-                // Â²ÄÍÎÂËÅÍÎ ²ÍÅÐÖ²Þ Ó ÏÎÂ²ÒÐ²
                 if (_moveInputVector.sqrMagnitude > 0f)
                 {
-                    // Òåïåð ó ïîâ³òð³ âèêîðèñòîâóºòüñÿ òà ñàìà øâèäê³ñòü (GetMoveSpeed), ùî é íà çåìë³.
-                    // ßêùî òè ñòðèáíóâ íà ñïðèíò³, òè ïðîäîâæèø ëåò³òè ç³ øâèäê³ñòþ ñïðèíòó!
                     var targetVelocity = _moveInputVector * GetMoveSpeed(deltaTime);
                     var velocityDiff = Vector3.ProjectOnPlane(targetVelocity - currentVelocity, Vector3.up);
                     currentVelocity += velocityDiff * _config.AirAcceleration * deltaTime;
@@ -192,10 +223,8 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
         {
             if (_config == null || _stamina == null) return;
 
-            // --- ÍÎÂÅ: ÁËÎÊÓÂÀÍÍß ÓÕÈËÅÍÍß ÏÐÈ ÏÅÐÅÂÀÍÒÀÆÅÍÍ² ---
             if (_inventory != null && _inventory.GetCurrentWeight() > _inventory.GetMaxWeight())
             {
-                // ßêùî âàãà á³ëüøà çà 100%, ïðîñòî ñêàñîâóºìî ðèâîê
                 return;
             }
 
@@ -225,7 +254,6 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
 
             if (_jumpConsumed || !_motor.GroundingStatus.IsStableOnGround) return;
 
-            // ÑÒÐÈÁÎÊ ÆÅÐÅ ÑÒÀÌ²ÍÓ (Ïîñòàâèâ 15 îäèíèöü, ìîæåø âèíåñòè öå â _config)
             if (_stamina != null && !_stamina.Spend(15f)) return;
 
             _motor.ForceUnground(0.1f);
@@ -238,9 +266,7 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
         {
             if (_stats == null || _config == null || _stamina == null) return 5f;
 
-            // Ïåðåâ³ðÿºìî, ÷è º ÁÓÄÜ-ßÊÈÉ ââ³ä ðóõó (âïåðåä, íàçàä, âë³âî, âïðàâî)
             bool hasMovementInput = _moveInput.sqrMagnitude > 0.01f;
-
             bool isOverweight = false;
             float weightMultiplier = 1f;
 
@@ -250,11 +276,6 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
                 weightMultiplier = _inventory.GetWeightPenaltyMultiplier();
             }
 
-            // Ñïðèíò òåïåð ïðàöþº â óñ³ áîêè:
-            // 1. ª áóäü-ÿêèé ðóõ
-            // 2. Çàòèñíóòèé Shift
-            // 3. Íåìàº êðèòè÷íîãî ïåðåâàíòàæåííÿ (øâèäê³ñòü íå 0)
-            // 4. Âäàëîñÿ âèòðàòèòè ñòàì³íó
             var canSprint = hasMovementInput && _sprintHeld && !_isCrouching && weightMultiplier > 0f && _stamina.Spend(_config.SprintStaminaCostPerSecond * deltaTime);
 
             float baseSpeed = canSprint ? _stats.Get(StatType.SprintSpeed) : _stats.Get(StatType.MoveSpeed);

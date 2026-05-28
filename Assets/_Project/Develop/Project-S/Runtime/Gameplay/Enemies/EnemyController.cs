@@ -1,5 +1,6 @@
 using Project_S.Runtime.Gameplay.Character.Player;
 using Project_S.Runtime.Gameplay.Navigation;
+using Project_S.Runtime.Gameplay.Character.Combat;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -194,6 +195,12 @@ namespace Project_S.Runtime.Gameplay.Enemies
                 _mover.Stop();
 
             enabled = false;
+
+            MaceRageBuff playerRage = FindFirstObjectByType<MaceRageBuff>();
+            if (playerRage != null)
+            {
+                playerRage.OnEnemyKilled();
+            }
         }
     }
 }

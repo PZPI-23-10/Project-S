@@ -13,13 +13,32 @@ MonoBehaviour:
   m_Name: IronOreNode
   m_EditorClassIdentifier: 
   DisplayName: "Iron Ore Vein"
-  MaxHealth: 45
+  MaxHealth: 300
+  BaseYieldItem: {fileID: 11400000, guid: 7ad799469e2b4710ab4f55ea130f7f21, type: 2}
+  HealthPerBaseYield: 100
+  BaseYieldAmount: 1
   PreferredTool: 2
   MatchingToolDamageMultiplier: 1
-  MismatchedToolDamageMultiplier: 0.2
-  SoulAshReward: 0
+  MismatchedToolDamageMultiplier: 1
+  MismatchedYieldMultiplier: 0.9
+  DamageMultipliers:
+  - Type: 2
+    Multiplier: 0
+  - Type: 3
+    Multiplier: 0
+  - Type: 5
+    Multiplier: 0.2
+  - Type: 4
+    Multiplier: 0.2
+  - Type: 1
+    Multiplier: 0.2
+  SoulAshReward: 10
   Drops:
   - Item: {fileID: 11400000, guid: 7ad799469e2b4710ab4f55ea130f7f21, type: 2}
-    MinAmount: 1
+    MinAmount: 3
     MaxAmount: 3
     Chance: 1
+  - Item: {fileID: 11400000, guid: 02b7080157078c848857cba96908cdf9, type: 2}
+    MinAmount: 1
+    MaxAmount: 1
+    Chance: 0.2

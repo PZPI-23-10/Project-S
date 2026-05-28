@@ -148,6 +148,28 @@ namespace Project_S.Editor.Tests
         }
 
         [Test]
+        public void PlayerInteractorTogglesHoverableInteractable()
+        {
+            var interactor = CreateInteractor(3f);
+            var interactableObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _objects.Add(interactableObject);
+            interactableObject.transform.position = RayOrigin + Vector3.forward * 2f;
+            var interactable = interactableObject.AddComponent<TestHoverableInteractable>();
+            Physics.SyncTransforms();
+
+            InvokePrivate(interactor, "RefreshHoverPrompt");
+            Assert.That(interactable.IsHovered, Is.True);
+            Assert.That(interactable.HoverSetCount, Is.EqualTo(1));
+
+            interactableObject.transform.position = RayOrigin + Vector3.forward * 5f;
+            Physics.SyncTransforms();
+            InvokePrivate(interactor, "RefreshHoverPrompt");
+
+            Assert.That(interactable.IsHovered, Is.False);
+            Assert.That(interactable.HoverClearCount, Is.EqualTo(1));
+        }
+
+        [Test]
         public void InventoryUISwitchesStationContextToHandWhenPlayerMovesTooFar()
         {
             var uiObject = new GameObject("Inventory UI");
@@ -244,6 +266,27 @@ namespace Project_S.Editor.Tests
             public void Interact(PlayerInteractor interactor)
             {
                 WasInteracted = true;
+            }
+        }
+
+        private class TestHoverableInteractable : MonoBehaviour, IInteractable, IHoverableInteractable
+        {
+            public string InteractionPrompt => "Hover Station";
+            public bool IsHovered { get; private set; }
+            public int HoverSetCount { get; private set; }
+            public int HoverClearCount { get; private set; }
+
+            public void Interact(PlayerInteractor interactor)
+            {
+            }
+
+            public void SetHovered(bool isHovered)
+            {
+                IsHovered = isHovered;
+                if (isHovered)
+                    HoverSetCount++;
+                else
+                    HoverClearCount++;
             }
         }
     }

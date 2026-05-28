@@ -71,6 +71,14 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 6071001152694330268}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a622235817abd68429dbbed4ed1d8ff1,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 710200000000000001}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a622235817abd68429dbbed4ed1d8ff1,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 710200000000000002}
   m_SourcePrefab: {fileID: 100100000, guid: a622235817abd68429dbbed4ed1d8ff1, type: 3}
 --- !u!1 &4315278133840977814 stripped
 GameObject:
@@ -100,3 +108,35 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 981441960982960275, guid: a622235817abd68429dbbed4ed1d8ff1, type: 3}
+--- !u!114 &710200000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4315278133840977814}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 886a2fabd8341022204b04ada9e47189, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _data: {fileID: 11400000, guid: e61c84d46af67c141b94f40eafe6b083, type: 2}
+  _currentHealth: 0
+  _createFallbackPresentation: 0
+  _fallbackColor: {r: 0.34, g: 0.28, b: 0.18, a: 1}
+  _hitFeedbackColor: {r: 0.9, g: 0.72, b: 0.35, a: 1}
+--- !u!114 &710200000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4315278133840977814}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 387a1004290a8d6688a2377b46eb32f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _node: {fileID: 710200000000000001}
+  _worldOffset: {x: 0, y: 1.4, z: 0}
+  _barSize: {x: 96, y: 8}

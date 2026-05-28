@@ -42,14 +42,16 @@ MonoBehaviour:
   SecondaryTimedBuffMultiplier: 1
   SecondaryTimedBuffDurationSeconds: 0
   IsTwoHanded: 0
+  Passives:
+  - {fileID: 11400000, guid: 100cab3c97d63c44eb13f1dbe3afac5b, type: 2}
   DamageProfile:
   - Type: 0
-    Amount: 16
+    Amount: 8
   PoiseDamage: 5
   AttackSpeedMultiplier: 1.2
   MaxComboHits: 3
-  HitsToChargeHeavy: 3
-  HeavyAbility: 0
+  HitsToChargeHeavy: 0
+  HeavyAbilityData: {fileID: 0}
   HeavyAbilityDuration: 0
   OffhandAbility: 0
   AbilityCooldown: 8

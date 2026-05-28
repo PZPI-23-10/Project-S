@@ -32,19 +32,22 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
 
     public class PlayerInteractor : MonoBehaviour
     {
-        private const string PickupActionText = "E - Поднять";
-        private const string InteractActionText = "E - Взаимодействовать";
+        private const string DefaultPickupActionText = "E - Подобрать";
+        private const string DefaultInteractActionText = "E - Взаимодействовать";
 
         [SerializeField] private float _interactDistance = 2.5f;
         [SerializeField] private InventoryController _inventory;
         [SerializeField] private float _promptWorldYOffset = 0.35f;
         [SerializeField] private float _menuCloseDistanceBuffer = 0.5f;
+        [SerializeField] private string _pickupActionText = DefaultPickupActionText;
+        [SerializeField] private string _interactActionText = DefaultInteractActionText;
 
         private UnityEngine.Camera _cam;
         private SoulAshWallet _soulAshWallet;
         private InventoryUI _inventoryUI;
         private InteractionHoverInfo _currentHover;
         private bool _hasCurrentHover;
+        private IHoverableInteractable _hoveredInteractable;
 
         public InventoryController Inventory => _inventory;
         public float InteractDistance => _interactDistance;
@@ -87,7 +90,7 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
                 return false;
 
             Ray ray = new Ray(_cam.transform.position, _cam.transform.forward);
-            if (!Physics.Raycast(ray, out RaycastHit hit, _interactDistance))
+            if (!Physics.Raycast(ray, out RaycastHit hit, _interactDistance, ~0, QueryTriggerInteraction.Collide))
                 return false;
 
             var pickup = hit.collider.GetComponentInParent<ItemPickup>();
@@ -99,7 +102,7 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
 
                 hoverInfo = new InteractionHoverInfo(
                     title,
-                    PickupActionText,
+                    ResolvePickupActionText(pickup),
                     PromptPosition(hit.collider, hit.point),
                     pickup,
                     null);
@@ -112,7 +115,7 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
                 {
                     hoverInfo = new InteractionHoverInfo(
                         interactable.InteractionPrompt,
-                        InteractActionText,
+                        ResolveInteractActionText(interactable),
                         PromptPosition(hit.collider, hit.point),
                         null,
                         interactable);
@@ -127,6 +130,7 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
         {
             if (TryGetHoverInfo(out var hoverInfo))
             {
+                UpdateHoveredInteractable(hoverInfo.Interactable as IHoverableInteractable);
                 _currentHover = hoverInfo;
                 _hasCurrentHover = true;
                 WorldInteractionPromptUI.GetOrCreate()?.Show(
@@ -138,6 +142,7 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
             }
 
             _hasCurrentHover = false;
+            UpdateHoveredInteractable(FindHoveredOnlyInteractable());
             WorldInteractionPromptUI.Instance?.Hide();
         }
 
@@ -157,7 +162,64 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
             }
 
             _hasCurrentHover = false;
+            UpdateHoveredInteractable(null);
             WorldInteractionPromptUI.Instance?.Hide();
+        }
+
+        private void UpdateHoveredInteractable(IHoverableInteractable hoverable)
+        {
+            if (ReferenceEquals(_hoveredInteractable, hoverable))
+                return;
+
+            _hoveredInteractable?.SetHovered(false);
+            _hoveredInteractable = hoverable;
+            _hoveredInteractable?.SetHovered(true);
+        }
+
+        private IHoverableInteractable FindHoveredOnlyInteractable()
+        {
+            EnsureReferences();
+
+            if (ShouldSuppressHover())
+                return null;
+
+            Ray ray = new Ray(_cam.transform.position, _cam.transform.forward);
+            if (!Physics.Raycast(ray, out RaycastHit hit, _interactDistance, ~0, QueryTriggerInteraction.Collide))
+                return null;
+
+            foreach (var behaviour in hit.collider.GetComponentsInParent<MonoBehaviour>())
+            {
+                if (behaviour is IInteractable)
+                    return null;
+
+                if (behaviour is IHoverableInteractable hoverable)
+                    return hoverable;
+            }
+
+            return null;
+        }
+
+        private string ResolvePickupActionText(ItemPickup pickup)
+        {
+            if (pickup != null && !string.IsNullOrWhiteSpace(pickup.InteractionActionText))
+                return pickup.InteractionActionText;
+
+            return !string.IsNullOrWhiteSpace(_pickupActionText)
+                ? _pickupActionText
+                : DefaultPickupActionText;
+        }
+
+        private string ResolveInteractActionText(IInteractable interactable)
+        {
+            if (interactable is IInteractionActionText customAction
+                && !string.IsNullOrWhiteSpace(customAction.InteractionActionText))
+            {
+                return customAction.InteractionActionText;
+            }
+
+            return !string.IsNullOrWhiteSpace(_interactActionText)
+                ? _interactActionText
+                : DefaultInteractActionText;
         }
 
         private bool ShouldSuppressHover()

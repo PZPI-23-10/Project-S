@@ -12,18 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
   m_Name: Anvil_Misericorde
   m_EditorClassIdentifier: 
-  DisplayName: "Misericorde"
+  DisplayName: Misericorde
   Context: 6
   Output:
     Item: {fileID: 11400000, guid: f8f8a46e709f40f19de94d8529b4fd73, type: 2}
     Amount: 1
   Ingredients:
   - Item: {fileID: 11400000, guid: 9eb637fe99fc4baf9727225892ec7575, type: 2}
-    Amount: 1
+    Amount: 2
   - Item: {fileID: 11400000, guid: e5f03bd6ee9e2d044bca9d96e4564966, type: 2}
     Amount: 1
-  SoulAshCost: 77
+  - Item: {fileID: 11400000, guid: a66c7b8131eafd3450dd8a325ad07a46, type: 2}
+    Amount: 1
+  - Item: {fileID: 11400000, guid: cd0daeb177f15eacd3fe89886055ad6a, type: 2}
+    Amount: 2
+  SoulAshCost: 333
   RequiredItems: []
   CraftDurationSeconds: 0
   FuelSecondsCost: 0
-  Description: "Forge a fast piercing misericorde. Its active ability is deferred."
+  Description: Forge a fast piercing misericorde. Its active ability is deferred.
