@@ -42,6 +42,20 @@ namespace UniStorm.Utility
         [HideInInspector]
         public string EmeraldAITag = "Respawn";
 
+        // ==========================================
+        // 🔥 ДОДАНО ДЛЯ СПАВНУ РЕСУРСІВ (Початок) 🔥
+        // ==========================================
+        [Header("Lightning Resource Spawn Settings")]
+        [Tooltip("Префаб ресурсу (кристалу/руди), який з'явиться після удару блискавки")]
+        public GameObject lightningResourcePrefab;
+
+        [Tooltip("Шанс появи ресурсу при кожному ударі блискавки (від 0 до 100)")]
+        [Range(0, 100)]
+        public int resourceSpawnChance = 25;
+        // ==========================================
+        // 🔥 ДОДАНО ДЛЯ СПАВНУ РЕСУРСІВ (Кінець) 🔥
+        // ==========================================
+
         void Start()
         {
             UniStormSystem UniStormSystemTemp = FindObjectOfType<UniStormSystem>();
@@ -69,7 +83,7 @@ namespace UniStorm.Utility
                     HitObject = C.gameObject;
                     PlayerDetected = true;
                 }
-                else if (C.tag != PlayerTag && C.tag != EmeraldAITag && UniStormSystem.Instance.LightningStrikesEmeraldAI == UniStormSystem.EnableFeature.Enabled || 
+                else if (C.tag != PlayerTag && C.tag != EmeraldAITag && UniStormSystem.Instance.LightningStrikesEmeraldAI == UniStormSystem.EnableFeature.Enabled ||
                     UniStormSystem.Instance.LightningStrikesEmeraldAI == UniStormSystem.EnableFeature.Disabled && C.tag != PlayerTag)
                 {
                     ObjectDetected = true;
@@ -78,7 +92,7 @@ namespace UniStorm.Utility
                 }
                 else if (C.tag == EmeraldAITag && UniStormSystem.Instance.LightningStrikesEmeraldAI == UniStormSystem.EnableFeature.Enabled)
                 {
-#if EMERALD_AI_PRESENT
+#if EMERALD_AI_PRESENT                    
                     EmeraldAIAgentDetected = true;
                     HitPosition = C.transform.position;
                     HitAgent = C.gameObject;
@@ -123,6 +137,24 @@ namespace UniStorm.Utility
                     HitPosition = new Vector3(HitPosition.x, pos.y + 0.5f, HitPosition.z);
                 }
 
+                // ==========================================
+                // 🔥 ДОДАНО ДЛЯ СПАВНУ РЕСУРСІВ (Початок) 🔥
+                // ==========================================
+                if (lightningResourcePrefab != null)
+                {
+                    int spawnRoll = Random.Range(1, 101); // Кидаємо кубик від 1 до 100
+                    if (spawnRoll <= resourceSpawnChance) // Якщо випало 25 або менше - спавнимо!
+                    {
+                        // Спавнимо ресурс трохи вище землі, щоб він не провалився в текстуру
+                        Vector3 spawnPos = new Vector3(HitPosition.x, HitPosition.y + 0.2f, HitPosition.z);
+                        Instantiate(lightningResourcePrefab, spawnPos, Quaternion.identity);
+                        Debug.Log("⚡ Блискавка створила ресурс у точці: " + spawnPos);
+                    }
+                }
+                // ==========================================
+                // 🔥 ДОДАНО ДЛЯ СПАВНУ РЕСУРСІВ (Кінець) 🔥
+                // ==========================================
+
                 if (!PlayerDetected && !EmeraldAIAgentDetected)
                 {
                     //If our hit object contains a LightningFireTag, start a fire.
@@ -147,7 +179,7 @@ namespace UniStorm.Utility
                 }
                 else if (EmeraldAIAgentDetected)
                 {
-#if EMERALD_AI_PRESENT
+#if EMERALD_AI_PRESENT                    
                     if (UniStormSystem.Instance.LightningStrikesEmeraldAI == UniStormSystem.EnableFeature.Enabled)
                     {
                         HitPosition = HitAgent.transform.position;
@@ -181,7 +213,7 @@ namespace UniStorm.Utility
             }
         }
 
-        IEnumerator ResetDelay ()
+        IEnumerator ResetDelay()
         {
             yield return new WaitForSeconds(0.1f);
             EmeraldAIAgentDetected = false;
