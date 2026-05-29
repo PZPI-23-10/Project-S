@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Project_S.Runtime.Gameplay.Character.Stats;
 using UnityEngine;
+using Project_S.Runtime.Gameplay.Harvesting; // ДОДАНО: Щоб гра відрізняла ворогів від дерев
 
 namespace Project_S.Runtime.Gameplay.Character.Combat
 {
@@ -81,7 +82,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             if (_alreadyDamagedEnemies.Contains(receiver))
                 return;
 
-            _alreadyDamagedEnemies.Add(receiver); 
+            _alreadyDamagedEnemies.Add(receiver);
 
             _alreadyHit.Add(other);
 
@@ -94,7 +95,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
             var combatController = _attacker.GetComponent<CombatController>();
 
-            // --- ЗМІНЕНО: Читаємо пасивки прямо з WeaponItemData (ScriptableObject) ---
+            // --- Читаємо пасивки прямо з WeaponItemData (ScriptableObject) ---
             if (_weaponData.Passives != null)
             {
                 foreach (var passive in _weaponData.Passives)
@@ -115,7 +116,37 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
             receiver.ReceiveDamage(request);
 
-            // --- ЗМІНЕНО: Читаємо пасивки після удару з WeaponItemData ---
+            // ==============================================================
+            // ДОДАНО: ЗВУК ВЛУЧАННЯ ПО ВОРОГУ (З ЛОГАМИ ДЛЯ ПЕРЕВІРКИ)
+            // ==============================================================
+            if (!(receiver is HarvestableResourceNode))
+            {
+                if (_weaponData.HitSound != null)
+                {
+                    Debug.Log("<color=lime>[ЗВУК ХІТА]</color> Влучили по ворогу! Граємо звук.");
+
+                    if (combatController != null)
+                    {
+                        AudioSource playerAudio = combatController.GetComponent<AudioSource>();
+                        if (playerAudio != null)
+                        {
+                            playerAudio.pitch = Random.Range(0.85f, 1.15f);
+                            playerAudio.PlayOneShot(_weaponData.HitSound);
+                        }
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning($"<color=yellow>[ЗВУК ХІТА]</color> Увага! Ми вдарили ворога, але в дата-файлі зброї {_weaponData.name} порожнє поле Hit Sound!");
+                }
+            }
+            else
+            {
+                Debug.Log("<color=grey>[ЗВУК ХІТА]</color> Вдарили дерево/камінь. Звук зброї ігноруємо.");
+            }
+            // ==============================================================
+
+            // --- Читаємо пасивки після удару з WeaponItemData ---
             if (_weaponData.Passives != null)
             {
                 foreach (var passive in _weaponData.Passives)

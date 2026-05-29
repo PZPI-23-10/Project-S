@@ -24,6 +24,8 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         [Header("Çâ'ÿçêè")]
         [SerializeField] private StaminaController _stamina;
         [SerializeField] private BlockController _blockController;
+        [SerializeField] private AudioSource _audioSource;
+        [SerializeField] private AudioClip _defaultEquipSound;
 
         [Header("Â³çóàë (Ïðàâà ðóêà)")]
         [SerializeField] private Transform _weaponHolder;
@@ -207,6 +209,12 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 _currentHitTester = _currentWeaponModel.GetComponentInChildren<MeleeHitTester>();
                 if (_currentHitTester != null) _currentHitTester.Setup(weaponToEquip, gameObject);
             }
+
+            if (_defaultEquipSound != null && _audioSource != null)
+            {
+                _audioSource.pitch = UnityEngine.Random.Range(0.9f, 1.15f);
+                _audioSource.PlayOneShot(_defaultEquipSound);
+            }
         }
 
         // ==========================================
@@ -318,6 +326,16 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         // ==========================================
         // ²ÂÅÍÒÈ ÀÍ²ÌÀÖ²É
         // ==========================================
+        public void AnimEvent_PlaySwingSound()
+        {
+            if (_audioSource != null && ActiveWeapon != null && ActiveWeapon.SwingSound != null)
+            {
+                float basePitch = Random.Range(0.9f, 1.1f);
+                _audioSource.pitch = basePitch * GetAttackSpeedMultiplier();
+                _audioSource.PlayOneShot(ActiveWeapon.SwingSound);
+            }
+        }
+
         public void AnimEvent_StartHitbox() { if (_currentHitTester != null) _currentHitTester.StartHitDetection(); }
         public void AnimEvent_StopHitbox() { if (_currentHitTester != null) _currentHitTester.StopHitDetection(); }
 

@@ -14,6 +14,13 @@ namespace Project_S.Runtime.Gameplay.Harvesting
         [SerializeField] private string _displayName = "Ягідний кущ";
         [SerializeField] private string _interactionActionText = "E - Зібрати";
 
+        // ==========================================
+        // ДОДАНО: Звук збирання ягід
+        // ==========================================
+        [Header("Аудіо")]
+        [SerializeField] private AudioClip _harvestSound; // Звук шурхоту листя
+        // ==========================================
+
         private bool _depleted;
         private int _remainingHarvests;
 
@@ -65,6 +72,15 @@ namespace Project_S.Runtime.Gameplay.Harvesting
             InventoryController inventory = interactor != null ? interactor.Inventory : null;
             WorldItemDropUtility.GrantOrDrop(_berryItem, amount, inventory, transform.position, "[Harvesting]");
             _remainingHarvests = Mathf.Max(0, _remainingHarvests - 1);
+
+            // ==========================================
+            // ГРАЄМО ЗВУК ШУРХОТУ ЛИСТЯ
+            // ==========================================
+            if (_harvestSound != null)
+            {
+                AudioSource.PlayClipAtPoint(_harvestSound, transform.position, 0.8f);
+            }
+            // ==========================================
 
             if (_remainingHarvests <= 0)
             {

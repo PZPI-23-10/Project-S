@@ -53,10 +53,11 @@ MonoBehaviour:
   HitsToChargeHeavy: 0
   HeavyAbilityData: {fileID: 0}
   HeavyAbilityDuration: 0
-  OffhandAbility: 0
   AbilityCooldown: 8
   BlockMitigation: 0.25
   ParryWindow: 0.18
   ParryStaminaReward: 20
   ParryPoiseDamage: 40
+  SwingSound: {fileID: 8300000, guid: 7b2fee8c2afe9484da3c5bce9a025a28, type: 3}
+  HitSound: {fileID: 8300000, guid: df7a60de0fa160d42b3da3666d8a0ba0, type: 3}
   HarvestTool: 0

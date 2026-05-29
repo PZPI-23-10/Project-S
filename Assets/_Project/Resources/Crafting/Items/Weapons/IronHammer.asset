@@ -59,4 +59,6 @@ MonoBehaviour:
   ParryWindow: 0.14
   ParryStaminaReward: 20
   ParryPoiseDamage: 40
+  SwingSound: {fileID: 8300000, guid: ae37f3315b976364c8ffbfe985c2eade, type: 3}
+  HitSound: {fileID: 8300000, guid: 561f3e59747f0094787c5487a8c2bddd, type: 3}
   HarvestTool: 0

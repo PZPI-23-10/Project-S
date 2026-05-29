@@ -42,6 +42,14 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
         [SerializeField] private string _pickupActionText = PickupActionText;
         [SerializeField] private string _interactActionText = InteractActionText;
 
+        // ==========================================
+        // ДОДАНО: Звук підняття предмета
+        // ==========================================
+        [Header("Аудіо")]
+        [SerializeField] private AudioSource _audioSource;
+        [SerializeField] private AudioClip _pickupSound;
+        // ==========================================
+
         private UnityEngine.Camera _cam;
         private SoulAshWallet _soulAshWallet;
         private InventoryUI _inventoryUI;
@@ -154,7 +162,19 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
             if (_currentHover.Pickup != null)
             {
                 if (_inventory != null)
+                {
                     _currentHover.Pickup.Collect(_inventory);
+
+                    // ==========================================
+                    // ДОДАНО: Граємо звук підняття предмета
+                    // ==========================================
+                    if (_pickupSound != null && _audioSource != null)
+                    {
+                        _audioSource.pitch = Random.Range(0.9f, 1.15f);
+                        _audioSource.PlayOneShot(_pickupSound);
+                    }
+                    // ==========================================
+                }
             }
             else
             {

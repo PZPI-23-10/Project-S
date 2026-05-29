@@ -17,6 +17,13 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
         [SerializeField] private PoiseController _poiseController;
         [SerializeField] private InventoryController _inventory;
 
+        [Header("Аудіо")]
+        [SerializeField] private AudioSource _audioSource;
+        [SerializeField] private AudioClip _jumpSound;
+        [SerializeField] private AudioClip _dodgeSound;
+        [SerializeField] private AudioClip _landSound;
+        [SerializeField] private AudioClip _footstepSound;
+
         private KinematicCharacterMotor _motor;
         private Vector2 _moveInput;
         private Vector3 _moveInputVector;
@@ -36,13 +43,16 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
         private bool _jumpRequested;
         private bool _jumpConsumed;
 
-        // --- ЗМІННІ ДЛЯ РИВКА З ДРИФТОМ ---
         private float _attackDashUntil;
         private float _attackDashSpeed;
         private float _attackDashTurnSpeed;
         private float _attackDashCurrentYaw;
+
+        // Змінні для кроків та приземлення
+        private bool _wasGrounded;
+        private float _nextStepTime;
+
         public bool IsAttackDashing => Time.time < _attackDashUntil;
-        // ------------------------------------
 
         public bool IsDodging => Time.time < _dodgeUntil;
         public bool IsGrounded => _motor != null && _motor.GroundingStatus.IsStableOnGround;
@@ -60,12 +70,11 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
             Cursor.visible = false;
         }
 
-        // --- ФУНКЦІЇ ДЛЯ РИВКА ---
         public void ForceAttackDash(float speed, float duration, float turnSpeed)
         {
             _attackDashSpeed = speed;
             _attackDashTurnSpeed = turnSpeed;
-            _attackDashCurrentYaw = _yaw; // Запам'ятовуємо кут, куди дивилися на старті
+            _attackDashCurrentYaw = _yaw;
             _attackDashUntil = Time.time + duration;
         }
 
@@ -73,7 +82,6 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
         {
             _attackDashUntil = 0f;
         }
-        // --------------------------
 
         public void Tick(PlayerInputSnapshot input)
         {
@@ -129,18 +137,13 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
                 return;
             }
 
-            // --- РИВОК ІЗ ДРИФТОМ ---
             if (IsAttackDashing)
             {
-                // Плавно повертаємо поточний кут ривка до кута камери (_yaw)
                 _attackDashCurrentYaw = Mathf.MoveTowardsAngle(_attackDashCurrentYaw, _yaw, _attackDashTurnSpeed * deltaTime);
-
-                // Направляємо вектор швидкості за новим плавним кутом
                 Vector3 steerDirection = Quaternion.Euler(0f, _attackDashCurrentYaw, 0f) * Vector3.forward;
                 currentVelocity = steerDirection * _attackDashSpeed;
                 return;
             }
-            // ------------------------
 
             if (IsDodging)
             {
@@ -184,10 +187,44 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
                 EnterCrouch();
             }
         }
+
         public void PostGroundingUpdate(float deltaTime) { }
+
         public void AfterCharacterUpdate(float deltaTime)
         {
-            if (_motor.GroundingStatus.IsStableOnGround)
+            bool isGroundedNow = _motor.GroundingStatus.IsStableOnGround;
+
+            // ==========================================
+            // ЗВУК ПРИЗЕМЛЕННЯ
+            // ==========================================
+            if (isGroundedNow && !_wasGrounded)
+            {
+                if (_landSound != null && _audioSource != null)
+                {
+                    _audioSource.PlayOneShot(_landSound);
+                }
+            }
+
+            // ==========================================
+            // ЗВУКИ КРОКІВ (Таймер)
+            // ==========================================
+            if (isGroundedNow && _moveInputVector.sqrMagnitude > 0.01f)
+            {
+                if (Time.time >= _nextStepTime)
+                {
+                    if (_footstepSound != null && _audioSource != null)
+                    {
+                        _audioSource.pitch = Random.Range(0.85f, 1.15f);
+                        _audioSource.PlayOneShot(_footstepSound, 0.4f); // 0.4f робить кроки тихішими
+                    }
+
+                    _nextStepTime = Time.time + (_sprintHeld ? 0.3f : 0.5f);
+                }
+            }
+
+            _wasGrounded = isGroundedNow;
+
+            if (isGroundedNow)
             {
                 _jumpConsumed = false;
             }
@@ -234,6 +271,12 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
             if (!_stamina.Spend(_config.DodgeStaminaCost))
                 return;
 
+            if (_dodgeSound != null && _audioSource != null)
+            {
+                _audioSource.pitch = Random.Range(0.9f, 1.15f);
+                _audioSource.PlayOneShot(_dodgeSound);
+            }
+
             var direction = _moveInputVector;
 
             if (direction.sqrMagnitude <= 0.01f)
@@ -255,6 +298,12 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
             if (_jumpConsumed || !_motor.GroundingStatus.IsStableOnGround) return;
 
             if (_stamina != null && !_stamina.Spend(15f)) return;
+
+            if (_jumpSound != null && _audioSource != null)
+            {
+                _audioSource.pitch = Random.Range(0.9f, 1.1f);
+                _audioSource.PlayOneShot(_jumpSound);
+            }
 
             _motor.ForceUnground(0.1f);
             currentVelocity += Vector3.up * Mathf.Sqrt(_config.JumpHeight * -2f * _config.Gravity) -

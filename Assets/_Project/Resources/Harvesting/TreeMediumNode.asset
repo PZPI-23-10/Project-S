@@ -21,6 +21,13 @@ MonoBehaviour:
   MatchingToolDamageMultiplier: 1
   MismatchedToolDamageMultiplier: 1
   MismatchedYieldMultiplier: 0.9
+  CorrectToolSounds:
+  - {fileID: 8300000, guid: 8b92220cc91310b4a991b52f113a77ea, type: 3}
+  WrongToolSounds:
+  - {fileID: 8300000, guid: ec6c1be9a57aa334b8dd393de86062b2, type: 3}
+  HitVFXPrefab: {fileID: 4080515105622610912, guid: 0feba2d50430ac944af09deead322b75,
+    type: 3}
+  DestructionSound: {fileID: 8300000, guid: ca64d3baa15c1b241997699a68a02d28, type: 3}
   DamageMultipliers: []
   SoulAshReward: 3
   Drops:
