@@ -315,6 +315,88 @@ namespace Project_S.Editor.Tests
         }
 
         [Test]
+        public void EnemyMeleeAttack_UsesCurrentAttackProfileDamage()
+        {
+            var config = CreateEnemyConfig();
+            config.AttackWindup = 0f;
+            config.AttackCooldown = 0f;
+            config.AttackRange = 2f;
+            config.AttackRadius = 0.5f;
+            config.HealthDamage = 5f;
+
+            var enemy = new GameObject("Profiled Enemy");
+            _objects.Add(enemy);
+            var meleeAttack = enemy.AddComponent<EnemyMeleeAttack>();
+            meleeAttack.Configure(config);
+            meleeAttack.ConfigureAttackProfiles(new[]
+            {
+                new EnemyAttackProfile
+                {
+                    Id = "attack1",
+                    AttackWindup = 0f,
+                    AttackCooldown = 0f,
+                    AttackRange = 2f,
+                    AttackRadius = 0.5f,
+                    HealthDamage = 22f,
+                    PoiseDamage = 14f,
+                    DamageType = DamageType.Slashing
+                },
+                new EnemyAttackProfile
+                {
+                    Id = "attack2",
+                    AttackWindup = 0f,
+                    AttackCooldown = 0f,
+                    AttackRange = 2f,
+                    AttackRadius = 0.5f,
+                    HealthDamage = 30f,
+                    PoiseDamage = 18f,
+                    DamageType = DamageType.Slashing
+                }
+            });
+
+            var target = new GameObject("Target");
+            _objects.Add(target);
+            target.transform.position = enemy.transform.position + Vector3.forward;
+            var receiver = target.AddComponent<CaptureDamageReceiver>();
+
+            Assert.That(meleeAttack.TryAttack(target.transform), Is.True);
+            Assert.That(receiver.LastRequest.HealthDamage, Is.EqualTo(22f).Within(0.001f));
+            Assert.That(receiver.LastRequest.PoiseDamage, Is.EqualTo(14f).Within(0.001f));
+
+            Assert.That(meleeAttack.TryAttack(target.transform), Is.True);
+            Assert.That(receiver.LastRequest.HealthDamage, Is.EqualTo(30f).Within(0.001f));
+            Assert.That(receiver.LastRequest.PoiseDamage, Is.EqualTo(18f).Within(0.001f));
+        }
+
+        [Test]
+        public void EnemyMeleeAttack_WithoutProfilesUsesEnemyConfigDamage()
+        {
+            var config = CreateEnemyConfig();
+            config.AttackWindup = 0f;
+            config.AttackCooldown = 0f;
+            config.AttackRange = 2f;
+            config.AttackRadius = 0.5f;
+            config.HealthDamage = 17f;
+            config.PoiseDamage = 9f;
+            config.DamageType = DamageType.Blunt;
+
+            var enemy = new GameObject("Classic Enemy");
+            _objects.Add(enemy);
+            var meleeAttack = enemy.AddComponent<EnemyMeleeAttack>();
+            meleeAttack.Configure(config);
+
+            var target = new GameObject("Target");
+            _objects.Add(target);
+            target.transform.position = enemy.transform.position + Vector3.forward;
+            var receiver = target.AddComponent<CaptureDamageReceiver>();
+
+            Assert.That(meleeAttack.TryAttack(target.transform), Is.True);
+            Assert.That(receiver.LastRequest.HealthDamage, Is.EqualTo(17f).Within(0.001f));
+            Assert.That(receiver.LastRequest.PoiseDamage, Is.EqualTo(9f).Within(0.001f));
+            Assert.That(receiver.LastRequest.Type, Is.EqualTo(DamageType.Blunt));
+        }
+
+        [Test]
         public void EnemyController_KeepsRootColliderAsTriggerForCorpseHarvest()
         {
             var config = CreateEnemyConfig();
@@ -545,6 +627,16 @@ namespace Project_S.Editor.Tests
             var field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null, $"Field {fieldName} was not found.");
             return (T)field.GetValue(target);
+        }
+
+        private sealed class CaptureDamageReceiver : MonoBehaviour, IDamageReceiver
+        {
+            public DamageRequest LastRequest;
+
+            public void ReceiveDamage(DamageRequest request)
+            {
+                LastRequest = request;
+            }
         }
     }
 }
