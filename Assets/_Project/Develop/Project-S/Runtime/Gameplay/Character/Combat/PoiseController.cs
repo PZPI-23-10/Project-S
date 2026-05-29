@@ -19,13 +19,10 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         [SerializeField] private float _poiseGainPerTap = 15f;
         [SerializeField] private float _knockbackForce = 5f;
 
-        // ==========================================
-        // ДОДАНО: Звук вибивання з рівноваги
-        // ==========================================
+
         [Header("Аудіо")]
         [SerializeField] private AudioSource _audioSource;
-        [SerializeField] private AudioClip _poiseBreakSound; // Глухий удар / дзвін у вухах
-        // ==========================================
+        [SerializeField] private AudioClip _poiseBreakSound; 
 
         private KeyCode _currentQteButton;
         private float _recoveryBlockedUntil;
@@ -124,15 +121,11 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 dir.y = 0;
                 _knockbackVector = dir * _knockbackForce;
 
-                // ==========================================
-                // ГРАЄМО ЗВУК ВТРАТИ РІВНОВАГИ
-                // ==========================================
                 if (_audioSource != null && _poiseBreakSound != null)
                 {
                     _audioSource.pitch = Random.Range(0.9f, 1.1f);
                     _audioSource.PlayOneShot(_poiseBreakSound);
                 }
-                // ==========================================
 
                 StartDirectionalQTE(attackerPosition);
             }

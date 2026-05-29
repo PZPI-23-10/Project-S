@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4ef8d4623094103a12dd5f3a83ce23c, type: 3}
+  m_Name: MinotaurBossConfig
+  m_EditorClassIdentifier: 
+  DisplayName: "\u041C\u0438\u043D\u043E\u0442\u0430\u0432\u0440"
+  MaxHealth: 650
+  SoulAshReward: 80
+  MoveSpeed: 2.8
+  AggroRange: 18
+  LoseTargetRange: 28
+  AttackRange: 2.4
+  RotationSpeed: 620
+  AgentRadius: 0.85
+  AgentHeight: 3.2
+  AgentBaseOffset: 0
+  MaxStepHeight: 0.45
+  MaxSlope: 45
+  StoppingDistancePadding: 0.1
+  RepathInterval: 0.18
+  AttackCooldown: 2.4
+  AttackWindup: 0.55
+  UseAttackClipDamageMoment: 1
+  AttackDamageMomentNormalized: 0.48
+  AttackRadius: 1.05
+  HealthDamage: 30
+  PoiseDamage: 20
+  DamageType: 2
+  DestroyDelayAfterDeath: 0
