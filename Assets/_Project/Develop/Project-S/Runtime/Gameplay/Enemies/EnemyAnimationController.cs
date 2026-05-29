@@ -24,6 +24,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
         [SerializeField] private AnimationClip _idleClip;
         [SerializeField] private AnimationClip _walkClip;
         [SerializeField] private AnimationClip _hitReactionClip;
+        [SerializeField] private AnimationClip[] _hitReactionClips;
         [SerializeField] private AnimationClip _attackClip;
 
         private readonly HashSet<int> _parameters = new HashSet<int>();
@@ -140,6 +141,11 @@ namespace Project_S.Runtime.Gameplay.Enemies
             CacheBasePose();
         }
 
+        public void ConfigureHitReactionClips(AnimationClip[] hitReactionClips)
+        {
+            _hitReactionClips = hitReactionClips;
+        }
+
         private void ResolveReferences()
         {
             if (_controller == null)
@@ -243,7 +249,9 @@ namespace Project_S.Runtime.Gameplay.Enemies
             if (_hitReactionGraph.IsValid())
                 return;
 
-            var clip = _attackClip;
+            var clip = attack != null && attack.CurrentAttackClip != null
+                ? attack.CurrentAttackClip
+                : _attackClip;
             _swingDuration = clip != null && clip.length > 0.01f
                 ? clip.length
                 : (attack != null ? attack.WindupDuration : 0.45f);
@@ -293,8 +301,9 @@ namespace Project_S.Runtime.Gameplay.Enemies
                 return;
 
             _swingRemaining = 0f;
-            float duration = _hitReactionClip != null && _hitReactionClip.length > 0.01f
-                ? _hitReactionClip.length
+            var hitReactionClip = SelectHitReactionClip();
+            float duration = hitReactionClip != null && hitReactionClip.length > 0.01f
+                ? hitReactionClip.length
                 : 0.35f;
 
             if (_controller != null)
@@ -303,7 +312,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
             StopAttackPlayable();
             StopLocomotionPlayable();
 
-            if (!PlayHitReactionClip())
+            if (!PlayHitReactionClip(hitReactionClip))
                 _hitReactionRemaining = duration;
         }
 
@@ -332,9 +341,9 @@ namespace Project_S.Runtime.Gameplay.Enemies
             return true;
         }
 
-        private bool PlayHitReactionClip()
+        private bool PlayHitReactionClip(AnimationClip clip)
         {
-            if (_animator == null || _hitReactionClip == null)
+            if (_animator == null || clip == null)
                 return false;
 
             StopHitReactionPlayable();
@@ -343,18 +352,36 @@ namespace Project_S.Runtime.Gameplay.Enemies
             _hitReactionGraph = PlayableGraph.Create($"{name}_HitReactionAnimation");
             _hitReactionGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
 
-            var clipPlayable = AnimationClipPlayable.Create(_hitReactionGraph, _hitReactionClip);
+            var clipPlayable = AnimationClipPlayable.Create(_hitReactionGraph, clip);
             clipPlayable.SetApplyFootIK(false);
             clipPlayable.SetApplyPlayableIK(false);
-            clipPlayable.SetDuration(_hitReactionClip.length);
+            clipPlayable.SetDuration(clip.length);
 
             var output = AnimationPlayableOutput.Create(_hitReactionGraph, "HitReaction", _animator);
             output.SetSourcePlayable(clipPlayable);
 
-            _hitReactionRemaining = _hitReactionClip.length;
+            _hitReactionRemaining = clip.length;
             _hitReactionGraph.Play();
             _hitReactionGraph.Evaluate(0f);
             return true;
+        }
+
+        private AnimationClip SelectHitReactionClip()
+        {
+            if (_hitReactionClips != null && _hitReactionClips.Length > 0)
+            {
+                var validClips = new List<AnimationClip>();
+                foreach (var clip in _hitReactionClips)
+                {
+                    if (clip != null)
+                        validClips.Add(clip);
+                }
+
+                if (validClips.Count > 0)
+                    return validClips[Random.Range(0, validClips.Count)];
+            }
+
+            return _hitReactionClip;
         }
 
         private void PlayLocomotionClip(AnimationClip clip, string outputName)
