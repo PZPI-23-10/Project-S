@@ -9,6 +9,56 @@ using UnityEngine.SceneManagement;
 
 namespace Project_S.Runtime.Services.SceneManagement
 {
+    public class SceneTransitionService : IDisposable
+    {
+        private readonly SceneLoader _sceneLoader;
+        private readonly PlayerProvider _playerProvider;
+        private bool _isTransitioning;
+        private string _currentLevelSceneName;
+
+        public SceneTransitionService(SceneLoader sceneLoader, PlayerProvider playerProvider)
+        {
+            _sceneLoader = sceneLoader;
+            _playerProvider = playerProvider;
+            SceneTransitionRequestBus.TransitionRequested += TransitionTo;
+        }
+
+        public void LoadInitialLevel(string levelSceneName, string spawnId = null) =>
+            TransitionToAsync(levelSceneName, spawnId, true).Forget();
+
+        public void TransitionTo(string levelSceneName, string spawnId = null) =>
+            TransitionToAsync(levelSceneName, spawnId, false).Forget();
+
+        public void Dispose()
+        {
+            SceneTransitionRequestBus.TransitionRequested -= TransitionTo;
+        }
+
+        public async UniTask TransitionToAsync(
+            string levelSceneName,
+            string spawnId = null,
+            bool unloadBootScene = false)
+        {
+            if (_isTransitioning || string.IsNullOrWhiteSpace(levelSceneName))
+                return;
+
+            _isTransitioning = true;
+            SceneTransitionRequestBus.NotifyTransitionStarted();
+
+            try
+            {
+                await EnsureCoreLoaded();
+
+                string previousLevelSceneName = ResolvePreviousLevelSceneName(levelSceneName);
+
+                if (!_sceneLoader.IsLoaded(levelSceneName))
+                    await _sceneLoader.LoadAsync(levelSceneName, LoadSceneMode.Additive);
+
+                Scene targetScene = SceneManager.GetSceneByName(levelSceneName);
+                if (targetScene.IsValid() && targetScene.isLoaded)
+                    SceneManager.SetActiveScene(targetScene);
+
+                MovePlayerToSpawn(targetScene, spawnId);
 
                 if (!string.IsNullOrWhiteSpace(previousLevelSceneName)
                     && previousLevelSceneName != levelSceneName)
