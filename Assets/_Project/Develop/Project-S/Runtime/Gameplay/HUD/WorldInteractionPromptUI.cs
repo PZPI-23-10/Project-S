@@ -6,7 +6,26 @@ namespace Project_S.Runtime.Gameplay.HUD
 {
     public class WorldInteractionPromptUI : MonoBehaviour
     {
-        public static WorldInteractionPromptUI Instance { get; private set; }
+        private const string RuntimeCanvasName = "[Runtime] Interaction Prompt Canvas";
+
+        private static WorldInteractionPromptUI _instance;
+        private static Canvas _runtimeCanvas;
+
+        public static WorldInteractionPromptUI Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = null;
+                    return null;
+                }
+
+                return _instance;
+            }
+
+            private set => _instance = value;
+        }
 
         [SerializeField] private TMP_Text _titleText;
         [SerializeField] private TMP_Text _actionText;
@@ -15,6 +34,7 @@ namespace Project_S.Runtime.Gameplay.HUD
         private RectTransform _rectTransform;
         private RectTransform _canvasRect;
         private Canvas _canvas;
+        private CanvasGroup _canvasGroup;
 
         private void Awake()
         {
@@ -23,16 +43,20 @@ namespace Project_S.Runtime.Gameplay.HUD
             Hide();
         }
 
+        private void OnDestroy()
+        {
+            if (ReferenceEquals(_instance, this))
+                _instance = null;
+        }
+
         public static WorldInteractionPromptUI GetOrCreate(Canvas preferredCanvas = null)
         {
             if (Instance != null)
                 return Instance;
 
-            foreach (var prompt in Resources.FindObjectsOfTypeAll<WorldInteractionPromptUI>())
+            var prompt = Object.FindFirstObjectByType<WorldInteractionPromptUI>(FindObjectsInactive.Include);
+            if (prompt != null && prompt.gameObject.scene.IsValid())
             {
-                if (prompt == null || !prompt.gameObject.scene.IsValid())
-                    continue;
-
                 Instance = prompt;
                 prompt.EnsureReferences();
                 return prompt;
@@ -41,8 +65,20 @@ namespace Project_S.Runtime.Gameplay.HUD
             return CreateFallback(preferredCanvas);
         }
 
+        public static void HideCurrent()
+        {
+            WorldInteractionPromptUI instance = Instance;
+            if (instance == null)
+                return;
+
+            instance.Hide();
+        }
+
         public void Show(Vector3 worldPosition, string title, string actionText, Camera worldCamera)
         {
+            if (!this)
+                return;
+
             if (worldCamera == null || string.IsNullOrWhiteSpace(title))
             {
                 Hide();
@@ -70,14 +106,22 @@ namespace Project_S.Runtime.Gameplay.HUD
 
         public void Hide()
         {
-            if (gameObject != null)
-                gameObject.SetActive(false);
+            if (!this)
+                return;
+
+            CanvasGroup canvasGroup = EnsureCanvasGroup();
+            if (canvasGroup == null)
+                return;
+
+            canvasGroup.alpha = 0f;
+            canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
         }
 
         private static WorldInteractionPromptUI CreateFallback(Canvas preferredCanvas)
         {
             Canvas canvas = ResolveCanvas(preferredCanvas);
-            var go = new GameObject("[Runtime] WorldInteractionPromptUI", typeof(RectTransform));
+            var go = new GameObject("[Runtime] WorldInteractionPromptUI", typeof(RectTransform), typeof(CanvasGroup));
             go.transform.SetParent(canvas.transform, false);
 
             var rect = (RectTransform)go.transform;
@@ -115,14 +159,23 @@ namespace Project_S.Runtime.Gameplay.HUD
             if (preferredCanvas != null)
                 return preferredCanvas;
 
-            var canvas = Object.FindFirstObjectByType<Canvas>();
-            if (canvas != null)
-                return canvas;
+            if (_runtimeCanvas != null)
+                return _runtimeCanvas;
 
             var canvasObject = new GameObject("[Runtime] HUD Canvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-            canvas = canvasObject.GetComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            return canvas;
+            canvasObject.name = RuntimeCanvasName;
+            Object.DontDestroyOnLoad(canvasObject);
+
+            _runtimeCanvas = canvasObject.GetComponent<Canvas>();
+            _runtimeCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            _runtimeCanvas.sortingOrder = short.MaxValue;
+
+            var scaler = canvasObject.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.matchWidthOrHeight = 0.5f;
+
+            return _runtimeCanvas;
         }
 
         private static TMP_Text CreateText(Transform parent, string name, int size, FontStyles style)
@@ -152,9 +205,16 @@ namespace Project_S.Runtime.Gameplay.HUD
 
         private void ActivateForShow()
         {
-            gameObject.SetActive(true);
             if (!gameObject.activeSelf)
                 gameObject.SetActive(true);
+
+            CanvasGroup canvasGroup = EnsureCanvasGroup();
+            if (canvasGroup == null)
+                return;
+
+            canvasGroup.alpha = 1f;
+            canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
         }
 
         private Vector2 CurrentSize()
@@ -177,14 +237,38 @@ namespace Project_S.Runtime.Gameplay.HUD
             if (_rectTransform == null)
                 _rectTransform = transform as RectTransform;
 
-            if (_canvas == null)
-                _canvas = GetComponentInParent<Canvas>();
+            if (_canvas == null || !_canvas.isActiveAndEnabled)
+            {
+                Canvas parentCanvas = GetComponentInParent<Canvas>();
+                _canvas = parentCanvas != null && parentCanvas.isActiveAndEnabled
+                    ? parentCanvas
+                    : ResolveCanvas(null);
 
-            if (_canvas == null)
-                _canvas = ResolveCanvas(null);
+                _canvasRect = null;
+            }
 
-            if (_canvasRect == null && _canvas != null)
+            if (_canvas != null && !transform.IsChildOf(_canvas.transform))
+            {
+                transform.SetParent(_canvas.transform, false);
+                _canvasRect = null;
+            }
+
+            if (_canvas != null && (_canvasRect == null || _canvasRect != _canvas.transform as RectTransform))
                 _canvasRect = _canvas.transform as RectTransform;
+
+            EnsureCanvasGroup();
+        }
+
+        private CanvasGroup EnsureCanvasGroup()
+        {
+            if (_canvasGroup != null)
+                return _canvasGroup;
+
+            _canvasGroup = GetComponent<CanvasGroup>();
+            if (_canvasGroup == null)
+                _canvasGroup = gameObject.AddComponent<CanvasGroup>();
+
+            return _canvasGroup;
         }
     }
 }

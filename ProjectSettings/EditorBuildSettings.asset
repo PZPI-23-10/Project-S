@@ -20,4 +20,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Project/LevelDesigne/YavWorld.unity
     guid: f4813a7d52d170241b306bbb1268929c
+  - enabled: 1
+    path: Assets/_Project/LevelDesigne/Dungeon_01_Scene.unity
+    guid: 7c4507b6f150f084d84ca0e22c6ff691
   m_configObjects: {}

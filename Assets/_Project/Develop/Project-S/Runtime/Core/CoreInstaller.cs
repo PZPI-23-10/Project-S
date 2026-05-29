@@ -1,4 +1,5 @@
-﻿using Project_S.Runtime.Core.Services;
+using Project_S.Runtime.Core.Services;
+using Project_S.Runtime.Services.SceneManagement;
 using UnityEngine;
 using Zenject;
 
@@ -8,7 +9,7 @@ namespace Project_S.Runtime.Core
     {
         [SerializeField] private CameraProvider _cameraProvider;
         [SerializeField] private PlayerProvider _playerProvider;
-        
+
         [SerializeField] private CoreEntryPoint _entryPoint;
 
         public override void InstallBindings()
@@ -17,9 +18,10 @@ namespace Project_S.Runtime.Core
                 .BindInterfacesTo<CoreEntryPoint>()
                 .FromInstance(_entryPoint)
                 .AsSingle();
-            
+
             Container.BindInstance(_cameraProvider).AsSingle().NonLazy();
             Container.BindInstance(_playerProvider).AsSingle().NonLazy();
+            Container.Bind<SceneTransitionService>().AsSingle().NonLazy();
         }
     }
 }

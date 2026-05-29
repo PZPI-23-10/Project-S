@@ -2,6 +2,7 @@ using Project_S.Runtime.Gameplay.Character.Inventory;
 using Project_S.Runtime.Gameplay.Character.Input;
 using Project_S.Runtime.Gameplay.Crafting;
 using Project_S.Runtime.Gameplay.HUD;
+using Project_S.Runtime.Services.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -32,6 +33,7 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
 
     public class PlayerInteractor : MonoBehaviour
     {
+        private const int MaxInteractionHits = 16;
         private const string PickupActionText = "E - Підняти";
         private const string InteractActionText = "E - Взаємодіяти";
 
@@ -56,6 +58,7 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
         private InteractionHoverInfo _currentHover;
         private bool _hasCurrentHover;
         private IHoverableInteractable _hoveredInteractable;
+        private readonly RaycastHit[] _interactionHits = new RaycastHit[MaxInteractionHits];
 
         public InventoryController Inventory => _inventory;
         public float InteractDistance => _interactDistance;
@@ -81,6 +84,18 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
             EnsureReferences();
         }
 
+        private void OnEnable()
+        {
+            SceneTransitionRequestBus.TransitionStarted += HandleSceneTransitionStarted;
+            SceneTransitionRequestBus.TransitionCompleted += HandleSceneTransitionCompleted;
+        }
+
+        private void OnDisable()
+        {
+            SceneTransitionRequestBus.TransitionStarted -= HandleSceneTransitionStarted;
+            SceneTransitionRequestBus.TransitionCompleted -= HandleSceneTransitionCompleted;
+        }
+
         public void Tick(PlayerInputSnapshot input)
         {
             RefreshHoverPrompt();
@@ -97,8 +112,162 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
             if (ShouldSuppressHover())
                 return false;
 
+            int hitCount = RaycastInteractionHits();
+            for (int i = 0; i < hitCount; i++)
+            {
+                RaycastHit hit = _interactionHits[i];
+                if (ShouldSkipInteractionHit(hit))
+                    continue;
+
+                if (TryCreateHoverInfo(hit, out hoverInfo))
+                    return true;
+
+                if (hit.collider != null && !hit.collider.isTrigger)
+                    return false;
+            }
+
+            return false;
+        }
+
+        private void RefreshHoverPrompt()
+        {
+            if (TryGetHoverInfo(out var hoverInfo))
+            {
+                UpdateHoveredInteractable(hoverInfo.Interactable as IHoverableInteractable);
+                _currentHover = hoverInfo;
+                _hasCurrentHover = true;
+                WorldInteractionPromptUI.GetOrCreate()?.Show(
+                    hoverInfo.PromptWorldPosition,
+                    hoverInfo.Title,
+                    hoverInfo.ActionText,
+                    _cam);
+                return;
+            }
+
+            _hasCurrentHover = false;
+            UpdateHoveredInteractable(FindHoveredOnlyInteractable());
+            WorldInteractionPromptUI.HideCurrent();
+        }
+
+        private void InteractWithCurrentHover()
+        {
+            if (!_hasCurrentHover && !TryGetHoverInfo(out _currentHover))
+                return;
+
+            if (_currentHover.Pickup != null)
+            {
+                if (_inventory != null)
+                {
+                    _currentHover.Pickup.Collect(_inventory);
+
+                    // ==========================================
+                    // ДОДАНО: Граємо звук підняття предмета
+                    // ==========================================
+                    if (_pickupSound != null && _audioSource != null)
+                    {
+                        _audioSource.pitch = Random.Range(0.9f, 1.15f);
+                        _audioSource.PlayOneShot(_pickupSound);
+                    }
+                    // ==========================================
+                }
+            }
+            else
+            {
+                _currentHover.Interactable?.Interact(this);
+            }
+
+            _hasCurrentHover = false;
+            UpdateHoveredInteractable(null);
+            WorldInteractionPromptUI.HideCurrent();
+        }
+
+        private void HandleSceneTransitionStarted()
+        {
+            ClearInteractionState();
+            WorldInteractionPromptUI.HideCurrent();
+        }
+
+        private void HandleSceneTransitionCompleted()
+        {
+            _cam = null;
+            _inventoryUI = null;
+            ClearInteractionState();
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+            EnsureReferences();
+        }
+
+        private void ClearInteractionState()
+        {
+            _currentHover = default;
+            _hasCurrentHover = false;
+            UpdateHoveredInteractable(null);
+        }
+
+        private void UpdateHoveredInteractable(IHoverableInteractable hoverable)
+        {
+            if (ReferenceEquals(_hoveredInteractable, hoverable))
+                return;
+
+            _hoveredInteractable?.SetHovered(false);
+            _hoveredInteractable = hoverable;
+            _hoveredInteractable?.SetHovered(true);
+        }
+
+        private IHoverableInteractable FindHoveredOnlyInteractable()
+        {
+            EnsureReferences();
+
+            if (ShouldSuppressHover())
+                return null;
+
+            int hitCount = RaycastInteractionHits();
+            for (int i = 0; i < hitCount; i++)
+            {
+                RaycastHit hit = _interactionHits[i];
+                if (ShouldSkipInteractionHit(hit))
+                    continue;
+
+                foreach (var behaviour in hit.collider.GetComponentsInParent<MonoBehaviour>())
+                {
+                    if (behaviour is IInteractable)
+                        return null;
+
+                    if (behaviour is IHoverableInteractable hoverable)
+                        return hoverable;
+                }
+
+                if (hit.collider != null && !hit.collider.isTrigger)
+                    return null;
+            }
+
+            return null;
+        }
+
+        private int RaycastInteractionHits()
+        {
             Ray ray = new Ray(_cam.transform.position, _cam.transform.forward);
-            if (!Physics.Raycast(ray, out RaycastHit hit, _interactDistance, ~0, QueryTriggerInteraction.Collide))
+            int hitCount = Physics.RaycastNonAlloc(
+                ray,
+                _interactionHits,
+                _interactDistance,
+                ~0,
+                QueryTriggerInteraction.Collide);
+
+            System.Array.Sort(_interactionHits, 0, hitCount, RaycastHitDistanceComparer.Instance);
+            return hitCount;
+        }
+
+        private bool ShouldSkipInteractionHit(RaycastHit hit)
+        {
+            return hit.collider == null || hit.collider.transform.root == transform.root;
+        }
+
+        private bool TryCreateHoverInfo(RaycastHit hit, out InteractionHoverInfo hoverInfo)
+        {
+            hoverInfo = default;
+
+            if (hit.collider == null)
                 return false;
 
             var pickup = hit.collider.GetComponentInParent<ItemPickup>();
@@ -134,89 +303,14 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
             return false;
         }
 
-        private void RefreshHoverPrompt()
+        private sealed class RaycastHitDistanceComparer : System.Collections.Generic.IComparer<RaycastHit>
         {
-            if (TryGetHoverInfo(out var hoverInfo))
+            public static readonly RaycastHitDistanceComparer Instance = new RaycastHitDistanceComparer();
+
+            public int Compare(RaycastHit left, RaycastHit right)
             {
-                UpdateHoveredInteractable(hoverInfo.Interactable as IHoverableInteractable);
-                _currentHover = hoverInfo;
-                _hasCurrentHover = true;
-                WorldInteractionPromptUI.GetOrCreate()?.Show(
-                    hoverInfo.PromptWorldPosition,
-                    hoverInfo.Title,
-                    hoverInfo.ActionText,
-                    _cam);
-                return;
+                return left.distance.CompareTo(right.distance);
             }
-
-            _hasCurrentHover = false;
-            UpdateHoveredInteractable(FindHoveredOnlyInteractable());
-            WorldInteractionPromptUI.Instance?.Hide();
-        }
-
-        private void InteractWithCurrentHover()
-        {
-            if (!_hasCurrentHover && !TryGetHoverInfo(out _currentHover))
-                return;
-
-            if (_currentHover.Pickup != null)
-            {
-                if (_inventory != null)
-                {
-                    _currentHover.Pickup.Collect(_inventory);
-
-                    // ==========================================
-                    // ДОДАНО: Граємо звук підняття предмета
-                    // ==========================================
-                    if (_pickupSound != null && _audioSource != null)
-                    {
-                        _audioSource.pitch = Random.Range(0.9f, 1.15f);
-                        _audioSource.PlayOneShot(_pickupSound);
-                    }
-                    // ==========================================
-                }
-            }
-            else
-            {
-                _currentHover.Interactable?.Interact(this);
-            }
-
-            _hasCurrentHover = false;
-            UpdateHoveredInteractable(null);
-            WorldInteractionPromptUI.Instance?.Hide();
-        }
-
-        private void UpdateHoveredInteractable(IHoverableInteractable hoverable)
-        {
-            if (ReferenceEquals(_hoveredInteractable, hoverable))
-                return;
-
-            _hoveredInteractable?.SetHovered(false);
-            _hoveredInteractable = hoverable;
-            _hoveredInteractable?.SetHovered(true);
-        }
-
-        private IHoverableInteractable FindHoveredOnlyInteractable()
-        {
-            EnsureReferences();
-
-            if (ShouldSuppressHover())
-                return null;
-
-            Ray ray = new Ray(_cam.transform.position, _cam.transform.forward);
-            if (!Physics.Raycast(ray, out RaycastHit hit, _interactDistance, ~0, QueryTriggerInteraction.Collide))
-                return null;
-
-            foreach (var behaviour in hit.collider.GetComponentsInParent<MonoBehaviour>())
-            {
-                if (behaviour is IInteractable)
-                    return null;
-
-                if (behaviour is IHoverableInteractable hoverable)
-                    return hoverable;
-            }
-
-            return null;
         }
 
         private string ResolvePickupActionText(ItemPickup pickup)
@@ -251,6 +345,7 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
                 return true;
 
             return Application.isPlaying
+                && Cursor.lockState != CursorLockMode.Locked
                 && Cursor.visible
                 && EventSystem.current != null
                 && EventSystem.current.IsPointerOverGameObject();
