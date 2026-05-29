@@ -28,6 +28,13 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         public bool IsBroken => _isQTEActive;
         public Vector3 PendingKnockback => _knockbackVector;
 
+        public Vector3 ConsumeKnockback()
+        {
+            Vector3 knockback = _knockbackVector;
+            _knockbackVector = Vector3.zero;
+            return knockback;
+        }
+
         private void Start()
         {
             if (_stats == null) _stats = GetComponent<CharacterStats>();

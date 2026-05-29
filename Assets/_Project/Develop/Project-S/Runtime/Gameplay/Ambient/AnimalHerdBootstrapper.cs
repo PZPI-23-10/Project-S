@@ -1,5 +1,7 @@
 using System.Collections;
+using System.Collections.Generic;
 using Project_S.Runtime.Gameplay.Character.Combat;
+using Project_S.Runtime.Gameplay.Character.Inventory;
 using Project_S.Runtime.Gameplay.Character.Player;
 using Project_S.Runtime.Gameplay.Diagnostics;
 using Project_S.Runtime.Gameplay.Enemies;
@@ -19,6 +21,13 @@ namespace Project_S.Runtime.Gameplay.Ambient
         private const float MinSpawnDistance = 20f;
         private const float MaxSpawnDistance = 40f;
         private const float DeathDestroyDelay = 8f;
+        private const float CorpseLifetimeSeconds = 300f;
+        private const float CorpseHealthPerBaseYield = 20f;
+
+        private const string GreyMeatPath = "Crafting/Items/Consumables/GreyMeat";
+        private const string BonePath = "Crafting/Items/Resources/Bone";
+        private const string LeatherPath = "Crafting/Items/Resources/Leather";
+        private const string PetrifiedBloodPath = "Crafting/Items/Resources/PetrifiedBlood";
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
@@ -122,6 +131,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
             var worldHealthBar = animal.AddComponent<EnemyWorldHealthBar>();
 
             health.Configure(config);
+            health.SetDestroyAfterDeath(false);
             mover.Configure(definition.WalkSpeed, 0.15f, definition.ColliderRadius, definition.ColliderHeight, 0f, 8f, 540f, 0.25f, 60);
             mover.TryWarpToNearestNavMesh(definition.HerdRadius);
             controller.Configure(
@@ -133,6 +143,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
                 definition.RunSpeed,
                 definition.ScareRadius);
             worldHealthBar.Configure(definition.UiName, definition.HealthBarOffset);
+            CreateCorpseHarvest(animal, health, definition, ResolveAnimalPoseRoot(animal), scriptedDeathPose: true);
         }
 
         private static void DisableImportedDemoComponents(GameObject animal)
@@ -179,6 +190,12 @@ namespace Project_S.Runtime.Gameplay.Ambient
             animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
         }
 
+        private static Transform ResolveAnimalPoseRoot(GameObject animal)
+        {
+            var animator = animal.GetComponentInChildren<Animator>();
+            return animator != null ? animator.transform : animal.transform;
+        }
+
         private static Quaternion RandomYaw()
         {
             return Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
@@ -206,7 +223,8 @@ namespace Project_S.Runtime.Gameplay.Ambient
                 float colliderRadius,
                 float colliderHeight,
                 string uiName,
-                Vector3 healthBarOffset)
+                Vector3 healthBarOffset,
+                AnimalCorpseDefinition corpse)
             {
                 DisplayName = displayName;
                 HerdName = herdName;
@@ -220,6 +238,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
                 ColliderHeight = colliderHeight;
                 UiName = uiName;
                 HealthBarOffset = healthBarOffset;
+                Corpse = corpse;
             }
 
             public string DisplayName { get; }
@@ -234,6 +253,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
             public float ColliderHeight { get; }
             public string UiName { get; }
             public Vector3 HealthBarOffset { get; }
+            public AnimalCorpseDefinition Corpse { get; }
         }
 
         private static class AnimalDefaults
@@ -252,7 +272,8 @@ namespace Project_S.Runtime.Gameplay.Ambient
                     0.8f,
                     2.2f,
                     "Лошадь",
-                    new Vector3(0f, 2.45f, 0f));
+                    new Vector3(0f, 2.45f, 0f),
+                    AnimalCorpseDefinition.Horse());
             }
 
             public static AnimalSpawnDefinition Deer()
@@ -269,7 +290,8 @@ namespace Project_S.Runtime.Gameplay.Ambient
                     0.55f,
                     1.7f,
                     "Олень",
-                    new Vector3(0f, 1.9f, 0f));
+                    new Vector3(0f, 1.9f, 0f),
+                    AnimalCorpseDefinition.Deer());
             }
 
             public static AnimalSpawnDefinition Chicken()
@@ -286,7 +308,8 @@ namespace Project_S.Runtime.Gameplay.Ambient
                     0.22f,
                     0.55f,
                     "Курица",
-                    new Vector3(0f, 0.8f, 0f));
+                    new Vector3(0f, 0.8f, 0f),
+                    AnimalCorpseDefinition.Chicken());
             }
         }
 
@@ -329,7 +352,8 @@ namespace Project_S.Runtime.Gameplay.Ambient
                 0.55f,
                 1.15f,
                 "Кабан",
-                new Vector3(0f, 1.35f, 0f)));
+                new Vector3(0f, 1.35f, 0f),
+                AnimalCorpseDefinition.Boar()));
             var config = ScriptableObject.CreateInstance<EnemyConfig>();
             config.DisplayName = "WildBoar";
             config.MaxHealth = 55f;
@@ -352,6 +376,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
             var worldHealthBar = boar.AddComponent<EnemyWorldHealthBar>();
 
             health.Configure(config);
+            health.SetDestroyAfterDeath(false);
             attack.Configure(config);
             mover.Configure(1.1f, Mathf.Max(0.1f, config.AttackRange - 0.05f), 0.55f, 1.15f, 0f, 12f, config.RotationSpeed, 0.18f, 45);
             mover.TryWarpToNearestNavMesh(9f);
@@ -364,7 +389,174 @@ namespace Project_S.Runtime.Gameplay.Ambient
                 1.1f,
                 4.8f,
                 config.AttackRange);
+            CreateCorpseHarvest(boar, health, AnimalCorpseDefinition.Boar(), visual.transform, scriptedDeathPose: false, 0.55f, 1.15f);
             worldHealthBar.Configure("Кабан", new Vector3(0f, 1.35f, 0f));
+        }
+
+        private static void CreateCorpseHarvest(
+            GameObject owner,
+            EnemyHealth health,
+            AnimalSpawnDefinition definition,
+            Transform poseRoot,
+            bool scriptedDeathPose)
+        {
+            CreateCorpseHarvest(
+                owner,
+                health,
+                definition.Corpse,
+                poseRoot,
+                scriptedDeathPose,
+                definition.ColliderRadius,
+                definition.ColliderHeight);
+        }
+
+        private static void CreateCorpseHarvest(
+            GameObject owner,
+            EnemyHealth health,
+            AnimalCorpseDefinition definition,
+            Transform poseRoot,
+            bool scriptedDeathPose,
+            float colliderRadius,
+            float colliderHeight)
+        {
+            if (!definition.IsValid)
+                return;
+
+            var corpse = owner.AddComponent<AnimalCorpseHarvest>();
+            corpse.Configure(
+                health,
+                owner,
+                poseRoot,
+                definition.MaxHealth,
+                CorpseHealthPerBaseYield,
+                CreateGrants(definition.BaseYields),
+                CreateGrants(definition.CompletionDrops),
+                definition.SoulAshReward,
+                CorpseLifetimeSeconds,
+                scriptedDeathPose);
+        }
+
+        private static IEnumerable<CorpseItemGrant> CreateGrants(IEnumerable<CorpseDropDefinition> definitions)
+        {
+            foreach (var definition in definitions)
+            {
+                var item = NpcStartupDiagnostics.LoadResource<ItemData>("AnimalCorpse", definition.ItemPath);
+                if (item == null)
+                {
+                    Debug.LogWarning($"[Animals] Corpse item '{definition.ItemPath}' was not found.");
+                    continue;
+                }
+
+                yield return new CorpseItemGrant
+                {
+                    Item = item,
+                    Amount = definition.Amount,
+                    Chance = definition.Chance
+                };
+            }
+        }
+
+        private readonly struct AnimalCorpseDefinition
+        {
+            public AnimalCorpseDefinition(
+                float maxHealth,
+                IReadOnlyList<CorpseDropDefinition> baseYields,
+                IReadOnlyList<CorpseDropDefinition> completionDrops,
+                int soulAshReward)
+            {
+                MaxHealth = maxHealth;
+                BaseYields = baseYields;
+                CompletionDrops = completionDrops;
+                SoulAshReward = soulAshReward;
+            }
+
+            public float MaxHealth { get; }
+            public IReadOnlyList<CorpseDropDefinition> BaseYields { get; }
+            public IReadOnlyList<CorpseDropDefinition> CompletionDrops { get; }
+            public int SoulAshReward { get; }
+            public bool IsValid => MaxHealth > 0f;
+
+            public static AnimalCorpseDefinition Boar()
+            {
+                return new AnimalCorpseDefinition(
+                    120f,
+                    new[]
+                    {
+                        new CorpseDropDefinition(GreyMeatPath, 1),
+                        new CorpseDropDefinition(BonePath, 1)
+                    },
+                    new[]
+                    {
+                        new CorpseDropDefinition(BonePath, 6),
+                        new CorpseDropDefinition(LeatherPath, 2),
+                        new CorpseDropDefinition(PetrifiedBloodPath, 1, 0.05f)
+                    },
+                    15);
+            }
+
+            public static AnimalCorpseDefinition Chicken()
+            {
+                return new AnimalCorpseDefinition(
+                    40f,
+                    new[]
+                    {
+                        new CorpseDropDefinition(GreyMeatPath, 1),
+                        new CorpseDropDefinition(BonePath, 1)
+                    },
+                    new[]
+                    {
+                        new CorpseDropDefinition(GreyMeatPath, 1),
+                        new CorpseDropDefinition(BonePath, 1)
+                    },
+                    1);
+            }
+
+            public static AnimalCorpseDefinition Deer()
+            {
+                return new AnimalCorpseDefinition(
+                    120f,
+                    new[]
+                    {
+                        new CorpseDropDefinition(GreyMeatPath, 1),
+                        new CorpseDropDefinition(BonePath, 1)
+                    },
+                    new[]
+                    {
+                        new CorpseDropDefinition(GreyMeatPath, 6),
+                        new CorpseDropDefinition(LeatherPath, 4)
+                    },
+                    5);
+            }
+
+            public static AnimalCorpseDefinition Horse()
+            {
+                return new AnimalCorpseDefinition(
+                    200f,
+                    new[]
+                    {
+                        new CorpseDropDefinition(BonePath, 1)
+                    },
+                    new[]
+                    {
+                        new CorpseDropDefinition(BonePath, 2),
+                        new CorpseDropDefinition(LeatherPath, 1)
+                    },
+                    10);
+            }
+        }
+
+        private readonly struct CorpseDropDefinition
+        {
+            public CorpseDropDefinition(string itemPath, int amount, float chance = 1f)
+            {
+                ItemPath = itemPath;
+                Amount = amount;
+                Chance = chance;
+            }
+
+            public string ItemPath { get; }
+            public int Amount { get; }
+            public float Chance { get; }
         }
 
         private static void AdjustBoarVisualHeight(GameObject boar)

@@ -38,6 +38,33 @@ namespace Project_S.Runtime.Gameplay.Enemies
             _config = config;
         }
 
+        public void OverrideCurrentWindup(float duration)
+        {
+            if (!_isWindingUp)
+                return;
+
+            _windupRemaining = Mathf.Max(0f, duration);
+        }
+
+        public void OverrideCurrentWindupFromClip(float clipLength)
+        {
+            if (!_isWindingUp)
+                return;
+
+            float duration = Mathf.Max(0f, clipLength);
+            if (_config != null && _config.UseAttackClipDamageMoment)
+                duration *= Mathf.Clamp01(_config.AttackDamageMomentNormalized);
+
+            OverrideCurrentWindup(duration);
+        }
+
+        public void CancelAttack()
+        {
+            _pendingTarget = null;
+            _windupRemaining = 0f;
+            _isWindingUp = false;
+        }
+
         public bool TryAttack(Transform target)
         {
             if (target == null || _config == null || _isWindingUp || _cooldownRemaining > 0f)

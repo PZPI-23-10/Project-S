@@ -1,4 +1,5 @@
 using Project_S.Runtime.Gameplay.Character.Player;
+using Project_S.Runtime.Gameplay.Ambient;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Enemies
@@ -289,6 +290,16 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
             if (_rigidbody != null)
             {
+                if (GetComponent<AnimalCorpseHarvest>() != null)
+                {
+                    _rigidbody.isKinematic = true;
+                    _rigidbody.useGravity = false;
+                    _rigidbody.velocity = Vector3.zero;
+                    _rigidbody.angularVelocity = Vector3.zero;
+                    enabled = false;
+                    return;
+                }
+
                 _rigidbody.isKinematic = false;
                 _rigidbody.useGravity = true;
                 _rigidbody.velocity = Vector3.zero;

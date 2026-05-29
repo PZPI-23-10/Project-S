@@ -21,14 +21,25 @@ namespace Project_S.Runtime.Gameplay.Enemies
         [SerializeField] private Transform _visualRoot;
         [SerializeField] private Animator _animator;
         [SerializeField] private AnimationClip _deathClip;
+        [SerializeField] private AnimationClip _idleClip;
+        [SerializeField] private AnimationClip _walkClip;
+        [SerializeField] private AnimationClip _hitReactionClip;
+        [SerializeField] private AnimationClip _attackClip;
 
         private readonly HashSet<int> _parameters = new HashSet<int>();
+        private PlayableGraph _locomotionGraph;
+        private AnimationClipPlayable _locomotionPlayable;
+        private AnimationClip _currentLocomotionClip;
+        private PlayableGraph _hitReactionGraph;
+        private PlayableGraph _attackGraph;
         private PlayableGraph _deathGraph;
         private Quaternion _baseLocalRotation;
         private Vector3 _baseLocalPosition;
         private float _deathGroundY;
         private float _swingDuration = 0.45f;
         private float _swingRemaining;
+        private float _hitReactionRemaining;
+        private float _attackClipRemaining;
         private bool _isDead;
 
         private void Awake()
@@ -49,11 +60,17 @@ namespace Project_S.Runtime.Gameplay.Enemies
             }
 
             if (_health != null)
+            {
+                _health.Damaged += OnDamaged;
                 _health.Died += OnDied;
+            }
         }
 
         private void OnDisable()
         {
+            StopLocomotionPlayable();
+            StopHitReactionPlayable();
+            StopAttackPlayable();
             StopDeathPlayable();
 
             if (_meleeAttack != null)
@@ -63,23 +80,36 @@ namespace Project_S.Runtime.Gameplay.Enemies
             }
 
             if (_health != null)
+            {
+                _health.Damaged -= OnDamaged;
                 _health.Died -= OnDied;
+            }
         }
 
         private void OnDestroy()
         {
+            StopLocomotionPlayable();
+            StopHitReactionPlayable();
+            StopAttackPlayable();
             StopDeathPlayable();
         }
 
         private void Update()
         {
+            UpdateHitReactionPlayable(Time.deltaTime);
+            UpdateAttackPlayable(Time.deltaTime);
             UpdateAnimatorParameters();
+            UpdateLocomotionPlayable();
         }
 
         private void LateUpdate()
         {
             UpdateProceduralSwing(Time.deltaTime);
-            KeepDeadVisualRootAnchored();
+
+            if (_isDead)
+                KeepDeadVisualRootAnchored();
+            else
+                KeepAliveVisualRootAnchored();
         }
 
         public void Configure(
@@ -88,7 +118,11 @@ namespace Project_S.Runtime.Gameplay.Enemies
             EnemyHealth health,
             Transform visualRoot,
             Animator animator,
-            AnimationClip deathClip = null)
+            AnimationClip deathClip = null,
+            AnimationClip idleClip = null,
+            AnimationClip walkClip = null,
+            AnimationClip hitReactionClip = null,
+            AnimationClip attackClip = null)
         {
             _controller = controller;
             _meleeAttack = meleeAttack;
@@ -96,6 +130,10 @@ namespace Project_S.Runtime.Gameplay.Enemies
             _visualRoot = visualRoot;
             _animator = animator;
             _deathClip = deathClip;
+            _idleClip = idleClip;
+            _walkClip = walkClip;
+            _hitReactionClip = hitReactionClip;
+            _attackClip = attackClip;
 
             ResolveReferences();
             CacheAnimatorParameters();
@@ -155,6 +193,29 @@ namespace Project_S.Runtime.Gameplay.Enemies
             SetBool(OnGroundHash, true);
         }
 
+        private void UpdateLocomotionPlayable()
+        {
+            if (_animator == null || _isDead || _hitReactionGraph.IsValid() || _attackGraph.IsValid())
+            {
+                StopLocomotionPlayable();
+                return;
+            }
+
+            bool shouldWalk = _controller != null && _controller.IsMoving;
+            var clip = shouldWalk ? _walkClip : _idleClip;
+            if (clip == null)
+            {
+                StopLocomotionPlayable();
+                return;
+            }
+
+            if (!_locomotionGraph.IsValid() || _currentLocomotionClip != clip)
+                PlayLocomotionClip(clip, shouldWalk ? "Walk" : "Idle");
+
+            if (_locomotionGraph.IsValid() && _locomotionPlayable.IsValid() && clip.length > 0.01f && _locomotionPlayable.GetTime() >= clip.length)
+                _locomotionPlayable.SetTime(0d);
+        }
+
         private void UpdateProceduralSwing(float deltaTime)
         {
             if (_visualRoot == null || _swingRemaining <= 0f)
@@ -179,8 +240,24 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
         private void OnAttackStarted(EnemyMeleeAttack attack)
         {
-            _swingDuration = attack != null ? attack.WindupDuration : 0.45f;
-            _swingRemaining = _swingDuration;
+            if (_hitReactionGraph.IsValid())
+                return;
+
+            var clip = _attackClip;
+            _swingDuration = clip != null && clip.length > 0.01f
+                ? clip.length
+                : (attack != null ? attack.WindupDuration : 0.45f);
+
+            if (attack != null)
+                attack.OverrideCurrentWindupFromClip(_swingDuration);
+
+            StopLocomotionPlayable();
+
+            if (PlayAttackClip(clip))
+                _swingRemaining = 0f;
+            else
+                _swingRemaining = _swingDuration;
+
             SetTrigger(AttackHash);
         }
 
@@ -202,8 +279,126 @@ namespace Project_S.Runtime.Gameplay.Enemies
                 _visualRoot.localPosition = _baseLocalPosition;
             }
 
+            StopAttackPlayable();
+            StopHitReactionPlayable();
+            StopLocomotionPlayable();
+
             if (!PlayDeathClip())
                 SetTrigger(DieHash);
+        }
+
+        private void OnDamaged(EnemyHealth health)
+        {
+            if (_isDead)
+                return;
+
+            _swingRemaining = 0f;
+            float duration = _hitReactionClip != null && _hitReactionClip.length > 0.01f
+                ? _hitReactionClip.length
+                : 0.35f;
+
+            if (_controller != null)
+                _controller.StunFor(duration);
+
+            StopAttackPlayable();
+            StopLocomotionPlayable();
+
+            if (!PlayHitReactionClip())
+                _hitReactionRemaining = duration;
+        }
+
+        private bool PlayAttackClip(AnimationClip clip)
+        {
+            if (_animator == null || clip == null)
+                return false;
+
+            StopAttackPlayable();
+            _animator.enabled = true;
+
+            _attackGraph = PlayableGraph.Create($"{name}_AttackAnimation");
+            _attackGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
+
+            var clipPlayable = AnimationClipPlayable.Create(_attackGraph, clip);
+            clipPlayable.SetApplyFootIK(false);
+            clipPlayable.SetApplyPlayableIK(false);
+            clipPlayable.SetDuration(clip.length);
+
+            var output = AnimationPlayableOutput.Create(_attackGraph, "Attack", _animator);
+            output.SetSourcePlayable(clipPlayable);
+
+            _attackClipRemaining = clip.length;
+            _attackGraph.Play();
+            _attackGraph.Evaluate(0f);
+            return true;
+        }
+
+        private bool PlayHitReactionClip()
+        {
+            if (_animator == null || _hitReactionClip == null)
+                return false;
+
+            StopHitReactionPlayable();
+            _animator.enabled = true;
+
+            _hitReactionGraph = PlayableGraph.Create($"{name}_HitReactionAnimation");
+            _hitReactionGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
+
+            var clipPlayable = AnimationClipPlayable.Create(_hitReactionGraph, _hitReactionClip);
+            clipPlayable.SetApplyFootIK(false);
+            clipPlayable.SetApplyPlayableIK(false);
+            clipPlayable.SetDuration(_hitReactionClip.length);
+
+            var output = AnimationPlayableOutput.Create(_hitReactionGraph, "HitReaction", _animator);
+            output.SetSourcePlayable(clipPlayable);
+
+            _hitReactionRemaining = _hitReactionClip.length;
+            _hitReactionGraph.Play();
+            _hitReactionGraph.Evaluate(0f);
+            return true;
+        }
+
+        private void PlayLocomotionClip(AnimationClip clip, string outputName)
+        {
+            if (_animator == null || clip == null)
+                return;
+
+            StopLocomotionPlayable();
+            _animator.enabled = true;
+
+            _locomotionGraph = PlayableGraph.Create($"{name}_{outputName}Animation");
+            _locomotionGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
+
+            _locomotionPlayable = AnimationClipPlayable.Create(_locomotionGraph, clip);
+            _locomotionPlayable.SetApplyFootIK(false);
+            _locomotionPlayable.SetApplyPlayableIK(false);
+            _locomotionPlayable.SetDuration(clip.length);
+
+            var output = AnimationPlayableOutput.Create(_locomotionGraph, outputName, _animator);
+            output.SetSourcePlayable(_locomotionPlayable);
+
+            _currentLocomotionClip = clip;
+            _locomotionGraph.Play();
+            _locomotionGraph.Evaluate(0f);
+        }
+
+        private void UpdateAttackPlayable(float deltaTime)
+        {
+            if (!_attackGraph.IsValid() || _isDead)
+                return;
+
+            _attackClipRemaining -= Mathf.Max(0f, deltaTime);
+            if (_attackClipRemaining <= 0f)
+                StopAttackPlayable();
+        }
+
+        private void UpdateHitReactionPlayable(float deltaTime)
+        {
+            if (!_hitReactionGraph.IsValid() || _isDead)
+                return;
+
+            _hitReactionRemaining -= Mathf.Max(0f, deltaTime);
+            if (_hitReactionRemaining <= 0f)
+                StopHitReactionPlayable();
         }
 
         private bool PlayDeathClip()
@@ -236,8 +431,20 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
             _deathGraph.Play();
             _deathGraph.Evaluate(0f);
-            AnchorDeadVisualToGround();
+            AnchorVisualRootToGround(_deathGroundY);
             return true;
+        }
+
+        private void KeepAliveVisualRootAnchored()
+        {
+            if (_visualRoot == null)
+                return;
+
+            var localPosition = _visualRoot.localPosition;
+            localPosition.x = _baseLocalPosition.x;
+            localPosition.z = _baseLocalPosition.z;
+            _visualRoot.localPosition = localPosition;
+            AnchorVisualRootToGround(transform.position.y);
         }
 
         private void KeepDeadVisualRootAnchored()
@@ -249,10 +456,10 @@ namespace Project_S.Runtime.Gameplay.Enemies
             localPosition.x = _baseLocalPosition.x;
             localPosition.z = _baseLocalPosition.z;
             _visualRoot.localPosition = localPosition;
-            AnchorDeadVisualToGround();
+            AnchorVisualRootToGround(_deathGroundY);
         }
 
-        private void AnchorDeadVisualToGround()
+        private void AnchorVisualRootToGround(float groundY)
         {
             if (_visualRoot == null)
                 return;
@@ -260,7 +467,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
             if (!TryGetVisualBounds(out Bounds bounds))
                 return;
 
-            float deltaY = _deathGroundY - bounds.min.y;
+            float deltaY = groundY - bounds.min.y;
             if (Mathf.Abs(deltaY) < 0.005f)
                 return;
 
@@ -295,6 +502,31 @@ namespace Project_S.Runtime.Gameplay.Enemies
         {
             if (_deathGraph.IsValid())
                 _deathGraph.Destroy();
+        }
+
+        private void StopLocomotionPlayable()
+        {
+            _locomotionPlayable = default;
+            _currentLocomotionClip = null;
+
+            if (_locomotionGraph.IsValid())
+                _locomotionGraph.Destroy();
+        }
+
+        private void StopHitReactionPlayable()
+        {
+            _hitReactionRemaining = 0f;
+
+            if (_hitReactionGraph.IsValid())
+                _hitReactionGraph.Destroy();
+        }
+
+        private void StopAttackPlayable()
+        {
+            _attackClipRemaining = 0f;
+
+            if (_attackGraph.IsValid())
+                _attackGraph.Destroy();
         }
 
         private void SetBool(int hash, bool value)

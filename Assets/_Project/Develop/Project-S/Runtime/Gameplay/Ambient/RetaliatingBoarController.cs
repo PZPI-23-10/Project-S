@@ -286,7 +286,12 @@ namespace Project_S.Runtime.Gameplay.Ambient
             PlayState(DeathState, 0.04f);
 
             foreach (var collider in GetComponentsInChildren<Collider>())
+            {
+                if (collider.gameObject == gameObject)
+                    continue;
+
                 collider.enabled = false;
+            }
         }
 
         private void ResolveReferences()

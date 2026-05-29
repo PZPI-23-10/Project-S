@@ -1,6 +1,7 @@
 using Project_S.Runtime.Gameplay.Character.Player;
 using Project_S.Runtime.Gameplay.Navigation;
 using Project_S.Runtime.Gameplay.Character.Combat;
+using Project_S.Runtime.Gameplay.Ambient;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -18,9 +19,11 @@ namespace Project_S.Runtime.Gameplay.Enemies
         [SerializeField] private Transform _target;
 
         private bool _hasAggro;
+        private float _stunRemaining;
 
         public bool HasAggro => _hasAggro;
         public bool IsMoving { get; private set; }
+        public bool IsStunned => _stunRemaining > 0f;
 
         private void Awake()
         {
@@ -52,6 +55,16 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
             if (_config == null)
                 return;
+
+            if (_stunRemaining > 0f)
+            {
+                _stunRemaining = Mathf.Max(0f, _stunRemaining - Time.deltaTime);
+
+                if (_mover != null)
+                    _mover.Stop();
+
+                return;
+            }
 
             ConfigureMover();
             EnsureTarget();
@@ -116,6 +129,18 @@ namespace Project_S.Runtime.Gameplay.Enemies
                 _meleeAttack.Configure(config);
 
             ConfigureMover();
+        }
+
+        public void StunFor(float duration)
+        {
+            _stunRemaining = Mathf.Max(_stunRemaining, Mathf.Max(0f, duration));
+            IsMoving = false;
+
+            if (_mover != null)
+                _mover.Stop();
+
+            if (_meleeAttack != null)
+                _meleeAttack.CancelAttack();
         }
 
         private void EnsureTarget()
@@ -193,6 +218,22 @@ namespace Project_S.Runtime.Gameplay.Enemies
         {
             if (_mover != null)
                 _mover.Stop();
+
+            var corpseHarvest = GetComponent<AnimalCorpseHarvest>();
+            foreach (var collider in GetComponents<Collider>())
+            {
+                if (corpseHarvest != null && collider.gameObject == gameObject)
+                {
+                    collider.isTrigger = true;
+                    continue;
+                }
+
+                collider.enabled = false;
+            }
+
+            var agent = GetComponent<NavMeshAgent>();
+            if (agent != null && agent.enabled)
+                agent.enabled = false;
 
             enabled = false;
 

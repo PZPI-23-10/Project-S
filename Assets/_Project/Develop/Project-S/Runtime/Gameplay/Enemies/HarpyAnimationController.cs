@@ -1,5 +1,9 @@
+using System.Collections;
 using System.Collections.Generic;
+using Project_S.Runtime.Gameplay.Ambient;
 using UnityEngine;
+using UnityEngine.Animations;
+using UnityEngine.Playables;
 
 namespace Project_S.Runtime.Gameplay.Enemies
 {
@@ -15,13 +19,23 @@ namespace Project_S.Runtime.Gameplay.Enemies
         private const string WindupState = "Glide";
         private const string AttackState = "JumpClawsAttack";
         private const string DeathState = "Death";
+        private const float DeathFallFallbackSeconds = 5f;
+        private const float DeathGroundOffset = 0.08f;
+        private const float GroundProbeHeight = 25f;
+        private const float GroundProbeDistance = 80f;
+        private const int GroundLayerMask = 1 << 8;
+        private static readonly int DeathStateHash = Animator.StringToHash(DeathState);
 
         [SerializeField] private FlyingEnemyController _controller;
         [SerializeField] private EnemyMeleeAttack _meleeAttack;
         [SerializeField] private EnemyHealth _health;
+        [SerializeField] private AnimalCorpseHarvest _corpseHarvest;
         [SerializeField] private Animator _animator;
+        [SerializeField] private AnimationClip _deathClip;
+        [SerializeField] private AnimationClip _deathHitGroundClip;
 
         private readonly HashSet<int> _parameters = new HashSet<int>();
+        private PlayableGraph _deathGraph;
         private FlyingEnemyState _lastState;
         private int _currentStateHash;
         private bool _dead;
@@ -50,6 +64,13 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
             if (_health != null)
                 _health.Died -= OnDied;
+
+            StopDeathPlayable();
+        }
+
+        private void OnDestroy()
+        {
+            StopDeathPlayable();
         }
 
         private void Update()
@@ -91,6 +112,19 @@ namespace Project_S.Runtime.Gameplay.Enemies
             PlayState(FlyState, 0f);
         }
 
+        public void Configure(
+            FlyingEnemyController controller,
+            EnemyMeleeAttack meleeAttack,
+            EnemyHealth health,
+            Animator animator,
+            AnimationClip deathClip,
+            AnimationClip deathHitGroundClip)
+        {
+            _deathClip = deathClip;
+            _deathHitGroundClip = deathHitGroundClip;
+            Configure(controller, meleeAttack, health, animator);
+        }
+
         private void ResolveReferences()
         {
             if (_controller == null)
@@ -101,6 +135,9 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
             if (_health == null)
                 _health = GetComponent<EnemyHealth>();
+
+            if (_corpseHarvest == null)
+                _corpseHarvest = GetComponent<AnimalCorpseHarvest>();
 
             if (_animator == null)
                 _animator = GetComponentInChildren<Animator>();
@@ -165,10 +202,115 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
         private void OnDied(EnemyHealth health)
         {
+            ResolveReferences();
             _dead = true;
             SetBool(IsFlyingHash, false);
             SetTrigger(DieHash);
+
+            if (_corpseHarvest != null)
+                StartCoroutine(CompleteCorpseAfterDeathAnimation());
+            else
+                PlayState(DeathState, 0.05f);
+        }
+
+        private IEnumerator CompleteCorpseAfterDeathAnimation()
+        {
+            if (_animator == null)
+            {
+                _corpseHarvest.CompleteExternalDeathPose(applyScriptedPose: false);
+                yield break;
+            }
+
+            if (_deathClip != null)
+                yield return PlayDeathClip(_deathClip, "Death");
+            else
+                yield return PlayAnimatorDeathState();
+
+            if (_deathHitGroundClip != null)
+                yield return PlayDeathClip(_deathHitGroundClip, "DeathHitGround");
+
+            if (_corpseHarvest != null)
+                _corpseHarvest.CompleteExternalDeathPose(applyScriptedPose: false);
+        }
+
+        private IEnumerator PlayAnimatorDeathState()
+        {
+            Vector3 startPosition = transform.position;
+            Vector3 endPosition = SampleGround(startPosition) + Vector3.up * DeathGroundOffset;
+            float elapsed = 0f;
+
             PlayState(DeathState, 0.05f);
+            yield return null;
+
+            while (_animator != null)
+            {
+                var state = _animator.GetCurrentAnimatorStateInfo(0);
+                bool deathStateReached = state.IsName(DeathState) || state.shortNameHash == DeathStateHash;
+                float animationProgress = deathStateReached ? Mathf.Clamp01(state.normalizedTime) : 0f;
+                float fallbackProgress = Mathf.Clamp01(elapsed / DeathFallFallbackSeconds);
+                float progress = Mathf.Max(animationProgress, fallbackProgress);
+                transform.position = Vector3.Lerp(startPosition, endPosition, Mathf.SmoothStep(0f, 1f, progress));
+
+                if (deathStateReached && !_animator.IsInTransition(0) && state.normalizedTime >= 1f)
+                {
+                    transform.position = endPosition;
+                    yield break;
+                }
+
+                elapsed += Time.deltaTime;
+                if (elapsed >= DeathFallFallbackSeconds)
+                {
+                    transform.position = endPosition;
+                    yield break;
+                }
+
+                yield return null;
+            }
+        }
+
+        private IEnumerator PlayDeathClip(AnimationClip clip, string outputName)
+        {
+            StopDeathPlayable();
+            _animator.enabled = true;
+
+            _deathGraph = PlayableGraph.Create($"{name}_{outputName}Animation");
+            _deathGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
+
+            var clipPlayable = AnimationClipPlayable.Create(_deathGraph, clip);
+            clipPlayable.SetApplyFootIK(false);
+            clipPlayable.SetApplyPlayableIK(false);
+            clipPlayable.SetDuration(clip.length);
+
+            var output = AnimationPlayableOutput.Create(_deathGraph, outputName, _animator);
+            output.SetSourcePlayable(clipPlayable);
+
+            _deathGraph.Play();
+            _deathGraph.Evaluate(0f);
+
+            float remaining = Mathf.Max(0.01f, clip.length);
+            while (remaining > 0f)
+            {
+                remaining -= Time.deltaTime;
+                yield return null;
+            }
+
+            StopDeathPlayable();
+        }
+
+        private void StopDeathPlayable()
+        {
+            if (_deathGraph.IsValid())
+                _deathGraph.Destroy();
+        }
+
+        private static Vector3 SampleGround(Vector3 position)
+        {
+            Vector3 origin = position + Vector3.up * GroundProbeHeight;
+            if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, GroundProbeDistance, GroundLayerMask, QueryTriggerInteraction.Ignore))
+                return hit.point;
+
+            position.y = 0f;
+            return position;
         }
 
         private void SetBool(int hash, bool value)

@@ -1,5 +1,8 @@
-using System.Collections;
+﻿using System.Collections;
+using System.Collections.Generic;
+using Project_S.Runtime.Gameplay.Ambient;
 using Project_S.Runtime.Gameplay.Character.Combat;
+using Project_S.Runtime.Gameplay.Character.Inventory;
 using Project_S.Runtime.Gameplay.Character.Player;
 using Project_S.Runtime.Gameplay.Diagnostics;
 using Project_S.Runtime.Gameplay.Loot;
@@ -20,6 +23,13 @@ namespace Project_S.Runtime.Gameplay.Enemies
         private const float HoverRadius = 24f;
         private const float DiveStopHeight = 1.2f;
         private const float RetreatDistanceThreshold = 0.35f;
+        private const float HarpyCorpseHealth = 80f;
+        private const float CorpseHealthPerBaseYield = 20f;
+        private const float CorpseLifetimeSeconds = 300f;
+        private const string GreyMeatPath = "Crafting/Items/Consumables/GreyMeat";
+        private const string BonePath = "Crafting/Items/Resources/Bone";
+        private const string LeatherPath = "Crafting/Items/Resources/Leather";
+        private const string PetrifiedBloodPath = "Crafting/Items/Resources/PetrifiedBlood";
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
@@ -119,10 +129,55 @@ namespace Project_S.Runtime.Gameplay.Enemies
             lootDropper.Configure(lootTable);
 
             health.Configure(config);
+            health.SetDestroyAfterDeath(false);
             attack.Configure(config);
             controller.Configure(config, target, HoverHeight, HoverRadius, DiveStopHeight, RetreatDistanceThreshold);
             animationController.Configure(controller, attack, health, visual != null ? visual.GetComponentInChildren<Animator>() : null);
+            CreateHarpyCorpseHarvest(harpy, health);
             worldHealthBar.Configure("Гарпия", new Vector3(0f, 2.2f, 0f));
+        }
+
+        private static void CreateHarpyCorpseHarvest(GameObject harpy, EnemyHealth health)
+        {
+            var baseYields = new List<CorpseItemGrant>();
+            var completionDrops = new List<CorpseItemGrant>();
+
+            AddGrant(baseYields, GreyMeatPath, 1, 1f);
+            AddGrant(baseYields, BonePath, 1, 1f);
+            AddGrant(completionDrops, LeatherPath, 1, 1f);
+            AddGrant(completionDrops, PetrifiedBloodPath, 1, 0.1f);
+
+            var corpse = harpy.AddComponent<AnimalCorpseHarvest>();
+            corpse.Configure(
+                health,
+                harpy,
+                harpy.transform,
+                HarpyCorpseHealth,
+                CorpseHealthPerBaseYield,
+                baseYields,
+                completionDrops,
+                0,
+                CorpseLifetimeSeconds,
+                scriptedDeathPose: true,
+                groundOffset: 0.08f,
+                waitForExternalDeathPose: true);
+        }
+
+        private static void AddGrant(ICollection<CorpseItemGrant> grants, string itemPath, int amount, float chance)
+        {
+            var item = NpcStartupDiagnostics.LoadResource<ItemData>("HarpyCorpse", itemPath);
+            if (item == null)
+            {
+                Debug.LogWarning($"[Harpy] Corpse item '{itemPath}' was not found.");
+                return;
+            }
+
+            grants.Add(new CorpseItemGrant
+            {
+                Item = item,
+                Amount = amount,
+                Chance = chance
+            });
         }
 
         private static GameObject TryAttachVisual(Transform parent)

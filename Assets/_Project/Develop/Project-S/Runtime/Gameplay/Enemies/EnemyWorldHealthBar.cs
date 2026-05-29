@@ -28,7 +28,10 @@ namespace Project_S.Runtime.Gameplay.Enemies
         private void OnEnable()
         {
             if (_health != null)
+            {
                 _health.HealthChanged += OnHealthChanged;
+                _health.Died += OnDied;
+            }
 
             Refresh();
         }
@@ -36,7 +39,10 @@ namespace Project_S.Runtime.Gameplay.Enemies
         private void OnDisable()
         {
             if (_health != null)
+            {
                 _health.HealthChanged -= OnHealthChanged;
+                _health.Died -= OnDied;
+            }
         }
 
         private void LateUpdate()
@@ -142,6 +148,12 @@ namespace Project_S.Runtime.Gameplay.Enemies
         private void OnHealthChanged(EnemyHealth health)
         {
             Refresh();
+        }
+
+        private void OnDied(EnemyHealth health)
+        {
+            if (_uiRoot != null)
+                _uiRoot.gameObject.SetActive(false);
         }
 
         private void SetFill(float normalizedHealth)

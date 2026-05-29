@@ -1,8 +1,10 @@
 using KinematicCharacterController;
+using Project_S.Runtime.Gameplay.Ambient;
 using Project_S.Runtime.Gameplay.Character.Combat;
 using Project_S.Runtime.Gameplay.Character.Input;
 using Project_S.Runtime.Gameplay.Character.Stats;
 using Project_S.Runtime.Gameplay.Character.Inventory;
+using Project_S.Runtime.Gameplay.Enemies;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Character.Movement
@@ -111,7 +113,7 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
         {
             if (_poiseController != null && _poiseController.PendingKnockback.sqrMagnitude > 0.001f)
             {
-                currentVelocity += _poiseController.PendingKnockback;
+                currentVelocity += _poiseController.ConsumeKnockback();
             }
 
             if (_poiseController != null && _poiseController.IsBroken)
@@ -200,7 +202,16 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
             UpdateCrouchView(deltaTime);
         }
 
-        public bool IsColliderValidForCollisions(Collider coll) => true;
+        public bool IsColliderValidForCollisions(Collider coll)
+        {
+            if (coll == null || coll.isTrigger)
+                return false;
+
+            if (coll.GetComponentInParent<AnimalCorpseHarvest>() != null)
+                return false;
+
+            return !IsAttackDashing || coll.GetComponentInParent<EnemyHealth>() == null;
+        }
         public void OnGroundHit(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport) { }
         public void OnMovementHit(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport) { }
         public void ProcessHitStabilityReport(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, Vector3 atCharacterPosition, Quaternion atCharacterRotation, ref HitStabilityReport hitStabilityReport) { }

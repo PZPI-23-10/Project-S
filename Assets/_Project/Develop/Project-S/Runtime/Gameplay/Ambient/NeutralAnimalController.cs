@@ -269,7 +269,12 @@ namespace Project_S.Runtime.Gameplay.Ambient
             SetAnimator(0f, 0f);
 
             foreach (var collider in GetComponentsInChildren<Collider>())
+            {
+                if (collider.gameObject == gameObject)
+                    continue;
+
                 collider.enabled = false;
+            }
 
             var rigidbody = GetComponent<Rigidbody>();
             if (rigidbody != null)

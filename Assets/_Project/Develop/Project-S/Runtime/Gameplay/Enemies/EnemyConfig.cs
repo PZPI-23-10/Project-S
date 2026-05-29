@@ -32,6 +32,8 @@ namespace Project_S.Runtime.Gameplay.Enemies
         [Header("Attack")]
         [Min(0f)] public float AttackCooldown = 1.8f;
         [Min(0f)] public float AttackWindup = 0.45f;
+        public bool UseAttackClipDamageMoment = false;
+        [Range(0f, 1f)] public float AttackDamageMomentNormalized = 0.5f;
         [Min(0f)] public float AttackRadius = 0.55f;
         [Min(0f)] public float HealthDamage = 12f;
         [Min(0f)] public float PoiseDamage = 8f;

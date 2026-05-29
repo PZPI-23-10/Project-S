@@ -2,6 +2,7 @@ using System;
 using Project_S.Runtime.Gameplay.Character.Combat;
 using Project_S.Runtime.Gameplay.Character.Inventory;
 using Project_S.Runtime.Gameplay.Crafting;
+using Project_S.Runtime.Gameplay.Ambient;
 using Project_S.Runtime.Gameplay.Loot;
 using UnityEngine;
 
@@ -11,12 +12,15 @@ namespace Project_S.Runtime.Gameplay.Enemies
     {
         [SerializeField] private EnemyConfig _config;
         [SerializeField] private LootDropper _lootDropper;
+        [SerializeField] private AnimalCorpseHarvest _corpseHarvest;
+        [SerializeField] private bool _destroyAfterDeath = true;
 
         private float _currentHealth;
         private bool _dead;
 
         public event Action<EnemyHealth> Died;
         public event Action<EnemyHealth> HealthChanged;
+        public event Action<EnemyHealth> Damaged;
 
         public EnemyConfig Config => _config;
         public float CurrentHealth => _currentHealth;
@@ -36,10 +40,18 @@ namespace Project_S.Runtime.Gameplay.Enemies
             ResetHealth();
         }
 
+        public void SetDestroyAfterDeath(bool destroyAfterDeath)
+        {
+            _destroyAfterDeath = destroyAfterDeath;
+        }
+
         public void ReceiveDamage(DamageRequest request)
         {
             if (_dead)
+            {
+                ForwardDamageToCorpse(request);
                 return;
+            }
 
             if (_currentHealth <= 0f)
                 ResetHealth();
@@ -50,7 +62,12 @@ namespace Project_S.Runtime.Gameplay.Enemies
             Debug.Log($"[Enemy] {EnemyName()} took {damage:F1} damage. HP: {_currentHealth:F1}");
 
             if (_currentHealth <= 0f)
+            {
                 Die(request.Source);
+                return;
+            }
+
+            Damaged?.Invoke(this);
         }
 
         private void Die(GameObject source)
@@ -60,6 +77,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
             _dead = true;
             EnsureReferences();
+            CancelPendingAttacks();
 
             if (_lootDropper != null)
                 _lootDropper.DropFor(source, SoulAshReward());
@@ -68,10 +86,13 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
             Died?.Invoke(this);
 
-            if (Application.isPlaying)
-                Destroy(gameObject, DestroyDelayAfterDeath());
-            else
-                DestroyImmediate(gameObject);
+            if (_destroyAfterDeath)
+            {
+                if (Application.isPlaying)
+                    Destroy(gameObject, DestroyDelayAfterDeath());
+                else
+                    DestroyImmediate(gameObject);
+            }
         }
 
         private void ResetHealth()
@@ -85,6 +106,27 @@ namespace Project_S.Runtime.Gameplay.Enemies
         {
             if (_lootDropper == null)
                 _lootDropper = GetComponent<LootDropper>();
+
+            if (_corpseHarvest == null)
+                _corpseHarvest = GetComponent<AnimalCorpseHarvest>();
+        }
+
+        private void ForwardDamageToCorpse(DamageRequest request)
+        {
+            EnsureReferences();
+
+            if (_corpseHarvest != null && _corpseHarvest.IsActive)
+                _corpseHarvest.ReceiveDamage(request);
+        }
+
+        private void CancelPendingAttacks()
+        {
+            var meleeAttack = GetComponent<EnemyMeleeAttack>();
+            if (meleeAttack == null)
+                return;
+
+            meleeAttack.CancelAttack();
+            meleeAttack.enabled = false;
         }
 
         private string EnemyName()

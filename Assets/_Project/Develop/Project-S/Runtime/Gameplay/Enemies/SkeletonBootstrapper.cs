@@ -1,5 +1,8 @@
 using System.Collections;
+using System.Collections.Generic;
+using Project_S.Runtime.Gameplay.Ambient;
 using Project_S.Runtime.Gameplay.Character.Combat;
+using Project_S.Runtime.Gameplay.Character.Inventory;
 using Project_S.Runtime.Gameplay.Character.Player;
 using Project_S.Runtime.Gameplay.Diagnostics;
 using Project_S.Runtime.Gameplay.Loot;
@@ -18,6 +21,10 @@ namespace Project_S.Runtime.Gameplay.Enemies
         private const string SkeletonVisualPath = "Enemies/Skeleton/KBH_Skel";
         private const string SkeletonAnimatorPath = "Enemies/Skeleton/SkeletonAnimator";
         private const string SkeletonDeathAnimationPath = "Enemies/Skeleton/Skeleton_Death";
+        private const string SkeletonIdleAnimationPath = "Enemies/Skeleton/Zombie Idle";
+        private const string SkeletonWalkAnimationPath = "Enemies/Skeleton/Zombie Walk";
+        private const string SkeletonHitReactionAnimationPath = "Enemies/Skeleton/Zombie Reaction Hit";
+        private const string SkeletonAttackAnimationPath = "Enemies/Skeleton/Zombie Punching";
         private const float SkeletonAgentRadius = 0.65f;
         private const float SkeletonAgentHeight = 2.35f;
         private const float SkeletonAgentBaseOffset = 0f;
@@ -25,6 +32,11 @@ namespace Project_S.Runtime.Gameplay.Enemies
         private const float SkeletonRepathInterval = 0.2f;
         private const float SkeletonVisualScale = 9.2f;
         private const float SkeletonDestroyDelayAfterDeath = 60f;
+        private const float SkeletonCorpseHealth = 100f;
+        private const float CorpseHealthPerBaseYield = 20f;
+        private const float CorpseLifetimeSeconds = 300f;
+        private const string BonePath = "Crafting/Items/Resources/Bone";
+        private const string LeatherPath = "Crafting/Items/Resources/Leather";
         private static readonly Vector3 SkeletonHealthBarOffset = new Vector3(0f, 2.6f, 0f);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -80,6 +92,8 @@ namespace Project_S.Runtime.Gameplay.Enemies
             config.RotationSpeed = 540f;
             config.AttackCooldown = 1.8f;
             config.AttackWindup = 0.45f;
+            config.UseAttackClipDamageMoment = true;
+            config.AttackDamageMomentNormalized = 0.38f;
             config.AttackRadius = 0.65f;
             config.HealthDamage = 12f;
             config.PoiseDamage = 8f;
@@ -130,6 +144,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
             lootDropper.Configure(lootTable);
 
             health.Configure(config);
+            health.SetDestroyAfterDeath(false);
             attack.Configure(config);
             mover.Configure(
                 config.MoveSpeed,
@@ -149,8 +164,52 @@ namespace Project_S.Runtime.Gameplay.Enemies
                 health,
                 visual != null ? visual.transform : null,
                 visual != null ? visual.GetComponentInChildren<Animator>() : null,
-                LoadSkeletonDeathClip());
+                LoadSkeletonClip(SkeletonDeathAnimationPath, "Skeleton_Death", "Death"),
+                LoadSkeletonClip(SkeletonIdleAnimationPath, "Zombie Idle", "Idle"),
+                LoadSkeletonClip(SkeletonWalkAnimationPath, "Zombie Walk", "Walk"),
+                LoadSkeletonClip(SkeletonHitReactionAnimationPath, "Zombie Reaction Hit", "Hit reaction"),
+                LoadSkeletonClip(SkeletonAttackAnimationPath, "Zombie Punching1", "Attack"));
+            CreateSkeletonCorpseHarvest(skeleton, health, visual != null ? visual.transform : skeleton.transform);
             worldHealthBar.Configure("Скелет", SkeletonHealthBarOffset);
+        }
+
+        private static void CreateSkeletonCorpseHarvest(GameObject skeleton, EnemyHealth health, Transform poseRoot)
+        {
+            var baseYields = new List<CorpseItemGrant>();
+            var completionDrops = new List<CorpseItemGrant>();
+
+            var bone = NpcStartupDiagnostics.LoadResource<ItemData>("SkeletonCorpse", BonePath);
+            if (bone != null)
+            {
+                baseYields.Add(new CorpseItemGrant
+                {
+                    Item = bone,
+                    Amount = 1
+                });
+            }
+
+            var leather = NpcStartupDiagnostics.LoadResource<ItemData>("SkeletonCorpse", LeatherPath);
+            if (leather != null)
+            {
+                completionDrops.Add(new CorpseItemGrant
+                {
+                    Item = leather,
+                    Amount = 1
+                });
+            }
+
+            var corpse = skeleton.AddComponent<AnimalCorpseHarvest>();
+            corpse.Configure(
+                health,
+                skeleton,
+                poseRoot,
+                SkeletonCorpseHealth,
+                CorpseHealthPerBaseYield,
+                baseYields,
+                completionDrops,
+                0,
+                CorpseLifetimeSeconds,
+                scriptedDeathPose: false);
         }
 
         private static void ConfigureHitbox(GameObject skeleton)
@@ -200,15 +259,15 @@ namespace Project_S.Runtime.Gameplay.Enemies
             animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
         }
 
-        private static AnimationClip LoadSkeletonDeathClip()
+        private static AnimationClip LoadSkeletonClip(string path, string preferredClipName, string label)
         {
-            var clips = NpcStartupDiagnostics.LoadAllResources<AnimationClip>("Skeleton", SkeletonDeathAnimationPath);
+            var clips = NpcStartupDiagnostics.LoadAllResources<AnimationClip>("Skeleton", path);
             foreach (var clip in clips)
             {
                 if (clip == null || clip.name.StartsWith("__preview__"))
                     continue;
 
-                if (clip.name == "Skeleton_Death")
+                if (clip.name == preferredClipName)
                     return clip;
             }
 
@@ -220,7 +279,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
                 return clip;
             }
 
-            Debug.LogWarning($"[Skeleton] Death animation '{SkeletonDeathAnimationPath}' was not found.");
+            Debug.LogWarning($"[Skeleton] {label} animation '{path}' was not found.");
             return null;
         }
 
