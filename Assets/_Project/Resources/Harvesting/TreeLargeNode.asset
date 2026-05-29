@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 24e58db34c6e53c9ce5b4fdaa1bed91e, type: 3}
   m_Name: TreeLargeNode
   m_EditorClassIdentifier: 
-  DisplayName: "Large Tree"
+  DisplayName: Large Tree
   MaxHealth: 800
   BaseYieldItem: {fileID: 11400000, guid: a66c7b8131eafd3450dd8a325ad07a46, type: 2}
   HealthPerBaseYield: 80
@@ -21,6 +21,13 @@ MonoBehaviour:
   MatchingToolDamageMultiplier: 1
   MismatchedToolDamageMultiplier: 1
   MismatchedYieldMultiplier: 0.9
+  CorrectToolSounds:
+  - {fileID: 8300000, guid: 8b92220cc91310b4a991b52f113a77ea, type: 3}
+  WrongToolSounds:
+  - {fileID: 8300000, guid: ec6c1be9a57aa334b8dd393de86062b2, type: 3}
+  HitVFXPrefab: {fileID: 4080515105622610912, guid: 0feba2d50430ac944af09deead322b75,
+    type: 3}
+  DestructionSound: {fileID: 8300000, guid: 734a2caea62970048b53c0db1a7e4b2c, type: 3}
   DamageMultipliers:
   - Type: 3
     Multiplier: 0

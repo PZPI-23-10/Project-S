@@ -46,6 +46,10 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         public float ParryStaminaReward = 20f;
         public float ParryPoiseDamage = 40f;
 
+        [Header("Sounds")]
+        public AudioClip SwingSound;
+        public AudioClip HitSound;
+
         [Header("Harvesting")]
         public HarvestToolType HarvestTool = HarvestToolType.None;
 

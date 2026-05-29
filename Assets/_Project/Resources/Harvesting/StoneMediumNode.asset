@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 24e58db34c6e53c9ce5b4fdaa1bed91e, type: 3}
   m_Name: StoneMediumNode
   m_EditorClassIdentifier: 
-  DisplayName: "Medium Stone"
+  DisplayName: Medium Stone
   MaxHealth: 300
   BaseYieldItem: {fileID: 11400000, guid: 2b27167344e89f6b1257e31646d0c795, type: 2}
   HealthPerBaseYield: 50
@@ -21,6 +21,12 @@ MonoBehaviour:
   MatchingToolDamageMultiplier: 1
   MismatchedToolDamageMultiplier: 1
   MismatchedYieldMultiplier: 0.9
+  CorrectToolSounds:
+  - {fileID: 8300000, guid: 94c8626602d82444d8eac9585b1846b6, type: 3}
+  WrongToolSounds: []
+  HitVFXPrefab: {fileID: 4080515105622610912, guid: feb7cdd7acea129489bb34b50471b8aa,
+    type: 3}
+  DestructionSound: {fileID: 8300000, guid: 6124cc220a44c824380617aa325e945f, type: 3}
   DamageMultipliers:
   - Type: 2
     Multiplier: 0

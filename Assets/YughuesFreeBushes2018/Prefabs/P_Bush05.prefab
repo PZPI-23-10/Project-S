@@ -317,6 +317,7 @@ MonoBehaviour:
   _maxHarvests: 2
   _displayName: Berry Bush
   _interactionActionText: "E - \u041F\u043E\u0434\u043E\u0431\u0440\u0430\u0442\u044C"
+  _harvestSound: {fileID: 8300000, guid: 9cd55edae909aa440a71070f53f8deb7, type: 3}
 --- !u!1 &4119340359363394086
 GameObject:
   m_ObjectHideFlags: 0

@@ -13,6 +13,12 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             _combatController = GetComponentInParent<CombatController>();
         }
 
+        public void PlaySwingSound()
+        {
+            if (_combatController != null)
+                _combatController.AnimEvent_PlaySwingSound();
+        }
+
         public void ExecuteHeavyAbility()
         {
             if (_combatController != null) 

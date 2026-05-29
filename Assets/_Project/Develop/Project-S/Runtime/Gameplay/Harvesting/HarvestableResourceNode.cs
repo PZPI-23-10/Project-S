@@ -23,6 +23,8 @@ namespace Project_S.Runtime.Gameplay.Harvesting
         private float _baseYieldHealth;
         private ResourceWorldHealthBar _healthBar;
 
+        private AudioSource _audioSource;
+
         private readonly Dictionary<ItemData, float> _yieldFractions = new Dictionary<ItemData, float>();
 
         public event Action<HarvestableResourceNode> HealthChanged;
@@ -33,6 +35,7 @@ namespace Project_S.Runtime.Gameplay.Harvesting
         public float MaxHealth => _data != null ? Mathf.Max(1f, _data.MaxHealth) : 1f;
         public float NormalizedHealth => Mathf.Clamp01(_currentHealth / MaxHealth);
         public bool IsDepleted => _depleted;
+
         public void Configure(ResourceNodeData data)
         {
             _data = data;
@@ -44,6 +47,15 @@ namespace Project_S.Runtime.Gameplay.Harvesting
         {
             ResetHealth();
             EnsurePresentation();
+
+            _audioSource = GetComponent<AudioSource>();
+            if (_audioSource == null)
+            {
+                _audioSource = gameObject.AddComponent<AudioSource>();
+                _audioSource.spatialBlend = 1f;
+                _audioSource.minDistance = 2f;
+                _audioSource.maxDistance = 20f;
+            }
         }
 
         private void Update()
@@ -54,6 +66,8 @@ namespace Project_S.Runtime.Gameplay.Harvesting
 
         public void SetHovered(bool isHovered)
         {
+            if (this == null || gameObject == null) return;
+
             if (_healthBar == null)
                 _healthBar = GetComponent<ResourceWorldHealthBar>();
 
@@ -86,8 +100,12 @@ namespace Project_S.Runtime.Gameplay.Harvesting
             _currentHealth = Mathf.Max(0f, _currentHealth - damage);
             float healthRemoved = Mathf.Max(0f, previousHealth - _currentHealth);
             bool matchingTool = IsMatchingTool(request);
+
             GrantBaseYield(healthRemoved, request.Source, YieldMultiplier(matchingTool));
             ShowHitFeedback();
+
+            PlayFeedback(matchingTool, request.Source);
+
             HealthChanged?.Invoke(this);
             Debug.Log($"[Harvesting] {NodeName()} took {damage:F1} harvest damage. HP: {_currentHealth:F1}/{_data.MaxHealth:F1}");
 
@@ -185,11 +203,43 @@ namespace Project_S.Runtime.Gameplay.Harvesting
             HarvestCompleted?.Invoke(this);
             MarkPresentationDepleted();
 
+            if (_data != null && _data.DestructionSound != null)
+            {
+                AudioSource.PlayClipAtPoint(_data.DestructionSound, transform.position, 1f);
+            }
+
             var depletionHandler = GetComponent<IResourceDepletionHandler>();
             if (depletionHandler != null)
                 depletionHandler.HandleResourceDepleted(this);
             else
                 DestroyNode();
+        }
+
+        private void PlayFeedback(bool isCorrectTool, GameObject attacker)
+        {
+            if (_data == null) return;
+
+            AudioClip[] clipsToPlay = isCorrectTool ? _data.CorrectToolSounds : _data.WrongToolSounds;
+
+            if (clipsToPlay != null && clipsToPlay.Length > 0 && _audioSource != null)
+            {
+                AudioClip randomClip = clipsToPlay[UnityEngine.Random.Range(0, clipsToPlay.Length)];
+                _audioSource.pitch = UnityEngine.Random.Range(0.85f, 1.15f);
+                _audioSource.PlayOneShot(randomClip);
+            }
+
+            if (_data.HitVFXPrefab != null)
+            {
+                Vector3 spawnPos = transform.position + Vector3.up * 1f;
+
+                if (attacker != null)
+                {
+                    Vector3 directionToAttacker = (attacker.transform.position - transform.position).normalized;
+                    spawnPos += directionToAttacker * 0.5f;
+                }
+
+                Instantiate(_data.HitVFXPrefab, spawnPos, Quaternion.identity);
+            }
         }
 
         private static SoulAshWallet ResolveWallet(GameObject source, InventoryController inventory)
