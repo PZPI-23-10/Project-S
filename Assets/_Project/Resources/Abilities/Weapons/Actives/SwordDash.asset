@@ -16,7 +16,8 @@ MonoBehaviour:
   dashSpeed: 25
   hitRadius: 1.5
   dashTurnSpeed: 90
-  bigCutEffect: {fileID: 0}
+  bigCutEffect: {fileID: 4914495526166002796, guid: fe2205740225ab04bb07d3c6308b7c8b,
+    type: 3}
   poiseDamage: 30
   dashDamage:
   - Type: 0
