@@ -12,6 +12,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
         ItemStack GetSlot(int index);
         void SetSlot(int index, ItemStack stack);
         int GetItemCount(ItemData item);
+        bool CanStoreItem(ItemData item);
         bool CanAddItem(ItemData item, int amount);
         bool AddItem(ItemData item, int amount);
         bool CanRemoveItem(ItemData item, int amount);

@@ -3,7 +3,9 @@ using System.Reflection;
 using NUnit.Framework;
 using Project_S.Runtime.Gameplay.Character.Inventory;
 using Project_S.Runtime.Gameplay.Crafting;
+using Project_S.Runtime.Gameplay.HUD;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Project_S.Editor.Tests
 {
@@ -119,6 +121,111 @@ namespace Project_S.Editor.Tests
             Assert.That(wallet.Amount, Is.EqualTo(2));
         }
 
+        [Test]
+        public void GeneralStorage_AcceptsAnyItemThroughUniversalInterface()
+        {
+            var sword = CreateItem("Sword", false, 1);
+            sword.Kind = ItemKind.Weapon;
+            var storage = CreateGeneralStorage(2);
+            IItemStorage itemStorage = storage;
+
+            Assert.That(itemStorage.CanStoreItem(sword), Is.True);
+            Assert.That(itemStorage.AddItem(sword, 1), Is.True);
+            Assert.That(itemStorage.GetItemCount(sword), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void BaseResourceStorage_RejectsNonResourceItems()
+        {
+            var sword = CreateItem("Sword", false, 1);
+            sword.Kind = ItemKind.Weapon;
+            var wood = CreateItem("Wood", true, 20);
+            wood.Kind = ItemKind.Resource;
+            var storage = CreateBaseStorage(2);
+            IItemStorage itemStorage = storage;
+
+            Assert.That(itemStorage.CanStoreItem(sword), Is.False);
+            Assert.That(itemStorage.CanStoreItem(wood), Is.True);
+            Assert.That(itemStorage.AddItem(sword, 1), Is.False);
+            Assert.That(itemStorage.AddItem(wood, 3), Is.True);
+        }
+
+        [Test]
+        public void InventoryUI_OpenWithStorage_ShowsInventoryAndContextPanels()
+        {
+            var inventory = CreateInventory(4);
+            var storage = CreateGeneralStorage(4);
+            var uiObject = new GameObject("Inventory UI");
+            _objects.Add(uiObject);
+            var ui = uiObject.AddComponent<InventoryUI>();
+
+            var mainWindow = new GameObject("Main Window");
+            _objects.Add(mainWindow);
+            var inventoryPanel = new GameObject("Inventory Panel");
+            inventoryPanel.transform.SetParent(mainWindow.transform, false);
+            var contextPanel = new GameObject("Context Panel");
+            contextPanel.transform.SetParent(mainWindow.transform, false);
+            var slotsGrid = new GameObject("Slots Grid").transform;
+            slotsGrid.SetParent(inventoryPanel.transform, false);
+            var slotPrefab = CreateSlotPrefab();
+
+            SetPrivateField(ui, "_mainInventoryWindow", mainWindow);
+            SetPrivateField(ui, "_inventoryPanel", inventoryPanel);
+            SetPrivateField(ui, "_contextPanel", contextPanel);
+            SetPrivateField(ui, "_slotsGrid", slotsGrid);
+            SetPrivateField(ui, "_slotPrefab", slotPrefab);
+            SetPrivateField(ui, "_inventory", inventory);
+
+            InvokePrivate(ui, "Start");
+            ui.OpenWithStorage((IItemStorage)storage, storage.transform, inventory.transform, 3f);
+
+            Assert.That(mainWindow.activeSelf, Is.True);
+            Assert.That(inventoryPanel.activeSelf, Is.True);
+            Assert.That(contextPanel.activeSelf, Is.True);
+            Assert.That(ui.IsStorageOpen, Is.True);
+        }
+
+        [Test]
+        public void StoragePanel_TakeAll_MovesFittingItemsIntoInventory()
+        {
+            var wood = CreateItem("Wood", true, 20);
+            var inventory = CreateInventory(1);
+            var storage = CreateGeneralStorage(2);
+            storage.AddItem(wood, 5);
+
+            var panelObject = new GameObject("Storage Panel", typeof(RectTransform));
+            _objects.Add(panelObject);
+            var panel = panelObject.AddComponent<StoragePanelUI>();
+            panel.Initialize(inventory, null, CreateSlotPrefab(), null);
+            panel.SetStorage(storage);
+
+            InvokePrivate(panel, "TakeAll");
+
+            Assert.That(inventory.GetItemCount(wood), Is.EqualTo(5));
+            Assert.That(storage.GetItemCount(wood), Is.EqualTo(0));
+        }
+
+        [Test]
+        public void StoragePanel_TakeAll_MovesPartialStackWhenOnlyPartialFits()
+        {
+            var wood = CreateItem("Wood", true, 10);
+            var inventory = CreateInventory(1);
+            var storage = CreateGeneralStorage(1);
+            inventory.AddItem(wood, 8);
+            storage.AddItem(wood, 5);
+
+            var panelObject = new GameObject("Storage Panel", typeof(RectTransform));
+            _objects.Add(panelObject);
+            var panel = panelObject.AddComponent<StoragePanelUI>();
+            panel.Initialize(inventory, null, CreateSlotPrefab(), null);
+            panel.SetStorage(storage);
+
+            InvokePrivate(panel, "TakeAll");
+
+            Assert.That(inventory.GetItemCount(wood), Is.EqualTo(10));
+            Assert.That(storage.GetItemCount(wood), Is.EqualTo(3));
+        }
+
         private ItemData CreateItem(string itemName, bool stackable, int maxStack)
         {
             var item = ScriptableObject.CreateInstance<ItemData>();
@@ -147,6 +254,31 @@ namespace Project_S.Editor.Tests
             return go.AddComponent<SoulAshWallet>();
         }
 
+        private GeneralItemStorage CreateGeneralStorage(int size)
+        {
+            var go = new GameObject("GeneralStorage");
+            _objects.Add(go);
+            var storage = go.AddComponent<GeneralItemStorage>();
+            SetPrivateField(storage, "_storageSize", size);
+            return storage;
+        }
+
+        private BaseResourceStorage CreateBaseStorage(int size)
+        {
+            var go = new GameObject("BaseStorage");
+            _objects.Add(go);
+            var storage = go.AddComponent<BaseResourceStorage>();
+            SetPrivateField(storage, "_storageSize", size);
+            return storage;
+        }
+
+        private InventorySlotUI CreateSlotPrefab()
+        {
+            var slotObject = new GameObject("Slot Prefab", typeof(RectTransform), typeof(Image));
+            _objects.Add(slotObject);
+            return slotObject.AddComponent<InventorySlotUI>();
+        }
+
         private CraftingRecipeData CreateRecipe(
             ItemData output,
             int outputAmount,
@@ -170,6 +302,20 @@ namespace Project_S.Editor.Tests
             var field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null, $"Field {fieldName} was not found.");
             field.SetValue(target, value);
+        }
+
+        private static void InvokePrivate(object target, string methodName, params object[] args)
+        {
+            var type = target.GetType();
+            MethodInfo method = null;
+            while (type != null && method == null)
+            {
+                method = type.GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
+                type = type.BaseType;
+            }
+
+            Assert.That(method, Is.Not.Null, $"Method {methodName} was not found.");
+            method.Invoke(target, args);
         }
     }
 }

@@ -19,7 +19,7 @@ MonoBehaviour:
   MaxStack: 1
   MaxInventoryStacks: 0
   Icon: {fileID: 0}
-  Description: "\u041E\u043F\u0438\u0441..."
+  Description: Власні руки. Краще, ніж залишитися беззбройним.
   WeaponPrefab: {fileID: 3332889258831034580, guid: 17320fc247f21d84f86c2e6c4819d676,
     type: 3}
   WorldPickupPrefab: {fileID: 0}
@@ -52,10 +52,11 @@ MonoBehaviour:
   HitsToChargeHeavy: 0
   HeavyAbilityData: {fileID: 0}
   HeavyAbilityDuration: 0
-  OffhandAbility: 0
   AbilityCooldown: 8
   BlockMitigation: 0.404
   ParryWindow: 0.25
   ParryStaminaReward: 20
   ParryPoiseDamage: 40
+  SwingSound: {fileID: 8300000, guid: 889d6b010d99b8e4e859124b719f4b7d, type: 3}
+  HitSound: {fileID: 8300000, guid: 8a956034174b31045b446d74358b869c, type: 3}
   HarvestTool: 0

@@ -56,7 +56,7 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
     public class ItemData : ScriptableObject
     {
         [Header("Base")]
-        public string ItemName = "Item";
+        public string ItemName = "Предмет";
         public ItemKind Kind = ItemKind.Resource;
         public float Weight = 1.0f;
 
@@ -68,7 +68,7 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
 
         [Header("UI")]
         public Sprite Icon;
-        [TextArea(3, 5)] public string Description = "Description...";
+        [TextArea(3, 5)] public string Description = "Опис предмета.";
 
         [Header("World")]
         public GameObject WeaponPrefab;

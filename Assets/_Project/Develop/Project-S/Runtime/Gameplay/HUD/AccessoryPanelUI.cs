@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+/*using System.Collections.Generic;
 using Project_S.Runtime.Gameplay.Character.Inventory;
 using TMPro;
 using UnityEngine;
@@ -133,6 +133,92 @@ namespace Project_S.Runtime.Gameplay.HUD
             text.raycastTarget = false;
             rect.gameObject.AddComponent<LayoutElement>().preferredHeight = size + 4f;
             return text;
+        }
+
+        private void OnDestroy()
+        {
+            if (_accessories != null)
+                _accessories.Changed -= Refresh;
+        }
+    }
+}
+*/
+
+using System.Collections.Generic;
+using Project_S.Runtime.Gameplay.Character.Inventory;
+using UnityEngine;
+using UnityEngine.EventSystems;
+
+namespace Project_S.Runtime.Gameplay.HUD
+{
+    public class AccessoryPanelUI : MonoBehaviour
+    {
+        [Header("UI References")]
+        [SerializeField] private Transform _slotRoot; // Сюди ти перетягнеш сітку з Інспектора
+
+        private readonly List<InventorySlotUI> _slotViews = new List<InventorySlotUI>();
+        private AccessorySlotController _accessories;
+        private InventorySlotUI _slotPrefab;
+
+        public void Initialize(AccessorySlotController accessories, InventorySlotUI slotPrefab)
+        {
+            if (_accessories != null)
+                _accessories.Changed -= Refresh;
+
+            _accessories = accessories;
+            _slotPrefab = slotPrefab;
+
+            if (_accessories != null)
+                _accessories.Changed += Refresh;
+
+            Refresh();
+        }
+
+        public void Refresh()
+        {
+            if (_accessories == null || _slotRoot == null)
+                return;
+
+            int size = _accessories.GetSize();
+            EnsureSlotViews(size);
+
+            for (int i = 0; i < _slotViews.Count; i++)
+            {
+                var item = _accessories.GetItemInSlot(i);
+                _slotViews[i].UpdateView(item != null ? new ItemStack(item, 1) : null);
+            }
+        }
+
+        private void OnAccessorySlotClicked(int slotIndex, PointerEventData.InputButton button)
+        {
+            if (button != PointerEventData.InputButton.Left && button != PointerEventData.InputButton.Right)
+                return;
+
+            _accessories?.TryUnequipToInventory(slotIndex);
+            Refresh();
+        }
+
+        private void EnsureSlotViews(int count)
+        {
+            if (_slotRoot == null || _slotPrefab == null)
+                return;
+
+            while (_slotViews.Count < count)
+            {
+                int index = _slotViews.Count;
+                var slot = Instantiate(_slotPrefab, _slotRoot);
+                slot.Init(index, null, OnAccessorySlotClicked);
+                _slotViews.Add(slot);
+            }
+
+            while (_slotViews.Count > count)
+            {
+                int lastIndex = _slotViews.Count - 1;
+                var slot = _slotViews[lastIndex];
+                _slotViews.RemoveAt(lastIndex);
+                if (slot != null)
+                    Destroy(slot.gameObject);
+            }
         }
 
         private void OnDestroy()

@@ -10,7 +10,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
     {
         [SerializeField] private List<CraftingRecipeData> _availableRecipes = new List<CraftingRecipeData>();
 
-        public string InteractionPrompt => "Workbench";
+        public string InteractionPrompt => "Верстак";
         public CraftingContext Context => CraftingContext.Workbench;
         public IReadOnlyList<CraftingRecipeData> AvailableRecipes => _availableRecipes;
 

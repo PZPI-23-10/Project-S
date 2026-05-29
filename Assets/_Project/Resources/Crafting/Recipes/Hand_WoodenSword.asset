@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
   m_Name: Hand_WoodenSword
   m_EditorClassIdentifier: 
-  DisplayName: "Shaped Cudgel"
+  DisplayName: Оброблена палиця
   Context: 0
   Output:
     Item: {fileID: 11400000, guid: 6193baa0e931ca59883551f78901e91e, type: 2}
@@ -24,4 +24,4 @@ MonoBehaviour:
   RequiredItems:
   - Item: {fileID: 11400000, guid: 6e2b35595eb3e7cd5aba380d0ec7942e, type: 2}
     Amount: 1
-  Description: "Requires a stone axe as a non-consumed tool."
+  Description: Обробляє деревину в просту зброю для перших сутичок.

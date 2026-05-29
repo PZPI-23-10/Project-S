@@ -6,8 +6,8 @@ namespace Project_S.Runtime.Gameplay.Crafting
         {
             ConfigureStation(
                 CraftingContext.Anvil,
-                "Anvil",
-                "Forge",
+                "Ковадло",
+                "Викувати",
                 false,
                 null,
                 0f,

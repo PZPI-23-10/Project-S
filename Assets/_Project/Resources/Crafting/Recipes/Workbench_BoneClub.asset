@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
   m_Name: Workbench_BoneClub
   m_EditorClassIdentifier: 
-  DisplayName: "Bone Club"
+  DisplayName: Кістяна палиця
   Context: 1
   Output:
     Item: {fileID: 11400000, guid: 11d5154725ea38cd5456c9a33f463e61, type: 2}
@@ -26,4 +26,4 @@ MonoBehaviour:
     Amount: 1
   SoulAshCost: 30
   RequiredItems: []
-  Description: "One-handed club focused on poise damage."
+  Description: Збирає одноручну палицю, що добре збиває рівновагу ворогів.

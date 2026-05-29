@@ -12,15 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 215432127562c5e46812873892628a75, type: 3}
   m_Name: IronSword
   m_EditorClassIdentifier: 
-  ItemName: Iron Sword
+  ItemName: Залізний меч
   Kind: 1
   Weight: 1.3
   IsStackable: 0
   MaxStack: 1
   MaxInventoryStacks: 0
-  Icon: {fileID: 0}
-  Description: Iron-tier sword. Directional slice active ability is deferred; this
-    MVP uses its weapon stats.
+  Icon: {fileID: 21300000, guid: 77a8365fc41262442b3f09d7b7cd8c0b, type: 3}
+  Description: Надійний меч із заліза для впевненого ближнього бою.
   WeaponPrefab: {fileID: 5613771737888652153, guid: 3a7dd7e385d9bb140bec511aa43272a7,
     type: 3}
   WorldPickupPrefab: {fileID: 0}
@@ -53,10 +52,11 @@ MonoBehaviour:
   HitsToChargeHeavy: 1
   HeavyAbilityData: {fileID: 11400000, guid: 1fe7dcd767a32f0409ad36adff6311af, type: 2}
   HeavyAbilityDuration: 0
-  OffhandAbility: 0
   AbilityCooldown: 8
   BlockMitigation: 0.5
   ParryWindow: 0.3
   ParryStaminaReward: 20
   ParryPoiseDamage: 40
+  SwingSound: {fileID: 8300000, guid: 60865f48dc79e114284fd38c4aff266b, type: 3}
+  HitSound: {fileID: 8300000, guid: ff8a45b8f99ba804c987a679e18cd1e5, type: 3}
   HarvestTool: 0

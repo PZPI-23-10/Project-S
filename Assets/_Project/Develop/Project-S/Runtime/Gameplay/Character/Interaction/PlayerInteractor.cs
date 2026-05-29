@@ -32,15 +32,23 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
 
     public class PlayerInteractor : MonoBehaviour
     {
-        private const string DefaultPickupActionText = "E - Подобрать";
-        private const string DefaultInteractActionText = "E - Взаимодействовать";
+        private const string PickupActionText = "E - Підняти";
+        private const string InteractActionText = "E - Взаємодіяти";
 
         [SerializeField] private float _interactDistance = 2.5f;
         [SerializeField] private InventoryController _inventory;
         [SerializeField] private float _promptWorldYOffset = 0.35f;
         [SerializeField] private float _menuCloseDistanceBuffer = 0.5f;
-        [SerializeField] private string _pickupActionText = DefaultPickupActionText;
-        [SerializeField] private string _interactActionText = DefaultInteractActionText;
+        [SerializeField] private string _pickupActionText = PickupActionText;
+        [SerializeField] private string _interactActionText = InteractActionText;
+
+        // ==========================================
+        // ДОДАНО: Звук підняття предмета
+        // ==========================================
+        [Header("Аудіо")]
+        [SerializeField] private AudioSource _audioSource;
+        [SerializeField] private AudioClip _pickupSound;
+        // ==========================================
 
         private UnityEngine.Camera _cam;
         private SoulAshWallet _soulAshWallet;
@@ -154,7 +162,19 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
             if (_currentHover.Pickup != null)
             {
                 if (_inventory != null)
+                {
                     _currentHover.Pickup.Collect(_inventory);
+
+                    // ==========================================
+                    // ДОДАНО: Граємо звук підняття предмета
+                    // ==========================================
+                    if (_pickupSound != null && _audioSource != null)
+                    {
+                        _audioSource.pitch = Random.Range(0.9f, 1.15f);
+                        _audioSource.PlayOneShot(_pickupSound);
+                    }
+                    // ==========================================
+                }
             }
             else
             {
@@ -205,8 +225,8 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
                 return pickup.InteractionActionText;
 
             return !string.IsNullOrWhiteSpace(_pickupActionText)
-                ? _pickupActionText
-                : DefaultPickupActionText;
+                    ? _pickupActionText
+                    : PickupActionText; // <-- прибрали Default
         }
 
         private string ResolveInteractActionText(IInteractable interactable)
@@ -219,7 +239,7 @@ namespace Project_S.Runtime.Gameplay.Character.Interaction
 
             return !string.IsNullOrWhiteSpace(_interactActionText)
                 ? _interactActionText
-                : DefaultInteractActionText;
+                : InteractActionText; // <-- прибрали Default
         }
 
         private bool ShouldSuppressHover()

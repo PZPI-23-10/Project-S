@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 24e58db34c6e53c9ce5b4fdaa1bed91e, type: 3}
   m_Name: TreeSmallNode
   m_EditorClassIdentifier: 
-  DisplayName: "Small Tree"
+  DisplayName: Small Tree
   MaxHealth: 160
   BaseYieldItem: {fileID: 11400000, guid: a66c7b8131eafd3450dd8a325ad07a46, type: 2}
   HealthPerBaseYield: 80
@@ -21,6 +21,12 @@ MonoBehaviour:
   MatchingToolDamageMultiplier: 1
   MismatchedToolDamageMultiplier: 1
   MismatchedYieldMultiplier: 0.9
+  CorrectToolSounds:
+  - {fileID: 8300000, guid: 8b92220cc91310b4a991b52f113a77ea, type: 3}
+  WrongToolSounds:
+  - {fileID: 8300000, guid: ec6c1be9a57aa334b8dd393de86062b2, type: 3}
+  HitVFXPrefab: {fileID: 0}
+  DestructionSound: {fileID: 0}
   DamageMultipliers:
   - Type: 3
     Multiplier: 0

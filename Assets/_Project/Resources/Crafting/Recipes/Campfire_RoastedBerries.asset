@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
   m_Name: Campfire_RoastedBerries
   m_EditorClassIdentifier: 
-  DisplayName: "Roasted Berries"
+  DisplayName: Печені ягоди
   Context: 2
   Output:
     Item: {fileID: 11400000, guid: 34f9fb84f344be1f67283f8db47182d5, type: 2}
@@ -24,4 +24,4 @@ MonoBehaviour:
   RequiredItems: []
   CraftDurationSeconds: 0
   FuelSecondsCost: 5
-  Description: "Roast berries for a short Soul Ash reward buff. MVP timer is shorter than document balance."
+  Description: Підсмажує ягоди, роблячи їх поживнішими та кориснішими в дорозі.

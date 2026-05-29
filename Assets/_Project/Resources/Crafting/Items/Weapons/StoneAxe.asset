@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 215432127562c5e46812873892628a75, type: 3}
   m_Name: StoneAxe
   m_EditorClassIdentifier: 
-  ItemName: Stone Axe
+  ItemName: Кам'яна сокира
   Kind: 1
   Weight: 2
   IsStackable: 0
   MaxStack: 1
   MaxInventoryStacks: 0
-  Icon: {fileID: 0}
-  Description: Heavy starter axe. Temporary model uses the shared test weapon prefab.
+  Icon: {fileID: 21300000, guid: 1e3fd920b3687fc4d93ab0f6cae06baa, type: 3}
+  Description: Важка початкова сокира для рубання та грубого бою.
   WeaponPrefab: {fileID: 2115912416057973661, guid: 43973c2ee11af2a4ab4059bc0d83e94f,
     type: 3}
   WorldPickupPrefab: {fileID: 0}
@@ -52,10 +52,11 @@ MonoBehaviour:
   HitsToChargeHeavy: 0
   HeavyAbilityData: {fileID: 0}
   HeavyAbilityDuration: 0
-  OffhandAbility: 0
   AbilityCooldown: 8
   BlockMitigation: 0.25
   ParryWindow: 0.16
   ParryStaminaReward: 10
   ParryPoiseDamage: 20
+  SwingSound: {fileID: 8300000, guid: 60865f48dc79e114284fd38c4aff266b, type: 3}
+  HitSound: {fileID: 8300000, guid: 5e4265e1d42e54b4fa0ea1f920703e7f, type: 3}
   HarvestTool: 1

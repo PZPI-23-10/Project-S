@@ -6,8 +6,8 @@ namespace Project_S.Runtime.Gameplay.Crafting
         {
             ConfigureStation(
                 CraftingContext.Furnace,
-                "Furnace",
-                "Smelt",
+                "Піч",
+                "Переплавити",
                 false,
                 null,
                 0f,

@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 215432127562c5e46812873892628a75, type: 3}
   m_Name: FlintKnife
   m_EditorClassIdentifier: 
-  ItemName: Flint Knife
+  ItemName: Крем'яний ніж
   Kind: 1
   Weight: 0.3
   IsStackable: 0
   MaxStack: 1
   MaxInventoryStacks: 0
-  Icon: {fileID: 0}
-  Description: Fast short blade for close range fighting.
+  Icon: {fileID: 21300000, guid: 3d98b8e2463c93a4da4382f22059dc1a, type: 3}
+  Description: Швидке коротке лезо для ближнього бою.
   WeaponPrefab: {fileID: 4616788783821760893, guid: 03a20748421324e4cbb0bca508cf9f4d,
     type: 3}
   WorldPickupPrefab: {fileID: 0}
@@ -52,10 +52,11 @@ MonoBehaviour:
   HitsToChargeHeavy: 0
   HeavyAbilityData: {fileID: 0}
   HeavyAbilityDuration: 0
-  OffhandAbility: 0
   AbilityCooldown: 8
   BlockMitigation: 0.05
   ParryWindow: 0.32
   ParryStaminaReward: 20
   ParryPoiseDamage: 40
+  SwingSound: {fileID: 8300000, guid: 08be760ce24fe5c4cad74485473029e3, type: 3}
+  HitSound: {fileID: 8300000, guid: d7c958160f598d84ba768643e00f55ec, type: 3}
   HarvestTool: 3

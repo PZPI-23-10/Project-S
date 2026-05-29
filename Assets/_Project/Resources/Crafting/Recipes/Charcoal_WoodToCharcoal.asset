@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2588354fe61580db6a209e3eabedb303, type: 3}
   m_Name: Charcoal_WoodToCharcoal
   m_EditorClassIdentifier: 
-  DisplayName: "Charcoal"
+  DisplayName: Деревне вугілля
   Context: 3
   Output:
     Item: {fileID: 11400000, guid: e051c567f10311b55281039b5c28077a, type: 2}
@@ -24,4 +24,4 @@ MonoBehaviour:
   RequiredItems: []
   CraftDurationSeconds: 0
   FuelSecondsCost: 0
-  Description: "MVP station recipe with shortened timer."
+  Description: Випалює деревину у вугілля для печей і кузні.

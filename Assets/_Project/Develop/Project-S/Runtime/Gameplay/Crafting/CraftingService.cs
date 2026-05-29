@@ -11,7 +11,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
         public IReadOnlyList<string> Problems => _problems;
         public bool CanCraft => _problems.Count == 0;
-        public string Message => CanCraft ? "Ready" : string.Join("\n", _problems);
+        public string Message => CanCraft ? "Готово" : string.Join("\n", _problems);
 
         public void AddProblem(string problem)
         {
@@ -39,30 +39,30 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             if (_inventory == null)
             {
-                check.AddProblem("Inventory is missing.");
+                check.AddProblem("Інвентар відсутній.");
                 return check;
             }
 
             if (_wallet == null)
             {
-                check.AddProblem("Soul Ash wallet is missing.");
+                check.AddProblem("Сховище попелу душ відсутнє.");
                 return check;
             }
 
             if (recipe == null)
             {
-                check.AddProblem("Recipe is missing.");
+                check.AddProblem("Рецепт відсутній.");
                 return check;
             }
 
             if (recipe.Output == null || recipe.Output.Item == null || recipe.Output.Amount <= 0)
-                check.AddProblem("Recipe output is not configured.");
+                check.AddProblem("Результат рецепта не налаштовано.");
 
             CheckAmounts(recipe.Ingredients, false, check);
             CheckAmounts(recipe.RequiredItems, true, check);
 
             if (recipe.SoulAshCost > 0 && GetSoulAshCount() < recipe.SoulAshCost)
-                check.AddProblem($"Need {recipe.SoulAshCost - GetSoulAshCount()} more Soul Ash.");
+                check.AddProblem($"Потрібно ще {recipe.SoulAshCost - GetSoulAshCount()} попелу душ.");
 
             var validIngredients = (recipe.Ingredients ?? Enumerable.Empty<CraftingItemAmount>())
                 .Where(IsValidAmount)
@@ -77,7 +77,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
                     .ToList();
 
                 if (!_inventory.CanAddItemAfterRemoving(recipe.Output.Item, recipe.Output.Amount, removals))
-                    check.AddProblem("Not enough inventory space for the crafted item.");
+                    check.AddProblem("В інвентарі бракує місця для створеного предмета.");
             }
 
             return check;
@@ -90,7 +90,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             if (!_inventory.AddItem(recipe.Output.Item, recipe.Output.Amount))
             {
-                check.AddProblem("Inventory changed before output could be added.");
+                check.AddProblem("Інвентар змінився до додавання результату.");
                 return false;
             }
 
@@ -107,14 +107,14 @@ namespace Project_S.Runtime.Gameplay.Crafting
             {
                 if (!TryRemoveItem(ingredient.Item, ingredient.Amount))
                 {
-                    check.AddProblem("Inventory changed before crafting completed.");
+                    check.AddProblem("Інвентар змінився до завершення створення.");
                     return false;
                 }
             }
 
             if (!TrySpendSoulAsh(recipe.SoulAshCost))
             {
-                check.AddProblem("Soul Ash changed before crafting completed.");
+                check.AddProblem("Кількість попелу душ змінилася до завершення створення.");
                 return false;
             }
 
@@ -140,14 +140,14 @@ namespace Project_S.Runtime.Gameplay.Crafting
             {
                 if (!IsValidAmount(amount))
                 {
-                    check.AddProblem(nonConsumed ? "A requirement is not configured." : "An ingredient is not configured.");
+                    check.AddProblem(nonConsumed ? "Вимогу не налаштовано." : "Інгредієнт не налаштовано.");
                     continue;
                 }
 
                 int owned = GetItemCount(amount.Item);
                 if (owned < amount.Amount)
                 {
-                    string verb = nonConsumed ? "Requires" : "Need";
+                    string verb = nonConsumed ? "Потрібно" : "Не вистачає";
                     check.AddProblem($"{verb} {amount.Item.ItemName} x{amount.Amount - owned}.");
                 }
             }

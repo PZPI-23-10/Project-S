@@ -8,6 +8,7 @@ using Project_S.Runtime.Gameplay.Crafting;
 using Project_S.Runtime.Gameplay.Harvesting;
 using Project_S.Runtime.Gameplay.HUD;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Project_S.Editor.Tests
 {
@@ -116,6 +117,93 @@ namespace Project_S.Editor.Tests
             Assert.That(hoverInfo.Title, Is.EqualTo("Wood x3"));
             Assert.That(hoverInfo.ActionText, Is.EqualTo("E - Поднять"));
             Assert.That(hoverInfo.Pickup, Is.EqualTo(pickup));
+        }
+
+        [Test]
+        public void InventoryAddItemRaisesItemAddedEvent()
+        {
+            var inventoryObject = new GameObject("Inventory");
+            _objects.Add(inventoryObject);
+            var inventory = inventoryObject.AddComponent<InventoryController>();
+            SetPrivateField(inventory, "_inventorySize", 2);
+
+            var item = ScriptableObject.CreateInstance<ItemData>();
+            _objects.Add(item);
+            item.ItemName = "Wood";
+            item.IsStackable = true;
+            item.MaxStack = 20;
+
+            ItemData addedItem = null;
+            int addedAmount = 0;
+            inventory.OnItemAdded += (eventItem, eventAmount) =>
+            {
+                addedItem = eventItem;
+                addedAmount = eventAmount;
+            };
+
+            Assert.That(inventory.AddItem(item, 3), Is.True);
+            Assert.That(addedItem, Is.EqualTo(item));
+            Assert.That(addedAmount, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void InventoryAddItemDoesNotRaiseItemAddedEventWhenFull()
+        {
+            var inventoryObject = new GameObject("Inventory");
+            _objects.Add(inventoryObject);
+            var inventory = inventoryObject.AddComponent<InventoryController>();
+            SetPrivateField(inventory, "_inventorySize", 1);
+
+            var blocker = ScriptableObject.CreateInstance<ItemData>();
+            _objects.Add(blocker);
+            blocker.ItemName = "Blocker";
+            blocker.IsStackable = false;
+
+            var rejected = ScriptableObject.CreateInstance<ItemData>();
+            _objects.Add(rejected);
+            rejected.ItemName = "Rejected";
+            rejected.IsStackable = false;
+
+            Assert.That(inventory.AddItem(blocker, 1), Is.True);
+
+            int eventCount = 0;
+            inventory.OnItemAdded += (_, _) => eventCount++;
+
+            Assert.That(inventory.AddItem(rejected, 1), Is.False);
+            Assert.That(eventCount, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void InventoryNotificationCreatesRightAnchoredRowWithIconNameAndAmount()
+        {
+            var canvasObject = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler),
+                typeof(GraphicRaycaster));
+            _objects.Add(canvasObject);
+            var canvas = canvasObject.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+
+            var item = ScriptableObject.CreateInstance<ItemData>();
+            _objects.Add(item);
+            item.ItemName = "Wood";
+            item.Icon = CreateTestSprite();
+
+            var notificationUI = InventoryItemNotificationUI.GetOrCreate(canvas);
+            notificationUI.ShowItemAdded(item, 4);
+
+            var container = notificationUI.transform.Find("ItemNotificationsContainer") as RectTransform;
+            Assert.That(container, Is.Not.Null);
+            Assert.That(container.anchorMin, Is.EqualTo(new Vector2(1f, 1f)));
+            Assert.That(container.anchorMax, Is.EqualTo(new Vector2(1f, 1f)));
+            Assert.That(container.childCount, Is.EqualTo(1));
+
+            var row = container.GetChild(0);
+            var texts = row.GetComponentsInChildren<TMPro.TMP_Text>(true);
+            Assert.That(ContainsText(texts, "Wood"), Is.True);
+            Assert.That(ContainsText(texts, "x4"), Is.True);
+
+            var icon = row.Find("Icon");
+            Assert.That(icon, Is.Not.Null);
+            Assert.That(icon.GetComponent<Image>().sprite, Is.EqualTo(item.Icon));
         }
 
         [Test]
@@ -256,6 +344,26 @@ namespace Project_S.Editor.Tests
 
             Assert.That(method, Is.Not.Null, $"Method {methodName} was not found.");
             method.Invoke(target, args);
+        }
+
+        private Sprite CreateTestSprite()
+        {
+            var texture = new Texture2D(2, 2);
+            var sprite = Sprite.Create(texture, new Rect(0f, 0f, 2f, 2f), new Vector2(0.5f, 0.5f));
+            _objects.Add(sprite);
+            _objects.Add(texture);
+            return sprite;
+        }
+
+        private static bool ContainsText(TMPro.TMP_Text[] texts, string expected)
+        {
+            foreach (var text in texts)
+            {
+                if (text != null && text.text == expected)
+                    return true;
+            }
+
+            return false;
         }
 
         private class TestInteractable : MonoBehaviour, IInteractable

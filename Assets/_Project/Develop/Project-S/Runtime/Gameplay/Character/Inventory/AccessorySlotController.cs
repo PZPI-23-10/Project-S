@@ -8,7 +8,7 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
     [Serializable]
     public class AccessorySlot
     {
-        public string DisplayName = "Ring";
+        public string DisplayName = "Перстень";
         public AccessorySlotType SlotType = AccessorySlotType.Ring;
         public AccessoryItemData Item;
     }
@@ -19,8 +19,8 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
         [SerializeField] private CharacterStats _stats;
         [SerializeField] private AccessorySlot[] _slots =
         {
-            new AccessorySlot { DisplayName = "Ring L", SlotType = AccessorySlotType.Ring },
-            new AccessorySlot { DisplayName = "Ring R", SlotType = AccessorySlotType.Ring }
+            new AccessorySlot { DisplayName = "Лівий перстень", SlotType = AccessorySlotType.Ring },
+            new AccessorySlot { DisplayName = "Правий перстень", SlotType = AccessorySlotType.Ring }
         };
 
         public event Action Changed;
@@ -168,8 +168,8 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
 
             _slots = new[]
             {
-                new AccessorySlot { DisplayName = "Ring L", SlotType = AccessorySlotType.Ring },
-                new AccessorySlot { DisplayName = "Ring R", SlotType = AccessorySlotType.Ring }
+                new AccessorySlot { DisplayName = "Лівий перстень", SlotType = AccessorySlotType.Ring },
+                new AccessorySlot { DisplayName = "Правий перстень", SlotType = AccessorySlotType.Ring }
             };
         }
     }

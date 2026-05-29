@@ -46,6 +46,12 @@ namespace Project_S.Runtime.Gameplay.Harvesting
         [Min(0f)] public float MismatchedToolDamageMultiplier = 1f;
         [Range(0f, 1f)] public float MismatchedYieldMultiplier = 0.9f;
 
+        [Header("Audio & VFX")]
+        public AudioClip[] CorrectToolSounds; 
+        public AudioClip[] WrongToolSounds;  
+        public GameObject HitVFXPrefab;      
+        public AudioClip DestructionSound;    
+
         [Header("Resistances")]
         public List<ResourceDamageMultiplier> DamageMultipliers = new List<ResourceDamageMultiplier>();
 

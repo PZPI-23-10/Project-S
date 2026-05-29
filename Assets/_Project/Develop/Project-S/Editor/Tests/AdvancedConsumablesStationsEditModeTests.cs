@@ -103,6 +103,40 @@ namespace Project_S.Editor.Tests
         }
 
         [Test]
+        public void TimedStation_EmptyRecipeList_AllowsMatchingContextRecipe()
+        {
+            var raw = CreateItem("Raw", true, 10, ItemKind.Resource);
+            var output = CreateItem("Output", true, 10, ItemKind.Resource);
+            CreatePlayer(2, out var inventory, out var wallet, out _, out _);
+            var station = CreateStation(CraftingContext.CharcoalPit, "Charcoal Pit", "Burn", false, null, 0f, 0f);
+            var recipe = CreateRecipe(CraftingContext.CharcoalPit, output, 1, new[] { new CraftingItemAmount(raw, 1) }, 0, 0f, 0f);
+
+            inventory.AddItem(raw, 1);
+
+            Assert.That(station.AllowsRecipe(recipe), Is.True);
+            Assert.That(station.TryStartRecipe(recipe, inventory, wallet, out var check), Is.True, check.Message);
+            Assert.That(inventory.GetItemCount(output), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void TimedStation_ConfiguredRecipeList_RejectsUnlistedMatchingContextRecipe()
+        {
+            var output = CreateItem("Output", true, 10, ItemKind.Resource);
+            var listedOutput = CreateItem("Listed Output", true, 10, ItemKind.Resource);
+            CreatePlayer(2, out var inventory, out var wallet, out _, out _);
+            var station = CreateStation(CraftingContext.CharcoalPit, "Charcoal Pit", "Burn", false, null, 0f, 0f);
+            var unlistedRecipe = CreateRecipe(CraftingContext.CharcoalPit, output, 1, new CraftingItemAmount[0], 0, 0f, 0f);
+            var listedRecipe = CreateRecipe(CraftingContext.CharcoalPit, listedOutput, 1, new CraftingItemAmount[0], 0, 0f, 0f);
+
+            station.ConfigureRecipes(new[] { listedRecipe });
+
+            Assert.That(station.AllowsRecipe(unlistedRecipe), Is.False);
+            Assert.That(station.TryStartRecipe(unlistedRecipe, inventory, wallet, out var check), Is.False);
+            Assert.That(check.Message, Does.Contain("РЅРµРґРѕСЃС‚СѓРїРЅРёР№"));
+            Assert.That(inventory.GetItemCount(output), Is.EqualTo(0));
+        }
+
+        [Test]
         public void MaxInventoryStacks_BlocksSecondLightningGreaseStack()
         {
             var grease = CreateItem("Lightning Grease", true, 10, ItemKind.Consumable);
