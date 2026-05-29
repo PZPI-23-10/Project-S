@@ -27,6 +27,9 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         [SerializeField] private AudioSource _audioSource;
         [SerializeField] private AudioClip _defaultEquipSound;
 
+        // ƒÓ‰‡ÌÓ ÔÓÒËÎ‡ÌÌˇ Ì‡ PoiseController
+        private PoiseController _poiseController;
+
         [Header("¬≥ÁÛ‡Î (œ‡‚‡ ÛÍ‡)")]
         [SerializeField] private Transform _weaponHolder;
         private GameObject _currentWeaponModel;
@@ -54,10 +57,6 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         public WeaponItemData CurrentWeapon => ActiveWeapon;
         public CombatState CurrentState { get; private set; } = CombatState.Idle;
 
-        // ==========================================
-        // Õ¿ÿ¿ ≤ƒ≈¿À‹Õ¿ —»—“≈Ã¿  ŒÃ¡Œ ¡≈« “¿…Ã≈–≤¬
-        // ==========================================
-
         private bool _isComboWindowOpen = false;
         private bool _nextAttackBuffered = false;
         private bool _isTransitioningToNextCombo = false;
@@ -67,8 +66,23 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         private int _currentHeavyCharge = 0;
         private float _lastAbilityTime = 0f;
 
+        private void Start()
+        {
+            _poiseController = GetComponent<PoiseController>();
+        }
+
         public void Tick(PlayerInputSnapshot input)
         {
+            if (_poiseController != null && _poiseController.IsBroken)
+            {
+                if (CurrentState == CombatState.Blocking)
+                {
+                    StopBlocking();
+                }
+
+                return;
+            }
+
             if (CurrentState == CombatState.Staggered) return;
             if (ActiveWeapon == null) return;
 
@@ -217,9 +231,6 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             }
         }
 
-        // ==========================================
-        //  œŒ¬≈–Õ”“≤ Ã≈“Œƒ» (¡ÀŒ , ”–ŒÕ, ÃÕŒ∆Õ» )
-        // ==========================================
         public void AddChargeOnHit()
         {
             if (CurrentState == CombatState.HeavySkill)
