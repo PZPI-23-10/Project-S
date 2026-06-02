@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1824800491907207630}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: GLTF_SceneRootNode
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -42,7 +42,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 14303817580463094}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: root
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -74,9 +74,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1309077052040838562}
-  - component: {fileID: -2483367677312875324}
   - component: {fileID: -2253897806173091050}
-  m_Layer: 0
+  - component: {fileID: -2483367677312875324}
+  - component: {fileID: 2747789560362158285}
+  m_Layer: 9
   m_Name: blackAmber (c - tamminen)_Pickup
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -99,6 +100,22 @@ Transform:
   - {fileID: 14303817580463094}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &-2253897806173091050
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6212970156880914942}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a7c3a5df266c8f4a9022088b518746b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Item: {fileID: 11400000, guid: 02b7080157078c848857cba96908cdf9, type: 2}
+  Amount: 1
+  _interactionActionText: "E - \u041F\u043E\u0434\u043E\u0431\u0440\u0430\u0442\u044C"
+  _iconRenderer: {fileID: 0}
 --- !u!65 &-2483367677312875324
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -118,23 +135,35 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &-2253897806173091050
-MonoBehaviour:
+  m_Size: {x: 0.25610352, y: 0.23919678, z: 0.24206543}
+  m_Center: {x: -0.0025634766, y: -0.0049471, z: 0.003395155}
+--- !u!54 &2747789560362158285
+Rigidbody:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6212970156880914942}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5a7c3a5df266c8f4a9022088b518746b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Item: {fileID: 11400000, guid: 02b7080157078c848857cba96908cdf9, type: 2}
-  Amount: 1
-  _interactionActionText: "E - \u041F\u043E\u0434\u043E\u0431\u0440\u0430\u0442\u044C"
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 1
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &6764022917462524139
 GameObject:
   m_ObjectHideFlags: 0
@@ -144,7 +173,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5524399191104167174}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: outer_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -178,7 +207,7 @@ GameObject:
   - component: {fileID: 7810058741919061932}
   - component: {fileID: 4021026865286331412}
   - component: {fileID: 5372899456420911391}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Object_6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -259,7 +288,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1134304379101602762}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: inner_0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -293,7 +322,7 @@ GameObject:
   - component: {fileID: 229072237619215200}
   - component: {fileID: 2969909481640351873}
   - component: {fileID: 6477126007275833070}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Object_4
   m_TagString: Untagged
   m_Icon: {fileID: 0}

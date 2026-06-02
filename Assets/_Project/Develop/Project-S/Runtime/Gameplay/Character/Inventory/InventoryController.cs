@@ -282,6 +282,24 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
                 }
             }
 
+            // =========================================================================
+            // ВИПРАВЛЕНО ТУТ: Тепер передаємо ЗВУКИ зілля/змазки у CombatController
+            // =========================================================================
+            if (item.WeaponCoatingVFX != null)
+            {
+                var combatController = GetComponent<CombatController>();
+                if (combatController != null)
+                {
+                    float duration = item.TimedBuffDurationSeconds > 0f ? item.TimedBuffDurationSeconds : 30f;
+
+                    // Передаємо 4 параметри: Префаб, Час, Звук маху, Звук удару
+                    combatController.ApplyWeaponCoating(item.WeaponCoatingVFX, duration, item.CoatingSwingSound, item.CoatingHitSound);
+
+                    applied = true;
+                }
+            }
+            // =========================================================================
+
             if (item.DamageConversions != null)
             {
                 foreach (var conversion in item.DamageConversions)

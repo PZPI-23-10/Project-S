@@ -82,6 +82,14 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
         public ConsumableSpecialEffectType SpecialEffect;
         public float SpecialEffectDelaySeconds;
 
+        [Header("Sound consumable")]
+        public AudioClip ConsumeSound;
+
+        [Header("Visual Grease(-)")]
+        public GameObject WeaponCoatingVFX;
+        public AudioClip CoatingSwingSound;
+        public AudioClip CoatingHitSound;
+
         [Header("Consumable Effects")]
         public List<ConsumableStatEffect> StatEffects = new List<ConsumableStatEffect>();
         public List<ConsumableTimedBuffEffect> TimedBuffs = new List<ConsumableTimedBuffEffect>();

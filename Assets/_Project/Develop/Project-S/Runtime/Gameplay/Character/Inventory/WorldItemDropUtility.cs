@@ -35,15 +35,25 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
             Vector3 position = origin + new Vector3(offset.x, 0.45f, offset.y);
 
             GameObject pickupObject;
+
             if (item.WorldPickupPrefab != null)
             {
                 pickupObject = Object.Instantiate(item.WorldPickupPrefab, position, Quaternion.identity);
             }
             else
             {
-                pickupObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                pickupObject.transform.position = position;
-                pickupObject.transform.localScale = Vector3.one * 0.35f;
+                GameObject defaultPrefab = Resources.Load<GameObject>("DefaultItemDrop");
+
+                if (defaultPrefab != null)
+                {
+                    pickupObject = Object.Instantiate(defaultPrefab, position, Quaternion.identity);
+                }
+                else
+                {
+                    pickupObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    pickupObject.transform.position = position;
+                    pickupObject.transform.localScale = Vector3.one * 0.35f;
+                }
             }
 
             pickupObject.name = amount > 1

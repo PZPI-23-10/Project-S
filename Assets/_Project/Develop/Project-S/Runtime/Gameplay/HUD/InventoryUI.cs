@@ -834,14 +834,12 @@ namespace Project_S.Runtime.Gameplay.HUD
 
         private void DropDraggedStackToWorld()
         {
-            if (_draggedStack == null || _draggedStack.Item.WorldPickupPrefab == null) return;
+            if (_draggedStack == null || _draggedStack.Item == null) return;
 
             Transform p = _inventory.transform;
             Vector3 pos = p.position + p.forward * 1.5f + Vector3.up * 0.5f;
 
-            GameObject dropped = Instantiate(_draggedStack.Item.WorldPickupPrefab, pos, Quaternion.identity);
-            if (dropped.TryGetComponent(out ItemPickup pickup))
-                pickup.Amount = _draggedStack.Amount;
+            WorldItemDropUtility.SpawnPickup(_draggedStack.Item, _draggedStack.Amount, pos, 0.5f);
 
             ClearDraggedItem();
         }

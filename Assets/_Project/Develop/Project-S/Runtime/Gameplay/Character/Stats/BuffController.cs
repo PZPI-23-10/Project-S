@@ -146,6 +146,18 @@ namespace Project_S.Runtime.Gameplay.Character.Stats
             RemoveExpired();
         }
 
+        public void ClearWeaponBuffs()
+        {
+            int removed = _activeBuffs.RemoveAll(x => x.Category == TimedBuffCategory.Weapon);
+            removed += _activeDamageConversions.RemoveAll(x => x.Category == TimedBuffCategory.Weapon);
+
+            if (removed > 0)
+            {
+                Changed?.Invoke();
+                Debug.Log("<color=orange>[BuffController]</color> Всі бафи зброї очищено!");
+            }
+        }
+
         private void Update()
         {
             RemoveExpired();

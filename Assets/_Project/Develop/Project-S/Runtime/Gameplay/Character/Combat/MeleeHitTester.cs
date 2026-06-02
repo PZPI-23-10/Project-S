@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Project_S.Runtime.Gameplay.Character.Stats;
 using UnityEngine;
-using Project_S.Runtime.Gameplay.Harvesting; // ДОДАНО: Щоб гра відрізняла ворогів від дерев
+using Project_S.Runtime.Gameplay.Harvesting;
 
 namespace Project_S.Runtime.Gameplay.Character.Combat
 {
@@ -83,7 +83,6 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 return;
 
             _alreadyDamagedEnemies.Add(receiver);
-
             _alreadyHit.Add(other);
 
             var currentDamageProfile = new List<DamageInstance>(_weaponData.DamageProfile);
@@ -95,18 +94,14 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
             var combatController = _attacker.GetComponent<CombatController>();
 
-            // --- Читаємо пасивки прямо з WeaponItemData (ScriptableObject) ---
             if (_weaponData.Passives != null)
             {
                 foreach (var passive in _weaponData.Passives)
                 {
                     if (passive != null)
-                    {
                         passive.OnBeforeHit(combatController, other, ref currentPoiseDamage, ref currentDamageProfile);
-                    }
                 }
             }
-            // --------------------------------------------------------------------------
 
             var request = new DamageRequest(
                             _attacker,
@@ -117,47 +112,53 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             receiver.ReceiveDamage(request);
 
             // ==============================================================
-            // ДОДАНО: ЗВУК ВЛУЧАННЯ ПО ВОРОГУ (З ЛОГАМИ ДЛЯ ПЕРЕВІРКИ)
+            // СПАВН КРОВІ / ІСКОР ТА ЗВУК ПОВЕРХНІ
             // ==============================================================
-            if (!(receiver is HarvestableResourceNode))
+            HitSurface surface = other.GetComponentInParent<HitSurface>();
+            if (surface != null)
             {
-                if (_weaponData.HitSound != null)
+                // Спавн візуалу (кров/деревина/іскри)
+                if (surface.HitVFXPrefab != null)
                 {
-                    Debug.Log("<color=lime>[ЗВУК ХІТА]</color> Влучили по ворогу! Граємо звук.");
-
-                    if (combatController != null)
-                    {
-                        AudioSource playerAudio = combatController.GetComponent<AudioSource>();
-                        if (playerAudio != null)
-                        {
-                            playerAudio.pitch = Random.Range(0.85f, 1.15f);
-                            playerAudio.PlayOneShot(_weaponData.HitSound);
-                        }
-                    }
+                    Vector3 hitPoint = other.ClosestPoint(transform.position);
+                    GameObject vfx = Instantiate(surface.HitVFXPrefab, hitPoint, Quaternion.LookRotation(_attacker.transform.forward));
+                    Destroy(vfx, 2f);
                 }
-                else
+
+                // Звук удару по конкретній поверхні
+                if (surface.SurfaceHitSound != null && combatController != null)
                 {
-                    Debug.LogWarning($"<color=yellow>[ЗВУК ХІТА]</color> Увага! Ми вдарили ворога, але в дата-файлі зброї {_weaponData.name} порожнє поле Hit Sound!");
+                    combatController.PlayHitSound(surface.SurfaceHitSound);
                 }
             }
-            else
+            // Якщо на об'єкті немає скрипта HitSurface, але це живий ворог - граємо дефолтний звук зброї
+            else if (!(receiver is HarvestableResourceNode))
             {
-                Debug.Log("<color=grey>[ЗВУК ХІТА]</color> Вдарили дерево/камінь. Звук зброї ігноруємо.");
+                if (_weaponData.HitSound != null && combatController != null)
+                {
+                    combatController.PlayHitSound(_weaponData.HitSound);
+                }
+            }
+
+            // ==============================================================
+            // ДОДАТКОВИЙ ЗВУК ВІД ЗМАЗКИ (Електричний удар)
+            // ==============================================================
+            if (combatController != null && combatController.ActiveCoatingHitSound != null)
+            {
+                combatController.PlayHitSound(combatController.ActiveCoatingHitSound);
             }
             // ==============================================================
 
-            // --- Читаємо пасивки після удару з WeaponItemData ---
+
+            // --- Читаємо пасивки після удару ---
             if (_weaponData.Passives != null)
             {
                 foreach (var passive in _weaponData.Passives)
                 {
                     if (passive != null)
-                    {
                         passive.OnAfterHit(combatController, other, receiver);
-                    }
                 }
             }
-            // -------------------------------------------------------------
 
             if (combatController != null)
             {
@@ -165,6 +166,9 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 {
                     combatController.AddChargeOnHit();
                 }
+
+                // ЗУПИНКА ЧАСУ
+                combatController.TriggerHitImpact();
             }
         }
 

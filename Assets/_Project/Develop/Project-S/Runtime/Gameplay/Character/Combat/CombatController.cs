@@ -1,6 +1,8 @@
+using System.Collections; 
 using UnityEngine;
 using Project_S.Runtime.Gameplay.Character.Input;
 using Project_S.Runtime.Gameplay.Character.Stats;
+using Project_S.Runtime.Gameplay.Character.Camera;
 
 namespace Project_S.Runtime.Gameplay.Character.Combat
 {
@@ -27,7 +29,6 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         [SerializeField] private AudioSource _audioSource;
         [SerializeField] private AudioClip _defaultEquipSound;
 
-        // Додано посилання на PoiseController
         private PoiseController _poiseController;
 
         [Header("Візуал (Права рука)")]
@@ -66,9 +67,24 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         private int _currentHeavyCharge = 0;
         private float _lastAbilityTime = 0f;
 
+        private GameObject _activeWeaponVFX;
+        public AudioClip ActiveCoatingSwingSound { get; private set; }
+        public AudioClip ActiveCoatingHitSound { get; private set; }
+
+        private Coroutine _drawWeaponCoroutine;
+        private Coroutine _hitStopCoroutine;
+
         private void Start()
         {
             _poiseController = GetComponent<PoiseController>();
+        }
+
+        // ==========================================
+        // ФІКС: Запобіжник, щоб час ніколи не залишався зупиненим назавжди!
+        // ==========================================
+        private void OnDisable()
+        {
+            Time.timeScale = 1f;
         }
 
         public void Tick(PlayerInputSnapshot input)
@@ -79,7 +95,6 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 {
                     StopBlocking();
                 }
-
                 return;
             }
 
@@ -107,7 +122,6 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 if (customWeapon != null)
                 {
                     bool inputHandled = customWeapon.ProcessCustomInput(input, _weaponAnimator, this);
-
                     if (inputHandled) return;
                 }
             }
@@ -115,7 +129,6 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             if (input.BlockHeld && CurrentState == CombatState.Idle && !_isOffhandActive) StartBlocking();
             else if (!input.BlockHeld && CurrentState == CombatState.Blocking) StopBlocking();
 
-            // Логіка буферизації ударів
             if (input.LightAttackHeld || input.LightAttackPressed)
             {
                 if (CurrentState == CombatState.Idle)
@@ -205,6 +218,25 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
         public void EquipWeapon(WeaponItemData newWeapon)
         {
+            RemoveWeaponCoating();
+
+            var buffController = GetComponent<BuffController>();
+            if (buffController != null)
+            {
+                buffController.ClearWeaponBuffs();
+            }
+
+            if (_currentWeapon == newWeapon && _currentWeaponModel != null)
+            {
+                return;
+            }
+
+            if (_drawWeaponCoroutine != null)
+            {
+                StopCoroutine(_drawWeaponCoroutine);
+                _drawWeaponCoroutine = null;
+            }
+
             if (_currentWeaponModel != null) Destroy(_currentWeaponModel);
 
             WeaponItemData weaponToEquip = newWeapon != null ? newWeapon : _unarmedWeapon;
@@ -217,17 +249,82 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 _currentWeaponModel = Instantiate(weaponToEquip.WeaponPrefab, _weaponHolder);
                 if (_currentWeaponModel != null) _weaponAnimator = _currentWeaponModel.GetComponent<Animator>();
 
-                _currentWeaponModel.transform.localPosition = Vector3.zero;
-                _currentWeaponModel.transform.localRotation = Quaternion.identity;
-
                 _currentHitTester = _currentWeaponModel.GetComponentInChildren<MeleeHitTester>();
                 if (_currentHitTester != null) _currentHitTester.Setup(weaponToEquip, gameObject);
+
+                _drawWeaponCoroutine = StartCoroutine(DrawWeaponRoutine(_currentWeaponModel.transform));
             }
 
             if (_defaultEquipSound != null && _audioSource != null)
             {
                 _audioSource.pitch = UnityEngine.Random.Range(0.9f, 1.15f);
                 _audioSource.PlayOneShot(_defaultEquipSound);
+            }
+        }
+
+        // ==========================================
+        // ФІКС: БЕЗПЕЧНА ЗУПИНКА ЧАСУ ТУТ (Щоб гра більше не лагала)
+        // ==========================================
+        public void TriggerHitImpact()
+        {
+            if (_hitStopCoroutine != null) StopCoroutine(_hitStopCoroutine);
+            _hitStopCoroutine = StartCoroutine(HitImpactRoutine());
+        }
+
+        private IEnumerator HitImpactRoutine()
+        {
+            Time.timeScale = 0.05f; // Уповільнюємо час
+
+            if (UnityEngine.Camera.main != null)
+            {
+                CameraJuice camJuice = UnityEngine.Camera.main.GetComponent<CameraJuice>();
+                if (camJuice != null) camJuice.PlayImpactShake(0.1f, 0.02f);
+            }
+
+            // Чекаємо в РЕАЛЬНОМУ часі, щоб не застрягти назавжди
+            yield return new WaitForSecondsRealtime(0.04f);
+            Time.timeScale = 1f; // Повертаємо час у норму
+        }
+        // ==========================================
+
+        private IEnumerator DrawWeaponRoutine(Transform weaponTransform)
+        {
+            float duration = 0.25f; // Швидкість діставання зброї (0.25 сек)
+            float elapsed = 0f;
+
+            // Зброя з'являється знизу екрана і трохи нахилена вперед
+            Vector3 startPos = new Vector3(0f, -0.6f, 0.2f);
+            Vector3 endPos = Vector3.zero;
+
+            // Нахил зброї: від 45 градусів (лежить) до 0 (рівно в руці)
+            Quaternion startRot = Quaternion.Euler(45f, 0f, 0f);
+            Quaternion endRot = Quaternion.identity;
+
+            weaponTransform.localPosition = startPos;
+            weaponTransform.localRotation = startRot;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = elapsed / duration;
+
+                // Математична формула для плавності (Ease Out - різко починається, плавно закінчується)
+                float smoothT = 1f - Mathf.Pow(1f - t, 3f);
+
+                if (weaponTransform != null)
+                {
+                    weaponTransform.localPosition = Vector3.Lerp(startPos, endPos, smoothT);
+                    weaponTransform.localRotation = Quaternion.Lerp(startRot, endRot, smoothT);
+                }
+
+                yield return null;
+            }
+
+            // На всяк випадок жорстко ставимо нулі в кінці
+            if (weaponTransform != null)
+            {
+                weaponTransform.localPosition = endPos;
+                weaponTransform.localRotation = endRot;
             }
         }
 
@@ -253,6 +350,44 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             var buffs = GetComponentInParent<BuffController>();
             if (buffs != null) multiplier *= buffs.AttackSpeedMultiplier;
             return Mathf.Max(0.01f, multiplier);
+        }
+
+        public void ApplyWeaponCoating(GameObject vfxPrefab, float duration, AudioClip swingSound, AudioClip hitSound)
+        {
+            if (_currentWeaponModel == null || vfxPrefab == null) return;
+
+            if (_activeWeaponVFX != null) Destroy(_activeWeaponVFX);
+
+            Transform targetAnchor = _currentWeaponModel.transform; 
+            if (_currentHitTester != null)
+            {
+                Collider hitbox = _currentHitTester.GetComponent<Collider>();
+                if (hitbox == null) hitbox = _currentHitTester.GetComponentInChildren<Collider>();
+
+                if (hitbox != null) targetAnchor = hitbox.transform;
+            }
+
+            _activeWeaponVFX = Instantiate(vfxPrefab, targetAnchor);
+
+            _activeWeaponVFX.transform.localPosition = Vector3.zero;
+            _activeWeaponVFX.transform.localRotation = Quaternion.identity;
+
+            ActiveCoatingSwingSound = swingSound;
+            ActiveCoatingHitSound = hitSound;
+
+            CancelInvoke(nameof(RemoveWeaponCoating));
+            Invoke(nameof(RemoveWeaponCoating), duration);
+        }
+
+        private void RemoveWeaponCoating()
+        {
+            if (_activeWeaponVFX != null)
+            {
+                Destroy(_activeWeaponVFX);
+                Debug.Log("<color=cyan>[Combat]</color> Дія змазки закінчилася.");
+            }
+            ActiveCoatingSwingSound = null;
+            ActiveCoatingHitSound = null;
         }
 
         private void PerformHeavySkill()
@@ -323,7 +458,6 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             {
                 Debug.LogWarning("<color=red>[Запобіжник]</color> Анімація зависла!");
                 _isTransitioningToNextCombo = false;
-
                 ForceResetToIdle();
             }
         }
@@ -334,16 +468,24 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             return _stamina.Spend(amount);
         }
 
-        // ==========================================
-        // ІВЕНТИ АНІМАЦІЙ
-        // ==========================================
         public void AnimEvent_PlaySwingSound()
         {
-            if (_audioSource != null && ActiveWeapon != null && ActiveWeapon.SwingSound != null)
+            if (_audioSource != null)
             {
                 float basePitch = Random.Range(0.9f, 1.1f);
-                _audioSource.pitch = basePitch * GetAttackSpeedMultiplier();
-                _audioSource.PlayOneShot(ActiveWeapon.SwingSound);
+                float finalPitch = basePitch * GetAttackSpeedMultiplier();
+
+                if (ActiveWeapon != null && ActiveWeapon.SwingSound != null)
+                {
+                    _audioSource.pitch = finalPitch;
+                    _audioSource.PlayOneShot(ActiveWeapon.SwingSound);
+                }
+
+                if (ActiveCoatingSwingSound != null)
+                {
+                    _audioSource.pitch = finalPitch;
+                    _audioSource.PlayOneShot(ActiveCoatingSwingSound);
+                }
             }
         }
 
@@ -369,6 +511,15 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             if (ActiveWeapon != null && ActiveWeapon.HeavyAbilityData != null)
             {
                 ActiveWeapon.HeavyAbilityData.ExecuteHeavyAbility(this, _weaponAnimator, _currentWeaponModel);
+            }
+        }
+
+        public void PlayHitSound(AudioClip hitSound)
+        {
+            if (_audioSource != null && hitSound != null)
+            {
+                _audioSource.pitch = UnityEngine.Random.Range(0.85f, 1.15f);
+                _audioSource.PlayOneShot(hitSound);
             }
         }
 

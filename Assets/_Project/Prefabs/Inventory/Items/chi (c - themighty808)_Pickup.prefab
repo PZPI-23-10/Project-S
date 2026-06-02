@@ -9,9 +9,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6111574502271480266}
-  - component: {fileID: -1159727582375664585}
   - component: {fileID: -5677621668758017336}
-  m_Layer: 0
+  - component: {fileID: 3626327758029069438}
+  - component: {fileID: 3991803734936901969}
+  m_Layer: 9
   m_Name: chi (c - themighty808)_Pickup
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -44,8 +45,24 @@ Transform:
   - {fileID: 2256207880275884034}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &-1159727582375664585
-BoxCollider:
+--- !u!114 &-5677621668758017336
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 93652290709770251}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a7c3a5df266c8f4a9022088b518746b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Item: {fileID: 11400000, guid: cd0daeb177f15eacd3fe89886055ad6a, type: 2}
+  Amount: 1
+  _interactionActionText: "E - \u041F\u043E\u0434\u043E\u0431\u0440\u0430\u0442\u044C"
+  _iconRenderer: {fileID: 0}
+--- !u!135 &3626327758029069438
+SphereCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -63,23 +80,35 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &-5677621668758017336
-MonoBehaviour:
+  m_Radius: 2.9599
+  m_Center: {x: 0, y: 3.039856, z: 0}
+--- !u!54 &3991803734936901969
+Rigidbody:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 93652290709770251}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5a7c3a5df266c8f4a9022088b518746b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Item: {fileID: 11400000, guid: cd0daeb177f15eacd3fe89886055ad6a, type: 2}
-  Amount: 1
-  _interactionActionText: "E - \u041F\u043E\u0434\u043E\u0431\u0440\u0430\u0442\u044C"
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 1
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &3302605745297379178
 GameObject:
   m_ObjectHideFlags: 0
@@ -91,7 +120,7 @@ GameObject:
   - component: {fileID: 1218476277692227834}
   - component: {fileID: 538136911660851504}
   - component: {fileID: 5981010309232392581}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: pSphere1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -174,7 +203,7 @@ GameObject:
   - component: {fileID: 2256207880275884034}
   - component: {fileID: 851215946439359005}
   - component: {fileID: 5786881556627605502}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: pSphere3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -257,7 +286,7 @@ GameObject:
   - component: {fileID: 461422076446502775}
   - component: {fileID: 7413740761715434661}
   - component: {fileID: 5971172371826665177}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: pSphere2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -340,7 +369,7 @@ GameObject:
   - component: {fileID: 4703219890142932981}
   - component: {fileID: 5662392777581453729}
   - component: {fileID: 7988129396618607028}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: pPlatonic4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -423,7 +452,7 @@ GameObject:
   - component: {fileID: 1609519677712177290}
   - component: {fileID: 4788096003759896963}
   - component: {fileID: 5273353518951050225}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: pPlatonic6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -506,7 +535,7 @@ GameObject:
   - component: {fileID: 1646098007319171555}
   - component: {fileID: 1558023318913301955}
   - component: {fileID: 9079052988502618882}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: pPlatonic7
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -589,7 +618,7 @@ GameObject:
   - component: {fileID: 781019266360092437}
   - component: {fileID: 702815166600414984}
   - component: {fileID: 2627579049405946669}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: pPlatonic5
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -672,7 +701,7 @@ GameObject:
   - component: {fileID: 6892151187304689007}
   - component: {fileID: 5817028338529606768}
   - component: {fileID: 5157525910779168181}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: pPlatonic2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -755,7 +784,7 @@ GameObject:
   - component: {fileID: 2188372481922135934}
   - component: {fileID: 6456306989986722230}
   - component: {fileID: 8141210955403719644}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: pPlatonic3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -838,7 +867,7 @@ GameObject:
   - component: {fileID: 377017216710734127}
   - component: {fileID: 923524843344627805}
   - component: {fileID: 7661322026462169382}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: pPlatonic8
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -921,7 +950,7 @@ GameObject:
   - component: {fileID: 5583725976495288053}
   - component: {fileID: 8705441811169845585}
   - component: {fileID: 706565391622968944}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: pPlatonic1
   m_TagString: Untagged
   m_Icon: {fileID: 0}

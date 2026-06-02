@@ -31,6 +31,7 @@ MonoBehaviour:
   StaminaRestoreAmount: 10
   SpecialEffect: 0
   SpecialEffectDelaySeconds: 0
+  ConsumeSound: {fileID: 8300000, guid: b9e64b6f38194164b8f85c188b75c30b, type: 3}
   StatEffects: []
   TimedBuffs: []
   SpecialEffects: []
