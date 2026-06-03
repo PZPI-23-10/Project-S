@@ -110,10 +110,12 @@ namespace Project_S.Runtime.Gameplay.Enemies
             skeleton.transform.position = position;
             skeleton.transform.localScale = Vector3.one * 1.1f;
 
-            if (NavMesh.SamplePosition(position, out NavMeshHit navMeshHit, 5f, NavMesh.AllAreas))
-                skeleton.transform.position = navMeshHit.position;
-            else
+            skeleton.transform.position = GroundPositionSampler.SampleNavMeshNearGround(position, 5f);
+
+            if (!NavMesh.SamplePosition(skeleton.transform.position, out NavMeshHit navMeshCheck, 0.25f, NavMesh.AllAreas))
                 Debug.LogWarning("[Skeleton] Spawn position is not on the runtime navmesh. Movement will stay disabled until a navmesh point is available.");
+            else
+                skeleton.transform.position = navMeshCheck.position;
 
             var renderer = skeleton.GetComponent<Renderer>();
             ConfigureHitbox(skeleton);

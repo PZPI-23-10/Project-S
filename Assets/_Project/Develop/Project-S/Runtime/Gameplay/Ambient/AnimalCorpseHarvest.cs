@@ -13,10 +13,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
 {
     public class AnimalCorpseHarvest : MonoBehaviour, IDamageReceiver
     {
-        private const float GroundProbeHeight = 25f;
-        private const float GroundProbeDistance = 80f;
         private const float ScriptedDeathPoseDuration = 0.5f;
-        private const int GroundLayerMask = 1 << 8;
 
         [SerializeField] private EnemyHealth _health;
         [SerializeField] private GameObject _corpseRoot;
@@ -376,12 +373,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
 
         private static Vector3 SampleGround(Vector3 position)
         {
-            Vector3 origin = position + Vector3.up * GroundProbeHeight;
-            if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, GroundProbeDistance, GroundLayerMask, QueryTriggerInteraction.Ignore))
-                return hit.point;
-
-            position.y = 0f;
-            return position;
+            return GroundPositionSampler.SampleGround(position);
         }
 
         private void SetHitboxEnabled(bool enabled)

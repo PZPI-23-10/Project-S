@@ -1,4 +1,5 @@
 using Project_S.Runtime.Gameplay.Character.Player;
+using Project_S.Runtime.Gameplay.Navigation;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Ambient
@@ -15,8 +16,6 @@ namespace Project_S.Runtime.Gameplay.Ambient
             Landing
         }
 
-        private const float GroundProbeHeight = 25f;
-        private const float GroundProbeDistance = 80f;
         private const float RotationSpeed = 540f;
         private const float LandingHeight = 0.25f;
         private const float MinFlyHeight = 4f;
@@ -108,12 +107,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
 
         public static Vector3 SampleGround(Vector3 position)
         {
-            Vector3 origin = position + Vector3.up * GroundProbeHeight;
-            if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, GroundProbeDistance, ~0, QueryTriggerInteraction.Ignore))
-                return hit.point;
-
-            position.y = 0f;
-            return position;
+            return GroundPositionSampler.SampleGround(position);
         }
 
         private void TickGroundIdle()
