@@ -1,4 +1,3 @@
-﻿using System;
 using Project_S.Runtime.Common.Constants;
 using Project_S.Runtime.Services.SceneManagement;
 using UnityEngine;
@@ -12,7 +11,7 @@ namespace Project_S.Runtime.Boot
 
         private void Awake()
         {
-            _sceneLoader.Load(SceneNames.YavWorld);
+            _sceneLoader.Load(SceneNames.Core);
         }
     }
 }

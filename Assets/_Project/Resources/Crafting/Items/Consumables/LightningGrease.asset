@@ -24,13 +24,19 @@ MonoBehaviour:
     \u0434\u043E\u0434\u0430\u0454 \u0443\u0434\u0430\u0440\u0430\u043C \u0441\u0438\u043B\u0443
     \u0431\u043B\u0438\u0441\u043A\u0430\u0432\u043A\u0438."
   WeaponPrefab: {fileID: 0}
-  WorldPickupPrefab: {fileID: 0}
+  WorldPickupPrefab: {fileID: 6775631542978168765, guid: 4f1d59f7b9971444e93fd46098986c3d,
+    type: 3}
   ConsumableEffect: 0
   HealthRestoreAmount: 0
   HungerRestoreAmount: 0
   StaminaRestoreAmount: 0
   SpecialEffect: 0
   SpecialEffectDelaySeconds: 0
+  ConsumeSound: {fileID: 8300000, guid: d32444fa0011c1a40babd7bb02efb6e0, type: 3}
+  WeaponCoatingVFX: {fileID: 844478810211980648, guid: 53203e25d7a28d04abeb922afa1e9cb1,
+    type: 3}
+  CoatingSwingSound: {fileID: 8300000, guid: 0c2f3450008d56644b792019cbc25a7a, type: 3}
+  CoatingHitSound: {fileID: 8300000, guid: 0ccae3e588a557e499e5d6ebdc42ad9a, type: 3}
   StatEffects: []
   TimedBuffs: []
   SpecialEffects: []
@@ -41,7 +47,7 @@ MonoBehaviour:
     Category: 4
     SourceFraction: 0.3
     ConvertedDamageFraction: 0.5
-    DurationSeconds: 120
+    DurationSeconds: 30
   TimedBuffType: 0
   TimedBuffCategory: 0
   TimedBuffMultiplier: 1

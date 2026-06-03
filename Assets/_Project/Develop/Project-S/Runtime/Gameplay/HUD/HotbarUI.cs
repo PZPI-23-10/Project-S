@@ -14,10 +14,23 @@ namespace Project_S.Runtime.Gameplay.HUD
         [SerializeField] private CombatController _combatController;
         [SerializeField] private InventorySlotUI _slotPrefab;
         [SerializeField] private Transform _hotbarGrid;
-        [SerializeField] private int _hotbarSize = 6; // За замовчуванням тепер 6
+        [SerializeField] private int _hotbarSize = 6;
         [SerializeField] private Vector2 _slotSize = new Vector2(72f, 72f);
         [SerializeField] private float _slotSpacing = 10f;
         [SerializeField] private Vector2 _panelPadding = new Vector2(12f, 10f);
+
+        [Header("Налаштування анімації")]
+        [Tooltip("Затримка між перемиканнями зброї")]
+        [SerializeField] private float _switchCooldown = 0.3f;
+        private float _lastSwitchTime;
+
+        [Header("Налаштування їжі")]
+        [Tooltip("Час у секундах між поїданням/питтям (Кулдаун)")]
+        [SerializeField] private float _consumableCooldown = 3f;
+        private float _lastConsumeTime = -999f;
+
+        // ЗАПОБІЖНИК ВІД БАГУ ОСТАННЬОГО ПРЕДМЕТА:
+        private int _lastConsumeFrame = -1;
 
         private readonly List<InventorySlotUI> _hotbarSlots = new List<InventorySlotUI>();
         private int _currentSelectedIndex = 0;
@@ -37,87 +50,140 @@ namespace Project_S.Runtime.Gameplay.HUD
                 _inventory.OnInventoryChanged -= RefreshHotbar;
         }
 
-        // НОВИЙ БЛОК: Читаємо мишку і клавіатуру прямо тут
         private void Update()
         {
-            // МАГІЯ ТУТ: Якщо курсор на екрані (відкритий інвентар/крафт), блокуємо хотбар!
             if (Cursor.visible) return;
 
-            // 1. Коліщатко мишки
             float scroll = Input.GetAxis("Mouse ScrollWheel");
-            if (scroll > 0f)
-                SelectPreviousSlot();
-            else if (scroll < 0f)
-                SelectNextSlot();
 
-            // 2. Кнопки від 1 до 9
+            // Скрол миші тільки перемикає виділення, не використовує предмети
+            if (scroll > 0f) SelectPreviousSlot(false);
+            else if (scroll < 0f) SelectNextSlot(false);
+
+            // Обробка клавіатури
             for (int i = 0; i < Mathf.Min(_hotbarSize, 9); i++)
             {
                 if (Input.GetKeyDown(KeyCode.Alpha1 + i))
                 {
-                    SelectSlot(i);
+                    SelectSlot(i, true);
                 }
             }
         }
 
-        // НОВА ФУНКЦІЯ: Наступний слот (з перекиданням на початок)
-        private void SelectNextSlot()
+        private void SelectPreviousSlot(bool autoUse)
         {
-            int nextIndex = _currentSelectedIndex + 1;
-            if (nextIndex >= _hotbarSize) nextIndex = 0;
-            SelectSlot(nextIndex);
+            int newIndex = _currentSelectedIndex - 1;
+            if (newIndex < 0) newIndex = _hotbarSize - 1;
+            SelectSlot(newIndex, autoUse);
         }
 
-        // НОВА ФУНКЦІЯ: Попередній слот (з перекиданням у кінець)
-        private void SelectPreviousSlot()
+        private void SelectNextSlot(bool autoUse)
         {
-            int prevIndex = _currentSelectedIndex - 1;
-            if (prevIndex < 0) prevIndex = _hotbarSize - 1;
-            SelectSlot(prevIndex);
+            int newIndex = _currentSelectedIndex + 1;
+            if (newIndex >= _hotbarSize) newIndex = 0;
+            SelectSlot(newIndex, autoUse);
         }
 
         public void Tick(PlayerInputSnapshot input)
         {
-            // Стара логіка вводу (залишаємо про всяк випадок)
             if (input.HotbarSlotPressed >= 0)
-                SelectSlot(input.HotbarSlotPressed);
+                SelectSlot(input.HotbarSlotPressed, true);
         }
 
-        public void SelectSlot(int index)
+        public void SelectSlot(int index, bool autoUse = true)
         {
-            if (index < 0 || index >= _hotbarSize)
+            if (index < 0 || index >= _hotbarSize) return;
+
+            ItemStack targetStack = _inventory != null ? _inventory.GetSlot(index) : null;
+
+            // 1. ЯКЩО В СЛОТІ ЗІЛЛЯ
+            if (targetStack != null && targetStack.Item != null && targetStack.Item.IsUsable)
+            {
+                if (!autoUse)
+                {
+                    _currentSelectedIndex = index;
+                    RefreshSelectionVisuals();
+                    _combatController?.EquipWeapon(null);
+                    return;
+                }
+
+                if (Time.time - _lastConsumeTime < 3f) return;
+
+                if (_inventory.TryUseItemAtSlot(index))
+                {
+                    _lastConsumeTime = Time.time;
+                    _lastConsumeFrame = Time.frameCount; // МАГІЯ: Запам'ятовуємо кадр, коли випили зілля!
+
+                    if (targetStack.Item.ConsumeSound != null && UnityEngine.Camera.main != null)
+                    {
+                        AudioSource.PlayClipAtPoint(targetStack.Item.ConsumeSound, UnityEngine.Camera.main.transform.position, 1f);
+                    }
+                }
+
+                RefreshSelectionVisuals();
                 return;
+            }
+
+            // 2. ЯКЩО СЛОТ ПОРОЖНІЙ АБО ТАМ ЗБРОЯ
+
+            // МАГІЯ: Якщо ми щойно (в цьому ж кадрі) з'їли зілля і слот став пустим - БЛОКУЄМО ПЕРЕМИКАННЯ!
+            if (Time.frameCount == _lastConsumeFrame) return;
+
+            if (Time.time - _lastSwitchTime < _switchCooldown) return;
+            _lastSwitchTime = Time.time;
 
             _currentSelectedIndex = index;
             RefreshSelectionVisuals();
+            SyncWeaponWithCurrentSlot();
+        }
 
-            ItemStack stack = _inventory != null ? _inventory.GetSlot(index) : null;
+        private void SyncWeaponWithCurrentSlot()
+        {
+            ItemStack stack = _inventory != null ? _inventory.GetSlot(_currentSelectedIndex) : null;
 
-            if (stack != null && stack.Item != null)
+            if (stack != null && stack.Item != null && stack.Amount > 0)
             {
                 if (stack.Item.IsUsable)
                 {
-                    if (_inventory.TryUseItemAtSlot(index))
-                        Debug.Log($"[Hotbar] Used {stack.Item.ItemName}.");
-
+                    _combatController?.EquipWeapon(null);
                     return;
                 }
 
                 WeaponItemData weaponData = stack.Item as WeaponItemData;
-
-                if (_combatController != null)
+                if (_combatController != null && _combatController.CurrentWeapon != weaponData)
+                {
                     _combatController.EquipWeapon(weaponData);
+                }
             }
-            else if (_combatController != null)
+            else
             {
-                _combatController.EquipWeapon(null);
+                if (_combatController != null && _combatController.CurrentWeapon != null)
+                {
+                    if (_combatController.ActiveWeapon != null && _combatController.CurrentWeapon.WeaponPrefab != null)
+                    {
+                        _combatController.EquipWeapon(null);
+                    }
+                }
             }
+        }
+
+        public void RefreshHotbar()
+        {
+            if (_inventory == null) return;
+
+            var allSlots = _inventory.GetAllSlots();
+            for (int i = 0; i < _hotbarSlots.Count; i++)
+            {
+                if (i < allSlots.Length)
+                    _hotbarSlots[i].UpdateView(allSlots[i]);
+            }
+
+            SyncWeaponWithCurrentSlot();
         }
 
         private void GenerateHotbar()
         {
             if (_hotbarGrid == null || _slotPrefab == null || _inventory == null) return;
-
             ConfigureLayout();
 
             foreach (Transform child in _hotbarGrid) Destroy(child.gameObject);
@@ -132,27 +198,19 @@ namespace Project_S.Runtime.Gameplay.HUD
             }
 
             RefreshHotbar();
-            SelectSlot(0);
+
+            _currentSelectedIndex = 0;
+            RefreshSelectionVisuals();
+            SyncWeaponWithCurrentSlot();
         }
 
         private void OnHotbarSlotClicked(int slotIndex, PointerEventData.InputButton button)
         {
             if (button == PointerEventData.InputButton.Left)
-                SelectSlot(slotIndex);
+                SelectSlot(slotIndex, true);
         }
 
-        public void RefreshHotbar()
-        {
-            if (_inventory == null) return;
-
-            var allSlots = _inventory.GetAllSlots();
-            for (int i = 0; i < _hotbarSlots.Count; i++)
-            {
-                if (i < allSlots.Length)
-                    _hotbarSlots[i].UpdateView(allSlots[i]);
-            }
-        }
-
+        // --- БЛОК НАЛАШТУВАННЯ UI ---
         private void ConfigureLayout()
         {
             var gridRect = _hotbarGrid as RectTransform;
@@ -175,8 +233,7 @@ namespace Project_S.Runtime.Gameplay.HUD
             }
 
             var layout = _hotbarGrid.GetComponent<HorizontalLayoutGroup>();
-            if (layout == null)
-                layout = _hotbarGrid.gameObject.AddComponent<HorizontalLayoutGroup>();
+            if (layout == null) layout = _hotbarGrid.gameObject.AddComponent<HorizontalLayoutGroup>();
 
             layout.padding = new RectOffset(0, 0, 0, 0);
             layout.spacing = _slotSpacing;
@@ -188,9 +245,7 @@ namespace Project_S.Runtime.Gameplay.HUD
 
             if (transform is RectTransform panelRect)
             {
-                float panelWidth = _slotSize.x * _hotbarSize
-                    + _slotSpacing * Mathf.Max(0, _hotbarSize - 1)
-                    + _panelPadding.x * 2f;
+                float panelWidth = _slotSize.x * _hotbarSize + _slotSpacing * Mathf.Max(0, _hotbarSize - 1) + _panelPadding.x * 2f;
                 float panelHeight = _slotSize.y + _panelPadding.y * 2f;
                 panelRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, panelWidth);
                 panelRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, panelHeight);
@@ -199,8 +254,7 @@ namespace Project_S.Runtime.Gameplay.HUD
 
         private void ConfigureSlotRect(InventorySlotUI slot)
         {
-            if (slot == null)
-                return;
+            if (slot == null) return;
 
             if (slot.transform is RectTransform slotRect)
             {
@@ -213,8 +267,7 @@ namespace Project_S.Runtime.Gameplay.HUD
             }
 
             var layoutElement = slot.GetComponent<LayoutElement>();
-            if (layoutElement == null)
-                layoutElement = slot.gameObject.AddComponent<LayoutElement>();
+            if (layoutElement == null) layoutElement = slot.gameObject.AddComponent<LayoutElement>();
 
             layoutElement.minWidth = _slotSize.x;
             layoutElement.minHeight = _slotSize.y;

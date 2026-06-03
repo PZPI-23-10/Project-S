@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 215432127562c5e46812873892628a75, type: 3}
+  m_Name: IronMace
+  m_EditorClassIdentifier: 
+  ItemName: Item
+  Kind: 1
+  Weight: 2
+  IsStackable: 0
+  MaxStack: 1
+  MaxInventoryStacks: 0
+  Icon: {fileID: 21300000, guid: 415bec14a6a0af34488e7591c3d6af5a, type: 3}
+  Description: Description...
+  WeaponPrefab: {fileID: 917152428829336219, guid: 14f3cef8f9856a94caabc525992ab661,
+    type: 3}
+  WorldPickupPrefab: {fileID: 0}
+  ConsumableEffect: 0
+  HealthRestoreAmount: 0
+  HungerRestoreAmount: 0
+  StaminaRestoreAmount: 0
+  SpecialEffect: 0
+  SpecialEffectDelaySeconds: 0
+  StatEffects: []
+  TimedBuffs: []
+  SpecialEffects: []
+  DamageConversions: []
+  TimedBuffType: 0
+  TimedBuffCategory: 0
+  TimedBuffMultiplier: 1
+  TimedBuffDurationSeconds: 0
+  SecondaryTimedBuffType: 0
+  SecondaryTimedBuffCategory: 0
+  SecondaryTimedBuffMultiplier: 1
+  SecondaryTimedBuffDurationSeconds: 0
+  IsTwoHanded: 0
+  Passives: []
+  DamageProfile:
+  - Type: 1
+    Amount: 26
+  PoiseDamage: 20
+  AttackSpeedMultiplier: 1
+  MaxComboHits: 3
+  HitsToChargeHeavy: 1
+  HeavyAbilityData: {fileID: 11400000, guid: 3741ddc5f7a8cea42af9ecb46a4d59a6, type: 2}
+  HeavyAbilityDuration: 0
+  AbilityCooldown: 8
+  BlockMitigation: 0.5
+  ParryWindow: 0.25
+  ParryStaminaReward: 20
+  ParryPoiseDamage: 40
+  SwingSound: {fileID: 8300000, guid: 6f498d9e463ef764fb8747dbd6ed6f25, type: 3}
+  HitSound: {fileID: 8300000, guid: 3802c944ccbb0d848bfdb87e04355b7a, type: 3}
+  HarvestTool: 0

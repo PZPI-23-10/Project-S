@@ -20,7 +20,7 @@ MonoBehaviour:
   MaxInventoryStacks: 0
   Icon: {fileID: 21300000, guid: 5274f230cc9d83a48b3a04ab7cf17ff0, type: 3}
   Description: Легкий спис із крем'яним наконечником для бою на відстані.
-  WeaponPrefab: {fileID: 3942592866433276128, guid: 6e6f288cc1ccdd543b2cd3d632a069ed,
+  WeaponPrefab: {fileID: 4293743258515247548, guid: c60da37eae1c92d4e9560d6238df94a6,
     type: 3}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 0
@@ -42,19 +42,22 @@ MonoBehaviour:
   SecondaryTimedBuffMultiplier: 1
   SecondaryTimedBuffDurationSeconds: 0
   IsTwoHanded: 0
+  Passives:
+  - {fileID: 11400000, guid: 100cab3c97d63c44eb13f1dbe3afac5b, type: 2}
   DamageProfile:
   - Type: 0
-    Amount: 16
+    Amount: 8
   PoiseDamage: 5
   AttackSpeedMultiplier: 1.2
   MaxComboHits: 3
-  HitsToChargeHeavy: 3
-  HeavyAbility: 0
+  HitsToChargeHeavy: 0
+  HeavyAbilityData: {fileID: 0}
   HeavyAbilityDuration: 0
-  OffhandAbility: 0
   AbilityCooldown: 8
   BlockMitigation: 0.25
   ParryWindow: 0.18
   ParryStaminaReward: 20
   ParryPoiseDamage: 40
+  SwingSound: {fileID: 8300000, guid: 7b2fee8c2afe9484da3c5bce9a025a28, type: 3}
+  HitSound: {fileID: 8300000, guid: df7a60de0fa160d42b3da3666d8a0ba0, type: 3}
   HarvestTool: 0

@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24e58db34c6e53c9ce5b4fdaa1bed91e, type: 3}
+  m_Name: TreeHugeNode
+  m_EditorClassIdentifier: 
+  DisplayName: Huge Tree
+  MaxHealth: 1440
+  BaseYieldItem: {fileID: 11400000, guid: a66c7b8131eafd3450dd8a325ad07a46, type: 2}
+  HealthPerBaseYield: 80
+  BaseYieldAmount: 1
+  PreferredTool: 1
+  MatchingToolDamageMultiplier: 1
+  MismatchedToolDamageMultiplier: 1
+  MismatchedYieldMultiplier: 0.9
+  CorrectToolSounds:
+  - {fileID: 8300000, guid: 8b92220cc91310b4a991b52f113a77ea, type: 3}
+  WrongToolSounds:
+  - {fileID: 8300000, guid: ec6c1be9a57aa334b8dd393de86062b2, type: 3}
+  HitVFXPrefab: {fileID: 4080515105622610912, guid: 0feba2d50430ac944af09deead322b75,
+    type: 3}
+  DestructionSound: {fileID: 8300000, guid: 57119a72b5d71c644910fc85b30cbdc2, type: 3}
+  DamageMultipliers:
+  - Type: 3
+    Multiplier: 0
+  - Type: 1
+    Multiplier: 0.3
+  - Type: 0
+    Multiplier: 0.4
+  - Type: 5
+    Multiplier: 1.1
+  - Type: 4
+    Multiplier: 1.2
+  SoulAshReward: 30
+  Drops:
+  - Item: {fileID: 11400000, guid: a66c7b8131eafd3450dd8a325ad07a46, type: 2}
+    MinAmount: 24
+    MaxAmount: 24
+    Chance: 1
+  - Item: {fileID: 11400000, guid: 02b7080157078c848857cba96908cdf9, type: 2}
+    MinAmount: 1
+    MaxAmount: 1
+    Chance: 0.4

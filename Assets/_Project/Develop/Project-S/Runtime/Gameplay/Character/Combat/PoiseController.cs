@@ -19,6 +19,11 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         [SerializeField] private float _poiseGainPerTap = 15f;
         [SerializeField] private float _knockbackForce = 5f;
 
+
+        [Header("Аудіо")]
+        [SerializeField] private AudioSource _audioSource;
+        [SerializeField] private AudioClip _poiseBreakSound; 
+
         private KeyCode _currentQteButton;
         private float _recoveryBlockedUntil;
         private bool _isQTEActive;
@@ -27,6 +32,13 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
         public bool IsBroken => _isQTEActive;
         public Vector3 PendingKnockback => _knockbackVector;
+
+        public Vector3 ConsumeKnockback()
+        {
+            Vector3 knockback = _knockbackVector;
+            _knockbackVector = Vector3.zero;
+            return knockback;
+        }
 
         private void Start()
         {
@@ -69,7 +81,6 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             }
             else if (current < max && Time.time > _recoveryBlockedUntil)
             {
-                // Примусово дотягуємо рівно до max, щоб UI гарантовано сховався
                 float nextPoise = current + 40f * Time.deltaTime;
                 if (nextPoise >= max) nextPoise = max;
 
@@ -77,13 +88,10 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 if (_cameraJuice != null) _cameraJuice.ResetToNormal();
             }
 
-            // Гасимо імпульс відкидання
             _knockbackVector = Vector3.Lerp(_knockbackVector, Vector3.zero, Time.deltaTime * 10f);
 
-            // ОДИН-ЄДИНИЙ ВИКЛИК ЛОГІКИ UI НА ВСІ ВИПАДКИ ЖИТТЯ
             if (_qteUI != null)
             {
-                // Беремо найсвіжіший ХП після всіх розрахунків
                 _qteUI.UpdateUI(_stats.Get(StatType.Poise), max, _isQTEActive, _currentQteButton);
             }
         }
@@ -109,10 +117,15 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
             if (_stats.Get(StatType.Poise) <= 0 && !_isQTEActive)
             {
-                // ВІДКИДАЄМО ТІЛЬКИ ТУТ (коли вибило з рівноваги)
                 Vector3 dir = (transform.position - attackerPosition).normalized;
                 dir.y = 0;
-                _knockbackVector = dir * _knockbackForce; // ЗМІННА СИЛИ
+                _knockbackVector = dir * _knockbackForce;
+
+                if (_audioSource != null && _poiseBreakSound != null)
+                {
+                    _audioSource.pitch = Random.Range(0.9f, 1.1f);
+                    _audioSource.PlayOneShot(_poiseBreakSound);
+                }
 
                 StartDirectionalQTE(attackerPosition);
             }

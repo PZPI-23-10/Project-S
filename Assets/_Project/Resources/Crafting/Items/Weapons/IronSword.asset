@@ -20,7 +20,7 @@ MonoBehaviour:
   MaxInventoryStacks: 0
   Icon: {fileID: 21300000, guid: 77a8365fc41262442b3f09d7b7cd8c0b, type: 3}
   Description: Надійний меч із заліза для впевненого ближнього бою.
-  WeaponPrefab: {fileID: 3942592866433276128, guid: 6e6f288cc1ccdd543b2cd3d632a069ed,
+  WeaponPrefab: {fileID: 5613771737888652153, guid: 3a7dd7e385d9bb140bec511aa43272a7,
     type: 3}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 0
@@ -42,19 +42,21 @@ MonoBehaviour:
   SecondaryTimedBuffMultiplier: 1
   SecondaryTimedBuffDurationSeconds: 0
   IsTwoHanded: 0
+  Passives: []
   DamageProfile:
   - Type: 2
     Amount: 26
   PoiseDamage: 15
   AttackSpeedMultiplier: 1
   MaxComboHits: 3
-  HitsToChargeHeavy: 3
-  HeavyAbility: 0
+  HitsToChargeHeavy: 1
+  HeavyAbilityData: {fileID: 11400000, guid: 1fe7dcd767a32f0409ad36adff6311af, type: 2}
   HeavyAbilityDuration: 0
-  OffhandAbility: 0
   AbilityCooldown: 8
   BlockMitigation: 0.5
   ParryWindow: 0.3
   ParryStaminaReward: 20
   ParryPoiseDamage: 40
+  SwingSound: {fileID: 8300000, guid: 60865f48dc79e114284fd38c4aff266b, type: 3}
+  HitSound: {fileID: 8300000, guid: ff8a45b8f99ba804c987a679e18cd1e5, type: 3}
   HarvestTool: 0

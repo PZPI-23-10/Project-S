@@ -12,14 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35381e3f13136374abee8a5ed10dc4aa, type: 3}
   m_Name: RoastedMeat
   m_EditorClassIdentifier: 
-  ItemName: Печене м'ясо
+  ItemName: "\u041F\u0435\u0447\u0435\u043D\u0435 \u043C'\u044F\u0441\u043E"
   Kind: 2
   Weight: 0.1
   IsStackable: 1
   MaxStack: 4
   MaxInventoryStacks: 0
   Icon: {fileID: 21300000, guid: 3db1d7a3a5d153d4e908e3be4c40318b, type: 3}
-  Description: Приготоване м'ясо. Добре насичує і додає сил.
+  Description: "\u041F\u0440\u0438\u0433\u043E\u0442\u043E\u0432\u0430\u043D\u0435
+    \u043C'\u044F\u0441\u043E. \u0414\u043E\u0431\u0440\u0435 \u043D\u0430\u0441\u0438\u0447\u0443\u0454
+    \u0456 \u0434\u043E\u0434\u0430\u0454 \u0441\u0438\u043B."
   WeaponPrefab: {fileID: 0}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 2
@@ -28,6 +30,7 @@ MonoBehaviour:
   StaminaRestoreAmount: 0
   SpecialEffect: 0
   SpecialEffectDelaySeconds: 0
+  ConsumeSound: {fileID: 8300000, guid: 5fc63234aaa14574eb07aae2c1e6c14e, type: 3}
   StatEffects: []
   TimedBuffs: []
   SpecialEffects: []

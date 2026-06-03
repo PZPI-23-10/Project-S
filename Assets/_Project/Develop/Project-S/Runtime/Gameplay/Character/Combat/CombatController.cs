@@ -1,6 +1,8 @@
+using System.Collections; 
 using UnityEngine;
 using Project_S.Runtime.Gameplay.Character.Input;
 using Project_S.Runtime.Gameplay.Character.Stats;
+using Project_S.Runtime.Gameplay.Character.Camera;
 
 namespace Project_S.Runtime.Gameplay.Character.Combat
 {
@@ -16,9 +18,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
     public enum AttackDirection
     {
-        Center,
-        Left,
-        Right
+        Center, Left, Right
     }
 
     public class CombatController : MonoBehaviour
@@ -26,6 +26,10 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         [Header("Зв'язки")]
         [SerializeField] private StaminaController _stamina;
         [SerializeField] private BlockController _blockController;
+        [SerializeField] private AudioSource _audioSource;
+        [SerializeField] private AudioClip _defaultEquipSound;
+
+        private PoiseController _poiseController;
 
         [Header("Візуал (Права рука)")]
         [SerializeField] private Transform _weaponHolder;
@@ -40,111 +44,131 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
         private bool _isPhylacteryInHand = false;
         private bool _isCombatOffhandInHand = false;
-
         private bool _isOffhandActive => _isPhylacteryInHand || _isCombatOffhandInHand;
 
         [Header("Екіпірування")]
         [SerializeField] private WeaponItemData _unarmedWeapon;
         [SerializeField] private WeaponItemData _currentWeapon;
-        [SerializeField] private WeaponItemData _equippedOffhandItem; // ЛІВА РУКА (те, що лежить у слоті інвентарю)
+        [SerializeField] private WeaponItemData _equippedOffhandItem;
 
         [Header("Прогресія (Скіли)")]
-        [SerializeField] private bool _isOffhandSkillUnlocked = true; // ГАЛОЧКА ДЛЯ ТЕСТУ ПРОКАЧКИ
-
-
-        [Header("Налаштування Комбо")]
-        [SerializeField] private float _comboResetTime = 1.5f;
+        [SerializeField] private bool _isOffhandSkillUnlocked = true;
 
         public WeaponItemData ActiveWeapon => _currentWeapon != null ? _currentWeapon : _unarmedWeapon;
         public WeaponItemData CurrentWeapon => ActiveWeapon;
         public CombatState CurrentState { get; private set; } = CombatState.Idle;
 
+        private bool _isComboWindowOpen = false;
+        private bool _nextAttackBuffered = false;
+        private bool _isTransitioningToNextCombo = false;
         private int _comboStep = 0;
+        public int ComboStep => _comboStep;
+
         private int _currentHeavyCharge = 0;
-        private float _lastAttackTime = 0f;
         private float _lastAbilityTime = 0f;
+
+        private GameObject _activeWeaponVFX;
+        public AudioClip ActiveCoatingSwingSound { get; private set; }
+        public AudioClip ActiveCoatingHitSound { get; private set; }
+
+        private Coroutine _drawWeaponCoroutine;
+        private Coroutine _hitStopCoroutine;
+
+        private void Start()
+        {
+            _poiseController = GetComponent<PoiseController>();
+        }
+
+        // ==========================================
+        // ФІКС: Запобіжник, щоб час ніколи не залишався зупиненим назавжди!
+        // ==========================================
+        private void OnDisable()
+        {
+            Time.timeScale = 1f;
+        }
 
         public void Tick(PlayerInputSnapshot input)
         {
+            if (_poiseController != null && _poiseController.IsBroken)
+            {
+                if (CurrentState == CombatState.Blocking)
+                {
+                    StopBlocking();
+                }
+                return;
+            }
+
             if (CurrentState == CombatState.Staggered) return;
             if (ActiveWeapon == null) return;
 
             HandleCombatInput(input);
-            CheckComboReset();
         }
 
         private void HandleCombatInput(PlayerInputSnapshot input)
         {
-            // 1. ДІСТАТИ / СХОВАТИ ПРЕДМЕТ У ЛІВІЙ РУЦІ
-            if (input.ToggleOffhandPressed && CurrentState == CombatState.Idle)
-            {
-                ToggleOffhand();
-            }
+            if (input.ToggleOffhandPressed && CurrentState == CombatState.Idle) ToggleOffhand();
 
-            // 2. ВАЖКИЙ УДАР (ЛКМ ЗАЖАТО + ПКМ НАТИСНУТО)
-            // Ми перевіряємо це до блоку, щоб гра не плутала ПКМ для блоку з ПКМ для здібності
             if (input.HeavyAttackPressed && !_isOffhandActive)
             {
-                if (_currentHeavyCharge >= ActiveWeapon.HitsToChargeHeavy)
-                {
-                    PerformHeavySkill();
-                }
-                else
-                {
-                    Debug.Log($"<color=orange>[Боївка]</color> Вміння ще не заряджено! ({_currentHeavyCharge}/{ActiveWeapon.HitsToChargeHeavy})");
-                }
-                return; // Зупиняємо перевірку, щоб не спрацював звичайний блок
+                if (_currentHeavyCharge >= ActiveWeapon.HitsToChargeHeavy) PerformHeavySkill();
+                else Debug.Log($"<color=orange>[Боївка]</color> Вміння ще не заряджено! ({_currentHeavyCharge}/{ActiveWeapon.HitsToChargeHeavy})");
+                return;
             }
 
-            // 3. БЛОК (ПКМ)
-            if (input.BlockHeld && CurrentState == CombatState.Idle && !_isOffhandActive)
+            if (_currentWeaponModel != null)
             {
-                StartBlocking();
+                HammerWeapon customWeapon = _currentWeaponModel.GetComponent<HammerWeapon>();
+
+                if (customWeapon != null)
+                {
+                    bool inputHandled = customWeapon.ProcessCustomInput(input, _weaponAnimator, this);
+                    if (inputHandled) return;
+                }
             }
-            else if (!input.BlockHeld && CurrentState == CombatState.Blocking)
+
+            if (input.BlockHeld && CurrentState == CombatState.Idle && !_isOffhandActive) StartBlocking();
+            else if (!input.BlockHeld && CurrentState == CombatState.Blocking) StopBlocking();
+
+            if (input.LightAttackHeld || input.LightAttackPressed)
             {
-                StopBlocking();
+                if (CurrentState == CombatState.Idle)
+                {
+                    PerformLightAttack();
+                }
+                else if (CurrentState == CombatState.Attacking && _isComboWindowOpen)
+                {
+                    _nextAttackBuffered = true;
+                }
             }
 
             if (CurrentState != CombatState.Idle) return;
-
-            // 4. ЛЕГКИЙ УДАР (ЛКМ)
-            if (input.LightAttackPressed)
+            if (input.OffhandAbilityPressed && _isOffhandActive)
             {
-                PerformLightAttack();
-            }
-
-            // 5. ЗДІБНІСТЬ ДРУГОЇ РУКИ (Кнопка F)
-            if (input.OffhandAbilityPressed)
-            {
-                if (_isOffhandActive)
+                if (Time.time >= _lastAbilityTime + _equippedOffhandItem.AbilityCooldown)
                 {
                     PerformOffhandAbility();
+                }
+                else
+                {
+                    float timeLeft = (_lastAbilityTime + _equippedOffhandItem.AbilityCooldown) - Time.time;
+                    Debug.Log($"<color=grey>[Кулдаун]</color> Здібність ще заряджається! Залишилось: {timeLeft:F1} сек.");
                 }
             }
         }
 
-        private void PerformLightAttack()
+        public void PerformLightAttack()
         {
             CurrentState = CombatState.Attacking;
-            _lastAttackTime = Time.time;
+            _isComboWindowOpen = false;
+            _nextAttackBuffered = false;
 
             _comboStep++;
-
-            // Якщо в руках КУЛАКИ і активна ліва рука — комбо ріжеться до 1 удару
-            if (_currentWeapon == null && _isOffhandActive)
-            {
-                _comboStep = 1;
-            }
-            else if (_comboStep > ActiveWeapon.MaxComboHits)
-            {
-                _comboStep = 1;
-            }
+            if (_comboStep > ActiveWeapon.MaxComboHits) _comboStep = 1;
 
             Debug.Log($"<color=cyan>[Боївка]</color> Удар: {ActiveWeapon.name} | Крок: {_comboStep}");
 
-            float animDuration = 0.5f / GetAttackSpeedMultiplier();
-            Invoke(nameof(ResetToIdle), animDuration);
+            CancelInvoke(nameof(FailsafeReset));
+            Invoke(nameof(FailsafeReset), 4.5f);
 
             if (_weaponAnimator != null)
             {
@@ -155,58 +179,27 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
         private void ToggleOffhand()
         {
-            // Якщо зброя дворучна — ліва рука взагалі заблокована
-            if (ActiveWeapon.IsTwoHanded)
-            {
-                Debug.Log("<color=orange>[Боївка]</color> Не можна використати ліву руку! Зброя дворучна.");
-                return;
-            }
+            if (ActiveWeapon.IsTwoHanded) return;
+            if (_currentOffhandModel != null) Destroy(_currentOffhandModel);
 
-            // Очищаємо ліву руку перед тим, як щось туди дати
-            if (_currentOffhandModel != null)
-            {
-                Destroy(_currentOffhandModel);
-            }
-
-            // ЛОГІКА ПЕРЕМИКАННЯ
-            // Якщо зараз в руці нічого немає (або був ліхтар), і в нас Є ПРОКАЧКА та ЕКІПІРОВАНИЙ ПРЕДМЕТ
             if (!_isCombatOffhandInHand && _isOffhandSkillUnlocked && _equippedOffhandItem != null)
             {
-                // Дістаємо бойовий предмет (Щит/Кинджал)
-                _isCombatOffhandInHand = true;
-                _isPhylacteryInHand = false;
-
+                _isCombatOffhandInHand = true; _isPhylacteryInHand = false;
                 _currentOffhandModel = Instantiate(_equippedOffhandItem.WeaponPrefab, _offhandHolder);
                 if (_weaponAnimator != null) _weaponAnimator.SetBool("PhylacteryActive", true);
-
-                Debug.Log($"<color=magenta>[Ліва рука]</color> Дістали бойовий предмет: {_equippedOffhandItem.name}");
             }
-            // Якщо бойового предмета немає, скіл не вкачаний, АБО ми хочемо змінити Щит на Ліхтар
             else if (!_isPhylacteryInHand)
             {
-                // Дістаємо Філактерій (ЙОМУ НЕ ПОТРІБНА ПРОКАЧКА!)
-                _isPhylacteryInHand = true;
-                _isCombatOffhandInHand = false;
-
-                if (_phylacteryPrefab != null)
-                {
-                    _currentOffhandModel = Instantiate(_phylacteryPrefab, _offhandHolder);
-                }
+                _isPhylacteryInHand = true; _isCombatOffhandInHand = false;
+                if (_phylacteryPrefab != null) _currentOffhandModel = Instantiate(_phylacteryPrefab, _offhandHolder);
                 if (_weaponAnimator != null) _weaponAnimator.SetBool("PhylacteryActive", true);
-
-                Debug.Log("<color=yellow>[Ліва рука]</color> Дістали Філактерій!");
             }
-            // Якщо в руці вже був Філактерій — просто ховаємо все
             else
             {
-                _isPhylacteryInHand = false;
-                _isCombatOffhandInHand = false;
+                _isPhylacteryInHand = false; _isCombatOffhandInHand = false;
                 if (_weaponAnimator != null) _weaponAnimator.SetBool("PhylacteryActive", false);
-
-                Debug.Log("<color=grey>[Ліва рука]</color> Сховали все в ножни.");
             }
 
-            // Скидаємо координати спавну, щоб предмет рівно сидів у руці
             if (_currentOffhandModel != null)
             {
                 _currentOffhandModel.transform.localPosition = Vector3.zero;
@@ -214,74 +207,140 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             }
         }
 
-        // Цей метод викликає інвентар, коли гравець перетягує предмет у слот лівої руки
         public void EquipOffhand(WeaponItemData newOffhandItem)
         {
             _equippedOffhandItem = newOffhandItem;
-
             if (_isOffhandActive)
             {
-                ToggleOffhand(); // Сховати старий
-                if (newOffhandItem != null)
-                {
-                    ToggleOffhand(); // Дістати новий
-                }
+                ToggleOffhand(); if (newOffhandItem != null) ToggleOffhand();
+            }
+        }
+
+        public void EquipWeapon(WeaponItemData newWeapon)
+        {
+            RemoveWeaponCoating();
+
+            var buffController = GetComponent<BuffController>();
+            if (buffController != null)
+            {
+                buffController.ClearWeaponBuffs();
             }
 
-            Debug.Log($"<color=green>[Екіпірування]</color> У ліву руку покладено: {(newOffhandItem != null ? newOffhandItem.name : "Порожньо")}");
+            if (_currentWeapon == newWeapon && _currentWeaponModel != null)
+            {
+                return;
+            }
+
+            if (_drawWeaponCoroutine != null)
+            {
+                StopCoroutine(_drawWeaponCoroutine);
+                _drawWeaponCoroutine = null;
+            }
+
+            if (_currentWeaponModel != null) Destroy(_currentWeaponModel);
+
+            WeaponItemData weaponToEquip = newWeapon != null ? newWeapon : _unarmedWeapon;
+            _currentWeapon = newWeapon; _comboStep = 0;
+
+            if (weaponToEquip != null && weaponToEquip.IsTwoHanded && _isOffhandActive) ToggleOffhand();
+
+            if (weaponToEquip != null && weaponToEquip.WeaponPrefab != null)
+            {
+                _currentWeaponModel = Instantiate(weaponToEquip.WeaponPrefab, _weaponHolder);
+                if (_currentWeaponModel != null) _weaponAnimator = _currentWeaponModel.GetComponent<Animator>();
+
+                _currentHitTester = _currentWeaponModel.GetComponentInChildren<MeleeHitTester>();
+                if (_currentHitTester != null) _currentHitTester.Setup(weaponToEquip, gameObject);
+
+                _drawWeaponCoroutine = StartCoroutine(DrawWeaponRoutine(_currentWeaponModel.transform));
+            }
+
+            if (_defaultEquipSound != null && _audioSource != null)
+            {
+                _audioSource.pitch = UnityEngine.Random.Range(0.9f, 1.15f);
+                _audioSource.PlayOneShot(_defaultEquipSound);
+            }
+        }
+
+        // ==========================================
+        // ФІКС: БЕЗПЕЧНА ЗУПИНКА ЧАСУ ТУТ (Щоб гра більше не лагала)
+        // ==========================================
+        public void TriggerHitImpact()
+        {
+            if (_hitStopCoroutine != null) StopCoroutine(_hitStopCoroutine);
+            _hitStopCoroutine = StartCoroutine(HitImpactRoutine());
+        }
+
+        private IEnumerator HitImpactRoutine()
+        {
+            Time.timeScale = 0.05f; // Уповільнюємо час
+
+            if (UnityEngine.Camera.main != null)
+            {
+                CameraJuice camJuice = UnityEngine.Camera.main.GetComponent<CameraJuice>();
+                if (camJuice != null) camJuice.PlayImpactShake(0.1f, 0.02f);
+            }
+
+            // Чекаємо в РЕАЛЬНОМУ часі, щоб не застрягти назавжди
+            yield return new WaitForSecondsRealtime(0.04f);
+            Time.timeScale = 1f; // Повертаємо час у норму
+        }
+        // ==========================================
+
+        private IEnumerator DrawWeaponRoutine(Transform weaponTransform)
+        {
+            float duration = 0.25f; // Швидкість діставання зброї (0.25 сек)
+            float elapsed = 0f;
+
+            // Зброя з'являється знизу екрана і трохи нахилена вперед
+            Vector3 startPos = new Vector3(0f, -0.6f, 0.2f);
+            Vector3 endPos = Vector3.zero;
+
+            // Нахил зброї: від 45 градусів (лежить) до 0 (рівно в руці)
+            Quaternion startRot = Quaternion.Euler(45f, 0f, 0f);
+            Quaternion endRot = Quaternion.identity;
+
+            weaponTransform.localPosition = startPos;
+            weaponTransform.localRotation = startRot;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = elapsed / duration;
+
+                // Математична формула для плавності (Ease Out - різко починається, плавно закінчується)
+                float smoothT = 1f - Mathf.Pow(1f - t, 3f);
+
+                if (weaponTransform != null)
+                {
+                    weaponTransform.localPosition = Vector3.Lerp(startPos, endPos, smoothT);
+                    weaponTransform.localRotation = Quaternion.Lerp(startRot, endRot, smoothT);
+                }
+
+                yield return null;
+            }
+
+            // На всяк випадок жорстко ставимо нулі в кінці
+            if (weaponTransform != null)
+            {
+                weaponTransform.localPosition = endPos;
+                weaponTransform.localRotation = endRot;
+            }
         }
 
         public void AddChargeOnHit()
         {
+            if (CurrentState == CombatState.HeavySkill)
+            {
+                Debug.Log("<color=grey>[Боївка]</color> Важкий удар не заряджає зброю.");
+                return;
+            }
+
             if (_currentHeavyCharge < ActiveWeapon.HitsToChargeHeavy)
             {
                 _currentHeavyCharge++;
                 Debug.Log($"<color=yellow>[Боївка]</color> Влучання! Заряд: {_currentHeavyCharge} / {ActiveWeapon.HitsToChargeHeavy}");
             }
-        }
-
-        public void AnimEvent_StartHitbox()
-        {
-            if (_currentHitTester != null) _currentHitTester.StartHitDetection();
-        }
-
-        public void AnimEvent_StopHitbox()
-        {
-            if (_currentHitTester != null) _currentHitTester.StopHitDetection();
-        }
-
-        public void EquipWeapon(WeaponItemData newWeapon)
-        {
-            if (_currentWeaponModel != null) Destroy(_currentWeaponModel);
-
-            WeaponItemData weaponToEquip = newWeapon != null ? newWeapon : _unarmedWeapon;
-            _currentWeapon = newWeapon;
-            _comboStep = 0;
-
-            if (weaponToEquip != null && weaponToEquip.IsTwoHanded && _isOffhandActive)
-            {
-                ToggleOffhand();
-            }
-
-            if (weaponToEquip != null && weaponToEquip.WeaponPrefab != null)
-            {
-                _currentWeaponModel = Instantiate(weaponToEquip.WeaponPrefab, _weaponHolder);
-                if (_currentWeaponModel != null)
-                {
-                    _weaponAnimator = _currentWeaponModel.GetComponent<Animator>();
-                }
-
-                _currentWeaponModel.transform.localPosition = Vector3.zero;
-                _currentWeaponModel.transform.localRotation = Quaternion.identity;
-
-                _currentHitTester = _currentWeaponModel.GetComponentInChildren<MeleeHitTester>();
-                if (_currentHitTester != null)
-                {
-                    _currentHitTester.Setup(weaponToEquip, gameObject);
-                }
-            }
-
-            Debug.Log($"<color=green>[Екіпірування]</color> Взято зброю: {weaponToEquip.name}");
         }
 
         public float GetAttackSpeedMultiplier()
@@ -293,12 +352,61 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             return Mathf.Max(0.01f, multiplier);
         }
 
+        public void ApplyWeaponCoating(GameObject vfxPrefab, float duration, AudioClip swingSound, AudioClip hitSound)
+        {
+            if (_currentWeaponModel == null || vfxPrefab == null) return;
+
+            if (_activeWeaponVFX != null) Destroy(_activeWeaponVFX);
+
+            Transform targetAnchor = _currentWeaponModel.transform; 
+            if (_currentHitTester != null)
+            {
+                Collider hitbox = _currentHitTester.GetComponent<Collider>();
+                if (hitbox == null) hitbox = _currentHitTester.GetComponentInChildren<Collider>();
+
+                if (hitbox != null) targetAnchor = hitbox.transform;
+            }
+
+            _activeWeaponVFX = Instantiate(vfxPrefab, targetAnchor);
+
+            _activeWeaponVFX.transform.localPosition = Vector3.zero;
+            _activeWeaponVFX.transform.localRotation = Quaternion.identity;
+
+            ActiveCoatingSwingSound = swingSound;
+            ActiveCoatingHitSound = hitSound;
+
+            CancelInvoke(nameof(RemoveWeaponCoating));
+            Invoke(nameof(RemoveWeaponCoating), duration);
+        }
+
+        private void RemoveWeaponCoating()
+        {
+            if (_activeWeaponVFX != null)
+            {
+                Destroy(_activeWeaponVFX);
+                Debug.Log("<color=cyan>[Combat]</color> Дія змазки закінчилася.");
+            }
+            ActiveCoatingSwingSound = null;
+            ActiveCoatingHitSound = null;
+        }
+
         private void PerformHeavySkill()
         {
             CurrentState = CombatState.HeavySkill;
-            _currentHeavyCharge = 0;
-            Debug.Log($"<color=red>[Боївка]</color> ВМІННЯ ПРАВОЇ РУКИ: {ActiveWeapon.HeavyAbility}!");
-            Invoke(nameof(ResetToIdle), 1.0f);
+            if (ActiveWeapon.HeavyAbilityData != null && ActiveWeapon.HeavyAbilityData.ResetChargeOnUse)
+            {
+                _currentHeavyCharge = 0;
+            }
+
+            if (ActiveWeapon.HeavyAbilityData is EarthquakeAbility earthquake)
+            {
+                earthquake.StartJump(this);
+            }
+
+            if (_weaponAnimator != null)
+            {
+                _weaponAnimator.SetTrigger("HeavySkill");
+            }
         }
 
         private void PerformOffhandAbility()
@@ -306,13 +414,23 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             CurrentState = CombatState.Ability;
             _lastAbilityTime = Time.time;
 
-            // Якщо екіпіровано предмет, викликаємо його здібність (наприклад, Філактерій)
-            if (_equippedOffhandItem != null)
+            if (_equippedOffhandItem != null && _currentOffhandModel != null)
             {
-                Debug.Log($"<color=yellow>[Магія]</color> ЗДІБНІСТЬ ЛІВОЇ РУКИ: {_equippedOffhandItem.OffhandAbility}!");
+                Debug.Log($"<color=yellow>[Ліва рука]</color> Застосовуємо здібність: {_equippedOffhandItem.name}!");
+
+                IOffhandAbility offhandSkill = _currentOffhandModel.GetComponentInChildren<IOffhandAbility>();
+
+                if (offhandSkill != null)
+                {
+                    offhandSkill.ExecuteOffhandAbility(this, _weaponAnimator);
+                }
+                else
+                {
+                    Debug.LogWarning("На префабі лівої руки немає скрипта, який реалізує IOffhandAbility!");
+                }
             }
 
-            Invoke(nameof(ResetToIdle), 0.8f);
+            Invoke(nameof(ForceResetToIdle), 0.5f);
         }
 
         private void StartBlocking()
@@ -329,17 +447,97 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             if (_weaponAnimator != null) _weaponAnimator.SetBool("IsBlocking", false);
         }
 
-        private void CheckComboReset()
-        {
-            if (CurrentState == CombatState.Idle && _comboStep > 0 && Time.time - _lastAttackTime > _comboResetTime)
-            {
-                _comboStep = 0;
-            }
-        }
-
         private void ResetToIdle()
         {
             CurrentState = CombatState.Idle;
+        }
+
+        private void FailsafeReset()
+        {
+            if (CurrentState == CombatState.Attacking)
+            {
+                Debug.LogWarning("<color=red>[Запобіжник]</color> Анімація зависла!");
+                _isTransitioningToNextCombo = false;
+                ForceResetToIdle();
+            }
+        }
+
+        public bool DrainStamina(float amount)
+        {
+            if (_stamina == null) return true;
+            return _stamina.Spend(amount);
+        }
+
+        public void AnimEvent_PlaySwingSound()
+        {
+            if (_audioSource != null)
+            {
+                float basePitch = Random.Range(0.9f, 1.1f);
+                float finalPitch = basePitch * GetAttackSpeedMultiplier();
+
+                if (ActiveWeapon != null && ActiveWeapon.SwingSound != null)
+                {
+                    _audioSource.pitch = finalPitch;
+                    _audioSource.PlayOneShot(ActiveWeapon.SwingSound);
+                }
+
+                if (ActiveCoatingSwingSound != null)
+                {
+                    _audioSource.pitch = finalPitch;
+                    _audioSource.PlayOneShot(ActiveCoatingSwingSound);
+                }
+            }
+        }
+
+        public void AnimEvent_StartHitbox() { if (_currentHitTester != null) _currentHitTester.StartHitDetection(); }
+        public void AnimEvent_StopHitbox() { if (_currentHitTester != null) _currentHitTester.StopHitDetection(); }
+
+        public void AnimEvent_OpenComboWindow()
+        {
+            _isComboWindowOpen = true;
+        }
+
+        public void AnimEvent_TriggerNextCombo()
+        {
+            if (_nextAttackBuffered)
+            {
+                _isTransitioningToNextCombo = true;
+                PerformLightAttack();
+            }
+        }
+
+        public void AnimEvent_ExecuteHeavyAbility()
+        {
+            if (ActiveWeapon != null && ActiveWeapon.HeavyAbilityData != null)
+            {
+                ActiveWeapon.HeavyAbilityData.ExecuteHeavyAbility(this, _weaponAnimator, _currentWeaponModel);
+            }
+        }
+
+        public void PlayHitSound(AudioClip hitSound)
+        {
+            if (_audioSource != null && hitSound != null)
+            {
+                _audioSource.pitch = UnityEngine.Random.Range(0.85f, 1.15f);
+                _audioSource.PlayOneShot(hitSound);
+            }
+        }
+
+        public void ForceResetToIdle()
+        {
+            CancelInvoke(nameof(FailsafeReset));
+            _isComboWindowOpen = false;
+            _nextAttackBuffered = false;
+            _isTransitioningToNextCombo = false;
+            _comboStep = 0;
+            CurrentState = CombatState.Idle;
+
+            if (_weaponAnimator != null)
+            {
+                _weaponAnimator.SetInteger("ComboStep", 0);
+            }
+
+            Debug.Log("<color=lime>[Аніматор]</color> Стан Idle! Комбо успішно скинуто.");
         }
     }
 }

@@ -13,14 +13,14 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         public float Amount;
     }
 
-    public enum HeavyAbilityType { None, PrecisionAim, Fury, DirectionalSlice, AoEKnockback, SingleStrong, ChainForm }
-    public enum OffhandAbilityType { None, DamageParry, StunStrike, DoubleSlice, ShieldBash }
-
     [CreateAssetMenu(fileName = "New Weapon", menuName = "Project-S/Items/Weapon")]
     public class WeaponItemData : ItemData
     {
         [Header("Equip Settings")]
         public bool IsTwoHanded = false;
+
+        [Header("Passive Abilities")]
+        public List<WeaponPassiveData> Passives = new List<WeaponPassiveData>();
 
         [Header("Damage")]
         public List<DamageInstance> DamageProfile = new List<DamageInstance>();
@@ -33,11 +33,10 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
         [Header("Heavy ability")]
         public int HitsToChargeHeavy = 3;
-        public HeavyAbilityType HeavyAbility;
+        public WeaponActiveData HeavyAbilityData;
         public float HeavyAbilityDuration = 0f;
 
         [Header("Offhand ability")]
-        public OffhandAbilityType OffhandAbility;
         public float AbilityCooldown = 8f;
 
         [Header("Defense")]
@@ -46,6 +45,10 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         public float ParryWindow = 0.25f;
         public float ParryStaminaReward = 20f;
         public float ParryPoiseDamage = 40f;
+
+        [Header("Sounds")]
+        public AudioClip SwingSound;
+        public AudioClip HitSound;
 
         [Header("Harvesting")]
         public HarvestToolType HarvestTool = HarvestToolType.None;

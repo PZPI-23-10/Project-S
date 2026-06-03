@@ -12,28 +12,51 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 215432127562c5e46812873892628a75, type: 3}
   m_Name: Fists
   m_EditorClassIdentifier: 
-  ItemName: Кулаки
+  ItemName: "\u041F\u0440\u0435\u0434\u043C\u0435\u0442"
+  Kind: 1
   Weight: 1
   IsStackable: 0
   MaxStack: 1
+  MaxInventoryStacks: 0
   Icon: {fileID: 0}
   Description: Власні руки. Краще, ніж залишитися беззбройним.
   WeaponPrefab: {fileID: 3332889258831034580, guid: 17320fc247f21d84f86c2e6c4819d676,
     type: 3}
   WorldPickupPrefab: {fileID: 0}
+  ConsumableEffect: 0
+  HealthRestoreAmount: 0
+  HungerRestoreAmount: 0
+  StaminaRestoreAmount: 0
+  SpecialEffect: 0
+  SpecialEffectDelaySeconds: 0
+  StatEffects: []
+  TimedBuffs: []
+  SpecialEffects: []
+  DamageConversions: []
+  TimedBuffType: 0
+  TimedBuffCategory: 0
+  TimedBuffMultiplier: 1
+  TimedBuffDurationSeconds: 0
+  SecondaryTimedBuffType: 0
+  SecondaryTimedBuffCategory: 0
+  SecondaryTimedBuffMultiplier: 1
+  SecondaryTimedBuffDurationSeconds: 0
+  IsTwoHanded: 0
+  Passives: []
   DamageProfile:
   - Type: 1
     Amount: 8
   PoiseDamage: 6
   AttackSpeedMultiplier: 1
   MaxComboHits: 3
-  HitsToChargeHeavy: 4
-  HeavyAbility: 0
+  HitsToChargeHeavy: 0
+  HeavyAbilityData: {fileID: 0}
   HeavyAbilityDuration: 0
-  OffhandAbility: 0
   AbilityCooldown: 8
   BlockMitigation: 0.404
   ParryWindow: 0.25
   ParryStaminaReward: 20
   ParryPoiseDamage: 40
+  SwingSound: {fileID: 8300000, guid: 889d6b010d99b8e4e859124b719f4b7d, type: 3}
+  HitSound: {fileID: 8300000, guid: 8a956034174b31045b446d74358b869c, type: 3}
   HarvestTool: 0

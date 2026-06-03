@@ -507,7 +507,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: ПРОЄКТ ВИЖИВАННЯ
+  m_text: "\u041F\u0420\u041E\u0404\u041A\u0422 \u0412\u0418\u0416\u0418\u0412\u0410\u041D\u041D\u042F"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -2393,7 +2393,7 @@ PrefabInstance:
     - target: {fileID: 392940593384563300, guid: 0a68be1bd13d8694e8d8fe85574ac075,
         type: 3}
       propertyPath: m_text
-      value: ПРОЄКТ ВИЖИВАННЯ
+      value: PROJECT SURVIVAL
       objectReference: {fileID: 0}
     - target: {fileID: 392940593384563300, guid: 0a68be1bd13d8694e8d8fe85574ac075,
         type: 3}

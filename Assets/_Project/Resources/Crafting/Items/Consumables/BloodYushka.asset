@@ -31,6 +31,10 @@ MonoBehaviour:
   StaminaRestoreAmount: 0
   SpecialEffect: 0
   SpecialEffectDelaySeconds: 0
+  ConsumeSound: {fileID: 8300000, guid: 5fc63234aaa14574eb07aae2c1e6c14e, type: 3}
+  WeaponCoatingVFX: {fileID: 0}
+  CoatingSwingSound: {fileID: 0}
+  CoatingHitSound: {fileID: 0}
   StatEffects: []
   TimedBuffs: []
   SpecialEffects: []

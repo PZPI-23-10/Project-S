@@ -24,13 +24,15 @@ MonoBehaviour:
     \u043F\u0456\u0441\u043B\u044F \u043A\u043E\u0440\u043E\u0442\u043A\u043E\u0457
     \u0437\u0430\u0442\u0440\u0438\u043C\u043A\u0438."
   WeaponPrefab: {fileID: 0}
-  WorldPickupPrefab: {fileID: 0}
+  WorldPickupPrefab: {fileID: 6775631542978168765, guid: 4f1d59f7b9971444e93fd46098986c3d,
+    type: 3}
   ConsumableEffect: 0
   HealthRestoreAmount: 0
   HungerRestoreAmount: 0
   StaminaRestoreAmount: 0
   SpecialEffect: 1
   SpecialEffectDelaySeconds: 5
+  ConsumeSound: {fileID: 8300000, guid: b9e64b6f38194164b8f85c188b75c30b, type: 3}
   StatEffects: []
   TimedBuffs: []
   SpecialEffects: []

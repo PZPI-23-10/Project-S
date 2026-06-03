@@ -42,19 +42,21 @@ MonoBehaviour:
   SecondaryTimedBuffMultiplier: 1
   SecondaryTimedBuffDurationSeconds: 0
   IsTwoHanded: 1
+  Passives: []
   DamageProfile:
   - Type: 2
     Amount: 40
   PoiseDamage: 28
   AttackSpeedMultiplier: 0.75
   MaxComboHits: 1
-  HitsToChargeHeavy: 3
-  HeavyAbility: 0
+  HitsToChargeHeavy: 0
+  HeavyAbilityData: {fileID: 0}
   HeavyAbilityDuration: 0
-  OffhandAbility: 0
   AbilityCooldown: 8
   BlockMitigation: 0.25
   ParryWindow: 0.16
   ParryStaminaReward: 10
   ParryPoiseDamage: 20
+  SwingSound: {fileID: 8300000, guid: 60865f48dc79e114284fd38c4aff266b, type: 3}
+  HitSound: {fileID: 8300000, guid: 5e4265e1d42e54b4fa0ea1f920703e7f, type: 3}
   HarvestTool: 1

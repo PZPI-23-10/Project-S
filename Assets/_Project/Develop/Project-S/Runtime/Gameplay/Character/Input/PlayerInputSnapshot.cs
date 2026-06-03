@@ -4,23 +4,9 @@ namespace Project_S.Runtime.Gameplay.Character.Input
 {
     public readonly struct PlayerInputSnapshot
     {
+        // 18 параметрів: все на false або zero
         public static PlayerInputSnapshot Blocked => new PlayerInputSnapshot(
-            Vector2.zero,
-            Vector2.zero,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            -1,
-            false,
-            false,
-            false,
-            false);
+            Vector2.zero, Vector2.zero, false, false, false, false, false, false, false, false, false, -1, false, false, false, false, false, false);
 
         public PlayerInputSnapshot(
             Vector2 move,
@@ -34,21 +20,23 @@ namespace Project_S.Runtime.Gameplay.Character.Input
             bool interactPressed)
             : this(
                 move,
-                look,
-                sprintHeld,
+                look, 
+                sprintHeld, 
                 jumpPressed,
                 dodgePressed,
                 blockHeld,
                 lightAttackPressed,
-                heavyAttackPressed,
+                heavyAttackPressed, 
                 interactPressed,
-                false,
-                false,
+                false, 
+                false, 
                 -1,
                 false,
+                false, 
+                false, 
                 false,
-                false,
-                false)
+                false, 
+                false) // 18 параметрів
         {
         }
 
@@ -78,13 +66,16 @@ namespace Project_S.Runtime.Gameplay.Character.Input
                 toggleOffhandPressed,
                 offhandAbilityPressed,
                 hotbarSlotPressed,
+                false, 
+                false, 
                 false,
-                false,
-                false,
-                false)
+                false, 
+                false, 
+                false) // 18 параметрів
         {
         }
 
+        // ГОЛОВНИЙ КОНСТРУКТОР (18 параметрів)
         public PlayerInputSnapshot(
             Vector2 move,
             Vector2 look,
@@ -101,7 +92,9 @@ namespace Project_S.Runtime.Gameplay.Character.Input
             bool qteForwardPressed,
             bool qteBackPressed,
             bool qteLeftPressed,
-            bool qteRightPressed)
+            bool qteRightPressed,
+            bool lightAttackHeld = false, // Наш інпут для Молота
+            bool crouchHeld = false)      // Інпут твого друга для присідання
         {
             Move = move;
             Look = look;
@@ -119,6 +112,8 @@ namespace Project_S.Runtime.Gameplay.Character.Input
             QteBackPressed = qteBackPressed;
             QteLeftPressed = qteLeftPressed;
             QteRightPressed = qteRightPressed;
+            LightAttackHeld = lightAttackHeld;
+            CrouchHeld = crouchHeld;
         }
 
         public Vector2 Move { get; }
@@ -137,5 +132,7 @@ namespace Project_S.Runtime.Gameplay.Character.Input
         public bool QteBackPressed { get; }
         public bool QteLeftPressed { get; }
         public bool QteRightPressed { get; }
+        public bool LightAttackHeld { get; }
+        public bool CrouchHeld { get; }
     }
 }

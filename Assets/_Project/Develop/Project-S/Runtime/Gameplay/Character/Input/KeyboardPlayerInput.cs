@@ -11,6 +11,7 @@ namespace Project_S.Runtime.Gameplay.Character.Input
         [SerializeField] private KeyCode _sprintKey = KeyCode.LeftShift;
         [SerializeField] private KeyCode _jumpKey = KeyCode.Space;
         [SerializeField] private KeyCode _dodgeKey = KeyCode.LeftAlt;
+        [SerializeField] private KeyCode _crouchKey = KeyCode.LeftControl;
         [SerializeField] private KeyCode _interactKey = KeyCode.E;
         [SerializeField] private KeyCode _toggleOffhandKey = KeyCode.G;
         [SerializeField] private KeyCode _offhandAbilityKey = KeyCode.F;
@@ -40,7 +41,10 @@ namespace Project_S.Runtime.Gameplay.Character.Input
                 UnityEngine.Input.GetKeyDown(_qteForwardKey),
                 UnityEngine.Input.GetKeyDown(_qteBackKey),
                 UnityEngine.Input.GetKeyDown(_qteLeftKey),
-                UnityEngine.Input.GetKeyDown(_qteRightKey));
+                UnityEngine.Input.GetKeyDown(_qteRightKey),
+                UnityEngine.Input.GetMouseButton(0),
+                UnityEngine.Input.GetKey(_crouchKey)
+            );
         }
 
         private int GetHotbarSlotPressed()

@@ -12,14 +12,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 24e58db34c6e53c9ce5b4fdaa1bed91e, type: 3}
   m_Name: IronOreNode
   m_EditorClassIdentifier: 
-  DisplayName: Жила залізної руди
-  MaxHealth: 45
+  DisplayName: "\u0416\u0438\u043B\u0430 \u0437\u0430\u043B\u0456\u0437\u043D\u043E\u0457
+    \u0440\u0443\u0434\u0438"
+  MaxHealth: 300
+  BaseYieldItem: {fileID: 11400000, guid: 7ad799469e2b4710ab4f55ea130f7f21, type: 2}
+  HealthPerBaseYield: 100
+  BaseYieldAmount: 1
   PreferredTool: 2
   MatchingToolDamageMultiplier: 1
-  MismatchedToolDamageMultiplier: 0.2
-  SoulAshReward: 0
+  MismatchedToolDamageMultiplier: 1
+  MismatchedYieldMultiplier: 0.9
+  CorrectToolSounds:
+  - {fileID: 8300000, guid: 94c8626602d82444d8eac9585b1846b6, type: 3}
+  WrongToolSounds: []
+  HitVFXPrefab: {fileID: 4080515105622610912, guid: feb7cdd7acea129489bb34b50471b8aa,
+    type: 3}
+  DestructionSound: {fileID: 8300000, guid: 05cd6fa694513324eaa8c89813e22f7d, type: 3}
+  DamageMultipliers:
+  - Type: 2
+    Multiplier: 0
+  - Type: 3
+    Multiplier: 0
+  - Type: 5
+    Multiplier: 0.2
+  - Type: 4
+    Multiplier: 0.2
+  - Type: 1
+    Multiplier: 0.2
+  SoulAshReward: 10
   Drops:
   - Item: {fileID: 11400000, guid: 7ad799469e2b4710ab4f55ea130f7f21, type: 2}
-    MinAmount: 1
+    MinAmount: 3
     MaxAmount: 3
     Chance: 1
+  - Item: {fileID: 11400000, guid: 02b7080157078c848857cba96908cdf9, type: 2}
+    MinAmount: 1
+    MaxAmount: 1
+    Chance: 0.2

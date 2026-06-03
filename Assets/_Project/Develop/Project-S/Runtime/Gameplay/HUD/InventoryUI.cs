@@ -49,6 +49,7 @@ namespace Project_S.Runtime.Gameplay.HUD
         private AccessoryPanelUI _accessoryPanel;
         private AccessorySlotController _accessories;
         private IItemStorage _activeStorage;
+        private ICraftingRecipeProvider _activeCraftingRecipeProvider;
         private SoulAshWallet _soulAshWallet;
         private CraftingContext _currentCraftingContext = CraftingContext.Hand;
         private Transform _distanceCloseTarget;
@@ -139,8 +140,17 @@ namespace Project_S.Runtime.Gameplay.HUD
         public void OpenWithCraftingContext(CraftingContext context)
         {
             _activeStorage = null;
+            _activeCraftingRecipeProvider = null;
             ClearDistanceCloseTarget();
             SetInventoryOpen(true, context);
+        }
+
+        public void OpenWithCraftingContext(CraftingContext context, ICraftingRecipeProvider recipeProvider)
+        {
+            _activeStorage = null;
+            _activeCraftingRecipeProvider = recipeProvider;
+            ClearDistanceCloseTarget();
+            SetInventoryOpenInternal(true, context);
         }
 
         public void OpenWithCraftingContext(
@@ -149,7 +159,18 @@ namespace Project_S.Runtime.Gameplay.HUD
             Transform closeObserver,
             float closeDistance)
         {
+            OpenWithCraftingContext(context, closeTarget, closeObserver, closeDistance, null);
+        }
+
+        public void OpenWithCraftingContext(
+            CraftingContext context,
+            Transform closeTarget,
+            Transform closeObserver,
+            float closeDistance,
+            ICraftingRecipeProvider recipeProvider)
+        {
             _activeStorage = null;
+            _activeCraftingRecipeProvider = recipeProvider;
             SetDistanceCloseTarget(closeTarget, closeObserver, closeDistance);
             SetInventoryOpenInternal(true, context);
         }
@@ -164,6 +185,7 @@ namespace Project_S.Runtime.Gameplay.HUD
                 return;
 
             _activeStorage = storage;
+            _activeCraftingRecipeProvider = null;
             SetDistanceCloseTarget(closeTarget, closeObserver, closeDistance);
             SetInventoryOpenInternal(true, CraftingContext.Hand);
         }
@@ -183,11 +205,18 @@ namespace Project_S.Runtime.Gameplay.HUD
             Transform closeObserver,
             float closeDistance)
         {
-            OpenWithStorage((IItemStorage)storage, closeTarget, closeObserver, closeDistance);
+            if (storage == null)
+                return;
+
+            _activeStorage = storage;
+            _activeCraftingRecipeProvider = null;
+            SetDistanceCloseTarget(closeTarget, closeObserver, closeDistance);
+            SetInventoryOpenInternal(true, CraftingContext.Hand);
         }
 
         public void SetCraftingContext(CraftingContext context)
         {
+            _activeCraftingRecipeProvider = null;
             _currentCraftingContext = context;
             if (_craftingPanel != null)
                 _craftingPanel.SetContext(context);
@@ -196,6 +225,7 @@ namespace Project_S.Runtime.Gameplay.HUD
         public void SetInventoryOpen(bool open, CraftingContext context)
         {
             _activeStorage = null;
+            _activeCraftingRecipeProvider = null;
 
             if (open)
                 ClearDistanceCloseTarget();
@@ -277,7 +307,7 @@ namespace Project_S.Runtime.Gameplay.HUD
                 else
                 {
                     _storagePanel?.ClearStorage();
-                    _craftingPanel?.SetContext(_currentCraftingContext);
+                    _craftingPanel.SetContext(_currentCraftingContext);
                 }
 
                 Refresh();
@@ -293,6 +323,7 @@ namespace Project_S.Runtime.Gameplay.HUD
                 _storagePanel?.ClearStorage();
                 _craftingPanel?.SetPanelVisible(true);
                 _activeStorage = null;
+                _activeCraftingRecipeProvider = null;
                 TooltipUI.Instance?.Hide();
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
@@ -803,14 +834,12 @@ namespace Project_S.Runtime.Gameplay.HUD
 
         private void DropDraggedStackToWorld()
         {
-            if (_draggedStack == null || _draggedStack.Item.WorldPickupPrefab == null) return;
+            if (_draggedStack == null || _draggedStack.Item == null) return;
 
             Transform p = _inventory.transform;
             Vector3 pos = p.position + p.forward * 1.5f + Vector3.up * 0.5f;
 
-            GameObject dropped = Instantiate(_draggedStack.Item.WorldPickupPrefab, pos, Quaternion.identity);
-            if (dropped.TryGetComponent(out ItemPickup pickup))
-                pickup.Amount = _draggedStack.Amount;
+            WorldItemDropUtility.SpawnPickup(_draggedStack.Item, _draggedStack.Amount, pos, 0.5f);
 
             ClearDraggedItem();
         }

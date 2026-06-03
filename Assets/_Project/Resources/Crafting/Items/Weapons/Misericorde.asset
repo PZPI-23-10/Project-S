@@ -20,7 +20,7 @@ MonoBehaviour:
   MaxInventoryStacks: 0
   Icon: {fileID: 21300000, guid: f9bca48597b1071469183d5a1a9ff6d0, type: 3}
   Description: Дуже швидкий колючий клинок для точних ударів.
-  WeaponPrefab: {fileID: 3942592866433276128, guid: 6e6f288cc1ccdd543b2cd3d632a069ed,
+  WeaponPrefab: {fileID: 1265574902619433541, guid: 50d47112134114a4483fca9d26417522,
     type: 3}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 0
@@ -42,19 +42,21 @@ MonoBehaviour:
   SecondaryTimedBuffMultiplier: 1
   SecondaryTimedBuffDurationSeconds: 0
   IsTwoHanded: 0
+  Passives: []
   DamageProfile:
   - Type: 0
     Amount: 14
   PoiseDamage: 2
   AttackSpeedMultiplier: 1.65
-  MaxComboHits: 4
-  HitsToChargeHeavy: 3
-  HeavyAbility: 0
+  MaxComboHits: 5
+  HitsToChargeHeavy: 1
+  HeavyAbilityData: {fileID: 11400000, guid: de281e0ef9a9c76439011f2d90bfa42c, type: 2}
   HeavyAbilityDuration: 0
-  OffhandAbility: 0
   AbilityCooldown: 8
   BlockMitigation: 0
   ParryWindow: 0.36
   ParryStaminaReward: 20
   ParryPoiseDamage: 55
+  SwingSound: {fileID: 8300000, guid: 08be760ce24fe5c4cad74485473029e3, type: 3}
+  HitSound: {fileID: 8300000, guid: d7c958160f598d84ba768643e00f55ec, type: 3}
   HarvestTool: 0

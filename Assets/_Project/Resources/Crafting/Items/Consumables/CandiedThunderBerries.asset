@@ -12,14 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35381e3f13136374abee8a5ed10dc4aa, type: 3}
   m_Name: CandiedThunderBerries
   m_EditorClassIdentifier: 
-  ItemName: Зацукровані громові ягоди
+  ItemName: "\u0417\u0430\u0446\u0443\u043A\u0440\u043E\u0432\u0430\u043D\u0456 \u0433\u0440\u043E\u043C\u043E\u0432\u0456
+    \u044F\u0433\u043E\u0434\u0438"
   Kind: 2
   Weight: 0.1
   IsStackable: 1
   MaxStack: 6
   MaxInventoryStacks: 0
   Icon: {fileID: 21300000, guid: b4e43dfc90a97334282727c9c731db7f, type: 3}
-  Description: Солодкі ягоди з іскрою грози. Втамовують голод і збільшують здобуток попелу душ.
+  Description: "\u0421\u043E\u043B\u043E\u0434\u043A\u0456 \u044F\u0433\u043E\u0434\u0438
+    \u0437 \u0456\u0441\u043A\u0440\u043E\u044E \u0433\u0440\u043E\u0437\u0438. \u0412\u0442\u0430\u043C\u043E\u0432\u0443\u044E\u0442\u044C
+    \u0433\u043E\u043B\u043E\u0434 \u0456 \u0437\u0431\u0456\u043B\u044C\u0448\u0443\u044E\u0442\u044C
+    \u0437\u0434\u043E\u0431\u0443\u0442\u043E\u043A \u043F\u043E\u043F\u0435\u043B\u0443
+    \u0434\u0443\u0448."
   WeaponPrefab: {fileID: 0}
   WorldPickupPrefab: {fileID: 0}
   ConsumableEffect: 2
@@ -28,6 +33,7 @@ MonoBehaviour:
   StaminaRestoreAmount: 0
   SpecialEffect: 0
   SpecialEffectDelaySeconds: 0
+  ConsumeSound: {fileID: 8300000, guid: 5fc63234aaa14574eb07aae2c1e6c14e, type: 3}
   StatEffects: []
   TimedBuffs: []
   SpecialEffects: []

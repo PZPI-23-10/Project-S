@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using Project_S.Runtime.Gameplay.Character.Interaction;
 using Project_S.Runtime.Gameplay.Character.Inventory;
 using Project_S.Runtime.Gameplay.HUD;
@@ -5,7 +7,7 @@ using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Crafting
 {
-    public class TimedCraftingStation : MonoBehaviour, IInteractable
+    public class TimedCraftingStation : MonoBehaviour, IInteractable, ICraftingRecipeProvider
     {
         [SerializeField] private CraftingContext _context = CraftingContext.Campfire;
         [SerializeField] private string _displayName = "Станція";
@@ -16,6 +18,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
         [SerializeField] private float _maxFuelSeconds = 900f;
         [SerializeField] private float _fuelSeconds;
         [SerializeField] private BaseResourceStorage _baseStorage;
+        [SerializeField] private List<CraftingRecipeData> _availableRecipes = new List<CraftingRecipeData>();
 
         private CraftingRecipeData _activeRecipe;
         private InventoryController _activeInventory;
@@ -28,6 +31,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
         public CraftingContext Context => _context;
         public string DisplayName => _displayName;
         public string ActionLabel => _actionLabel;
+        public IReadOnlyList<CraftingRecipeData> AvailableRecipes => _availableRecipes;
         public bool UsesFuel => _usesFuel;
         public float FuelSeconds => _fuelSeconds;
         public float MaxFuelSeconds => _maxFuelSeconds;
@@ -57,6 +61,23 @@ namespace Project_S.Runtime.Gameplay.Crafting
             _fuelItem = fuelItem;
             _secondsPerFuelItem = secondsPerFuelItem;
             _maxFuelSeconds = maxFuelSeconds;
+        }
+
+        public bool AllowsRecipe(CraftingRecipeData recipe)
+        {
+            if (recipe == null || recipe.Context != _context)
+                return false;
+
+            return _availableRecipes == null
+                || _availableRecipes.Count == 0
+                || _availableRecipes.Contains(recipe);
+        }
+
+        public void ConfigureRecipes(IEnumerable<CraftingRecipeData> recipes)
+        {
+            _availableRecipes = recipes?
+                .Where(x => x != null)
+                .ToList() ?? new List<CraftingRecipeData>();
         }
 
         protected virtual void Awake()
@@ -93,11 +114,12 @@ namespace Project_S.Runtime.Gameplay.Crafting
                     _context,
                     transform,
                     interactor.transform,
-                    interactor.MenuCloseDistance);
+                    interactor.MenuCloseDistance,
+                    this);
             }
             else
             {
-                inventoryUI.OpenWithCraftingContext(_context);
+                inventoryUI.OpenWithCraftingContext(_context, this);
             }
         }
 
@@ -132,6 +154,8 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
             if (recipe.Context != _context)
                 check.AddProblem($"Цей рецепт не підходить для {_displayName}.");
+            else if (!AllowsRecipe(recipe))
+                check.AddProblem("Цей рецепт недоступний на цій станції.");
 
             if (_usesFuel && recipe.FuelSecondsCost > 0f && _fuelSeconds < recipe.FuelSecondsCost)
                 check.AddProblem($"Потрібно ще {Mathf.CeilToInt(recipe.FuelSecondsCost - _fuelSeconds)} с палива.");
@@ -206,7 +230,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
 
         private float GetEffectiveCraftDuration(CraftingRecipeData recipe)
         {
-            return 0f;
+            return recipe != null ? Mathf.Max(0f, recipe.CraftDurationSeconds) : 0f;
         }
 
         private void GrantRecipeOutput(CraftingRecipeData recipe, InventoryController targetInventory)
