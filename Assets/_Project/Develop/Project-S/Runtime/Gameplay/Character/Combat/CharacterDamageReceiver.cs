@@ -1,5 +1,7 @@
 using System.Collections; // Обов'язково для корутин (уповільнення часу)
+using Project_S.Runtime.Gameplay.Character.Movement;
 using Project_S.Runtime.Gameplay.Character.Stats;
+using Project_S.Runtime.Gameplay.Upgrades;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Character.Combat
@@ -12,6 +14,8 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         [SerializeField] private CombatController _combatController;
         [SerializeField] private PoiseController _poiseController;
         [SerializeField] private StaminaController _staminaController;
+        [SerializeField] private CharacterMotor _motor;
+        [SerializeField] private PlayerUpgradeController _upgrades;
 
         [Header("Аудіо")]
         [SerializeField] private AudioSource _audioSource;
@@ -26,8 +30,17 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         [SerializeField] private GameObject _parryVFXPrefab; // Префаб іскор або спалаху
         // ==========================================
 
+        private void Awake()
+        {
+            if (_motor == null) _motor = GetComponent<CharacterMotor>();
+            if (_upgrades == null) _upgrades = GetComponent<PlayerUpgradeController>();
+        }
+
         public void ReceiveDamage(DamageRequest request)
         {
+            if (IsDodgeInvulnerabilityActive())
+                return;
+
             DamageRequest modifiedRequest = request;
 
             // --- ЛОГІКА ЗАХИСТУ ---
@@ -116,6 +129,17 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         // ==========================================
         // КОРУТИНА ДЛЯ УПОВІЛЬНЕННЯ ЧАСУ (HIT STOP)
         // ==========================================
+        private bool IsDodgeInvulnerabilityActive()
+        {
+            if (_motor == null) _motor = GetComponent<CharacterMotor>();
+            if (_upgrades == null) _upgrades = GetComponent<PlayerUpgradeController>();
+
+            return _motor != null
+                && _motor.IsDodging
+                && _upgrades != null
+                && _upgrades.HasUpgrade(UpgradeIds.DodgeInvulnerability);
+        }
+
         private IEnumerator HitStopRoutine()
         {
             Time.timeScale = 0.1f; // Уповільнюємо час до 10%

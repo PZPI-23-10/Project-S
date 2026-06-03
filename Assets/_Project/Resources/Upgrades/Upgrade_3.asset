@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c78d3a23c8f14d398338f46134b6d32e, type: 3}
+  m_Name: Upgrade_3
+  m_EditorClassIdentifier:
+  Id: 3
+  DisplayName: "Навик 3"
+  Icon: {fileID: 0}
+  TreePosition: {x: 190, y: -150}
+  PrerequisiteIds: []
+  SoulAshCost: 100
+  ItemCosts:
+  - Item: {fileID: 11400000, guid: 02b7080157078c848857cba96908cdf9, type: 2}
+    Amount: 1
+  - Item: {fileID: 11400000, guid: 9644e950c2a3e34a7efc590be85bf38e, type: 2}
+    Amount: 12
+  - Item: {fileID: 11400000, guid: 2b27167344e89f6b1257e31646d0c795, type: 2}
+    Amount: 20
+  - Item: {fileID: 11400000, guid: a66c7b8131eafd3450dd8a325ad07a46, type: 2}
+    Amount: 20
+  Effects:
+  - Type: 0
+    StatType: 8
+    Amount: 30
+    ExpandStatLimit: 1
+  Description: "+30 веса."

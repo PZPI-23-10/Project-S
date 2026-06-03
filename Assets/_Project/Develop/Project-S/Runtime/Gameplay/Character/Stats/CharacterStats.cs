@@ -50,7 +50,7 @@ namespace Project_S.Runtime.Gameplay.Character.Stats
 
         public float GetNormalized(StatType type)
         {
-            return TryGetStat(type, out var stat) ? stat.NormalizedValue : 0f;
+            return TryGetStat(type, out var stat) ? stat.GetNormalizedValue(GetEffectiveMax(type, stat.MaxValue)) : 0f;
         }
 
         public float GetMin(StatType type)
@@ -60,7 +60,7 @@ namespace Project_S.Runtime.Gameplay.Character.Stats
 
         public float GetMax(StatType type)
         {
-            return TryGetStat(type, out var stat) ? stat.MaxValue : 0f;
+            return TryGetStat(type, out var stat) ? GetEffectiveMax(type, stat.MaxValue) : 0f;
         }
 
         public bool TryGet(StatType type, out float value)
@@ -83,13 +83,34 @@ namespace Project_S.Runtime.Gameplay.Character.Stats
                 return;
             }
 
-            stat.Set(value);
+            stat.Set(value, GetEffectiveMax(type, stat.MaxValue));
             Changed?.Invoke(type, ApplyModifiers(type, stat.CurrentValue));
         }
 
         public void Add(StatType type, float delta)
         {
             Set(type, GetRaw(type) + delta);
+        }
+
+        public void AddPermanent(StatType type, float delta, bool expandLimit = false)
+        {
+            if (!_statsByType.TryGetValue(type, out var stat))
+            {
+                Debug.LogWarning($"Stat {type} is not configured on {name}.", this);
+                return;
+            }
+
+            if (expandLimit && delta > 0f)
+                stat.AddMaxValue(delta);
+
+            stat.Set(stat.CurrentValue + delta, GetEffectiveMax(type, stat.MaxValue));
+            Changed?.Invoke(type, ApplyModifiers(type, stat.CurrentValue));
+        }
+
+        public void AddMaximumAndCurrent(StatType maxType, StatType currentType, float delta)
+        {
+            AddPermanent(maxType, delta, true);
+            AddPermanent(currentType, delta);
         }
 
         public void SetModifiers(object source, IEnumerable<StatModifier> modifiers)
@@ -167,6 +188,22 @@ namespace Project_S.Runtime.Gameplay.Character.Stats
             }
 
             return (value + additive) * multiplier;
+        }
+
+        private float GetEffectiveMax(StatType type, float fallback)
+        {
+            StatType maxType = type switch
+            {
+                StatType.Health => StatType.MaxHealth,
+                StatType.Stamina => StatType.MaxStamina,
+                StatType.Poise => StatType.MaxPoise,
+                _ => type
+            };
+
+            if (maxType == type)
+                return fallback;
+
+            return TryGet(maxType, out var dynamicMax) && dynamicMax > 0f ? dynamicMax : fallback;
         }
 
         private void NotifyChanged(IEnumerable<StatType> statTypes)

@@ -52,10 +52,11 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         [SerializeField] private WeaponItemData _equippedOffhandItem;
 
         [Header("Прогресія (Скіли)")]
-        [SerializeField] private bool _isOffhandSkillUnlocked = true;
+        [SerializeField] private bool _isOffhandSkillUnlocked;
 
         public WeaponItemData ActiveWeapon => _currentWeapon != null ? _currentWeapon : _unarmedWeapon;
         public WeaponItemData CurrentWeapon => ActiveWeapon;
+        public bool IsOffhandSkillUnlocked => _isOffhandSkillUnlocked;
         public CombatState CurrentState { get; private set; } = CombatState.Idle;
 
         private bool _isComboWindowOpen = false;
@@ -199,6 +200,37 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 _isPhylacteryInHand = false; _isCombatOffhandInHand = false;
                 if (_weaponAnimator != null) _weaponAnimator.SetBool("PhylacteryActive", false);
             }
+
+            if (_currentOffhandModel != null)
+            {
+                _currentOffhandModel.transform.localPosition = Vector3.zero;
+                _currentOffhandModel.transform.localRotation = Quaternion.identity;
+            }
+        }
+
+        public void SetOffhandSkillUnlocked(bool unlocked)
+        {
+            if (_isOffhandSkillUnlocked == unlocked)
+                return;
+
+            _isOffhandSkillUnlocked = unlocked;
+
+            if (!_isOffhandSkillUnlocked && _isCombatOffhandInHand)
+                ToggleOffhand();
+        }
+
+        public void TryShowCombatOffhand()
+        {
+            if (!_isOffhandSkillUnlocked || _equippedOffhandItem == null || _equippedOffhandItem.WeaponPrefab == null || ActiveWeapon == null || ActiveWeapon.IsTwoHanded)
+                return;
+
+            if (_currentOffhandModel != null)
+                Destroy(_currentOffhandModel);
+
+            _isCombatOffhandInHand = true;
+            _isPhylacteryInHand = false;
+            _currentOffhandModel = Instantiate(_equippedOffhandItem.WeaponPrefab, _offhandHolder);
+            if (_weaponAnimator != null) _weaponAnimator.SetBool("PhylacteryActive", true);
 
             if (_currentOffhandModel != null)
             {
