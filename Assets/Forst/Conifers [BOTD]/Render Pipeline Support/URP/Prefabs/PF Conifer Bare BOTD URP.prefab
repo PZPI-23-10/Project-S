@@ -361,7 +361,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _node: {fileID: 720400000000000001}
-  _worldOffset: {x: 0, y: 4.5, z: 0}
+  _topPadding: 0.35
+  _maxHeightAboveCamera: 0.7
+  _minHeightAboveCamera: -0.45
+  _cameraPullForward: 0.18
   _barSize: {x: 96, y: 8}
 --- !u!114 &720400000000000003
 MonoBehaviour:
