@@ -1,5 +1,6 @@
 using Project_S.Runtime.Common.EditorTools;
 using Project_S.Runtime.Services.AssetManagement;
+using Project_S.Runtime.Services.Save;
 using Project_S.Runtime.Services.SceneManagement;
 using Project_S.Runtime.Services.Storage;
 using UnityEngine;
@@ -19,8 +20,9 @@ namespace Project_S.Runtime.Boot
             
             Container.Bind<AssetLoader>().AsSingle();
             Container.Bind<SceneLoader>().AsSingle();
-
             Container.BindInstance(_playerStorage).AsSingle().NonLazy();
+            Container.Bind<SaveAssetRegistry>().AsSingle();
+            Container.Bind<GameSaveService>().AsSingle().NonLazy();
         }
     }
 }

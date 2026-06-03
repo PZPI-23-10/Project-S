@@ -56,6 +56,7 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
     public class ItemData : ScriptableObject
     {
         [Header("Base")]
+        public string SaveId;
         public string ItemName = "Предмет";
         public ItemKind Kind = ItemKind.Resource;
         public float Weight = 1.0f;

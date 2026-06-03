@@ -201,6 +201,33 @@ namespace Project_S.Runtime.Gameplay.Crafting
             return true;
         }
 
+        public void RestoreSaveState(
+            float fuelSeconds,
+            CraftingRecipeData activeRecipe,
+            float activeDurationSeconds,
+            float remainingCraftSeconds,
+            InventoryController activeInventory)
+        {
+            _fuelSeconds = Mathf.Clamp(fuelSeconds, 0f, _maxFuelSeconds);
+
+            if (activeRecipe != null && remainingCraftSeconds > 0f)
+            {
+                _activeRecipe = activeRecipe;
+                _activeInventory = activeInventory;
+                _activeDurationSeconds = Mathf.Max(0f, activeDurationSeconds);
+                _remainingCraftSeconds = Mathf.Max(0f, remainingCraftSeconds);
+            }
+            else
+            {
+                _activeRecipe = null;
+                _activeInventory = null;
+                _activeDurationSeconds = 0f;
+                _remainingCraftSeconds = 0f;
+            }
+
+            NotifyChanged();
+        }
+
         public void Tick(float deltaTime)
         {
             if (_activeRecipe == null || deltaTime <= 0f)

@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Project_S.Runtime.Gameplay.Character.Combat;
 using Project_S.Runtime.Gameplay.Character.Input;
 using UnityEngine;
@@ -19,6 +21,7 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
         private int _currentSlot = 0;
 
         public int CurrentSlotIndex => _currentSlot;
+        public event Action Changed;
 
         public float TotalWeight
         {
@@ -54,7 +57,15 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
             _currentSlot = slotIndex;
             ItemData item = _slots[slotIndex];
 
-            if (_spawnedWeapon != null) Destroy(_spawnedWeapon);
+            if (_spawnedWeapon != null)
+            {
+                if (Application.isPlaying)
+                    Destroy(_spawnedWeapon);
+                else
+                    DestroyImmediate(_spawnedWeapon);
+
+                _spawnedWeapon = null;
+            }
 
             if (item != null && item.WeaponPrefab != null)
             {
@@ -68,6 +79,8 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
             {
                 if (_fistsObject != null) _fistsObject.SetActive(true);
             }
+
+            Changed?.Invoke();
         }
 
         public ItemData GetItemInSlot(int index)
@@ -84,12 +97,30 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
                 {
                     _slots[i] = newItem;
                     if (_currentSlot == i) SwitchToSlot(i);
+                    else Changed?.Invoke();
                     return;
                 }
             }
 
             _slots[_currentSlot] = newItem;
             SwitchToSlot(_currentSlot);
+        }
+
+        public int GetSize()
+        {
+            return _slots != null ? _slots.Length : 0;
+        }
+
+        public void RestoreSlots(IReadOnlyList<ItemData> items, int currentSlot)
+        {
+            if (_slots == null || _slots.Length == 0)
+                _slots = new ItemData[3];
+
+            for (int i = 0; i < _slots.Length; i++)
+                _slots[i] = items != null && i < items.Count ? items[i] : null;
+
+            SwitchToSlot(Mathf.Clamp(currentSlot, 0, _slots.Length - 1));
+            Changed?.Invoke();
         }
     }
 }

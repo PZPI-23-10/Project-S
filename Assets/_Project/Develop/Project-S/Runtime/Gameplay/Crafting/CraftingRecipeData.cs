@@ -34,6 +34,7 @@ namespace Project_S.Runtime.Gameplay.Crafting
     [CreateAssetMenu(fileName = "New Crafting Recipe", menuName = "Project-S/Crafting/Recipe")]
     public class CraftingRecipeData : ScriptableObject
     {
+        public string SaveId;
         public string DisplayName;
         public CraftingContext Context;
         public CraftingItemAmount Output = new CraftingItemAmount();

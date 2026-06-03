@@ -1,4 +1,5 @@
 using UnityEngine;
+using Project_S.Runtime.Services.Save;
 
 namespace Project_S.Runtime.Gameplay.Character.Inventory
 {
@@ -33,12 +34,19 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
 
             Vector2 offset = Random.insideUnitCircle * Mathf.Max(0f, dropRadius);
             Vector3 position = origin + new Vector3(offset.x, 0.45f, offset.y);
+            return SpawnPickupAt(item, amount, position, Quaternion.identity);
+        }
+
+        public static ItemPickup SpawnPickupAt(ItemData item, int amount, Vector3 position, Quaternion rotation)
+        {
+            if (item == null || amount <= 0)
+                return null;
 
             GameObject pickupObject;
 
             if (item.WorldPickupPrefab != null)
             {
-                pickupObject = Object.Instantiate(item.WorldPickupPrefab, position, Quaternion.identity);
+                pickupObject = Object.Instantiate(item.WorldPickupPrefab, position, rotation);
             }
             else
             {
@@ -46,12 +54,13 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
 
                 if (defaultPrefab != null)
                 {
-                    pickupObject = Object.Instantiate(defaultPrefab, position, Quaternion.identity);
+                    pickupObject = Object.Instantiate(defaultPrefab, position, rotation);
                 }
                 else
                 {
                     pickupObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     pickupObject.transform.position = position;
+                    pickupObject.transform.rotation = rotation;
                     pickupObject.transform.localScale = Vector3.one * 0.35f;
                 }
             }
@@ -66,6 +75,9 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
 
             if (pickupObject.GetComponentInChildren<Collider>() == null)
                 pickupObject.AddComponent<SphereCollider>();
+
+            if (pickupObject.GetComponent<RuntimeDroppedItem>() == null)
+                pickupObject.AddComponent<RuntimeDroppedItem>();
 
             pickup.Item = item;
             pickup.Amount = amount;

@@ -39,6 +39,27 @@ namespace Project_S.Runtime.Gameplay.Harvesting
         public float NormalizedHealth => Mathf.Clamp01(_currentHealth / MaxHealth);
         public bool IsDepleted => _depleted;
 
+        public void RestoreSaveState(float currentHealth, bool depleted)
+        {
+            _depleted = depleted;
+            _currentHealth = Mathf.Clamp(currentHealth, 0f, MaxHealth);
+
+            if (_depleted || _currentHealth <= 0f)
+            {
+                _depleted = true;
+                _currentHealth = 0f;
+                MarkPresentationDepleted();
+            }
+            else
+            {
+                var collider = GetComponent<Collider>();
+                if (collider != null)
+                    collider.enabled = true;
+            }
+
+            HealthChanged?.Invoke(this);
+        }
+
         public void Configure(ResourceNodeData data)
         {
             _data = data;

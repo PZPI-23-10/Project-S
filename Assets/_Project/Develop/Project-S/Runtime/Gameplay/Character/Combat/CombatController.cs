@@ -56,6 +56,8 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
         public WeaponItemData ActiveWeapon => _currentWeapon != null ? _currentWeapon : _unarmedWeapon;
         public WeaponItemData CurrentWeapon => ActiveWeapon;
+        public WeaponItemData SavedCurrentWeapon => _currentWeapon;
+        public WeaponItemData EquippedOffhandItem => _equippedOffhandItem;
         public bool IsOffhandSkillUnlocked => _isOffhandSkillUnlocked;
         public CombatState CurrentState { get; private set; } = CombatState.Idle;
 
@@ -181,7 +183,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         private void ToggleOffhand()
         {
             if (ActiveWeapon.IsTwoHanded) return;
-            if (_currentOffhandModel != null) Destroy(_currentOffhandModel);
+            if (_currentOffhandModel != null) DestroyObjectSafe(_currentOffhandModel);
 
             if (!_isCombatOffhandInHand && _isOffhandSkillUnlocked && _equippedOffhandItem != null)
             {
@@ -225,7 +227,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 return;
 
             if (_currentOffhandModel != null)
-                Destroy(_currentOffhandModel);
+                DestroyObjectSafe(_currentOffhandModel);
 
             _isCombatOffhandInHand = true;
             _isPhylacteryInHand = false;
@@ -269,7 +271,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 _drawWeaponCoroutine = null;
             }
 
-            if (_currentWeaponModel != null) Destroy(_currentWeaponModel);
+            if (_currentWeaponModel != null) DestroyObjectSafe(_currentWeaponModel);
 
             WeaponItemData weaponToEquip = newWeapon != null ? newWeapon : _unarmedWeapon;
             _currentWeapon = newWeapon; _comboStep = 0;
@@ -388,7 +390,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         {
             if (_currentWeaponModel == null || vfxPrefab == null) return;
 
-            if (_activeWeaponVFX != null) Destroy(_activeWeaponVFX);
+            if (_activeWeaponVFX != null) DestroyObjectSafe(_activeWeaponVFX);
 
             Transform targetAnchor = _currentWeaponModel.transform; 
             if (_currentHitTester != null)
@@ -415,7 +417,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         {
             if (_activeWeaponVFX != null)
             {
-                Destroy(_activeWeaponVFX);
+                DestroyObjectSafe(_activeWeaponVFX);
                 Debug.Log("<color=cyan>[Combat]</color> Дія змазки закінчилася.");
             }
             ActiveCoatingSwingSound = null;
@@ -553,6 +555,17 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 _audioSource.pitch = UnityEngine.Random.Range(0.85f, 1.15f);
                 _audioSource.PlayOneShot(hitSound);
             }
+        }
+
+        private static void DestroyObjectSafe(UnityEngine.Object target)
+        {
+            if (target == null)
+                return;
+
+            if (Application.isPlaying)
+                Destroy(target);
+            else
+                DestroyImmediate(target);
         }
 
         public void ForceResetToIdle()

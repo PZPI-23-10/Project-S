@@ -6,7 +6,7 @@ namespace Project_S.Runtime.Gameplay.Upgrades
 {
     public class UpgradeProgressStore : IDisposable
     {
-        private const string DefaultKey = "Upgrades.PurchasedIds";
+        public const string DefaultKey = "Upgrades.PurchasedIds";
 
         private readonly StoredList<string> _storedIds;
         private readonly HashSet<string> _runtimeIds = new HashSet<string>();
