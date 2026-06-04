@@ -2480,7 +2480,7 @@ MonoBehaviour:
   _currentWeapon: {fileID: 11400000, guid: 8b3146ccc4325cc4995424c49c2ef7c7, type: 2}
   _equippedOffhandItem: {fileID: 11400000, guid: 8b3146ccc4325cc4995424c49c2ef7c7,
     type: 2}
-  _isOffhandSkillUnlocked: 0
+  _isOffhandSkillUnlocked: 1
 --- !u!114 &545051954
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10004,6 +10004,7 @@ MonoBehaviour:
   _draggedItemAmount: {fileID: 10520749}
   _defaultInteractionCloseDistance: 3
   _actionGate: {fileID: 0}
+  _offhandSlot: {fileID: 1690734774}
 --- !u!1 &1179797915
 GameObject:
   m_ObjectHideFlags: 0
@@ -11665,6 +11666,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1673551003}
   m_CullTransparentMesh: 1
+--- !u!114 &1690734774 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6313610556956332447, guid: 42aa09698dec67741bf30b0be5b84759,
+    type: 3}
+  m_PrefabInstance: {fileID: 816966699}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 396b2e493fb94484f9d04a7fc4f84fa6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1709274665
 GameObject:
   m_ObjectHideFlags: 0
