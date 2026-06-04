@@ -1,4 +1,4 @@
-﻿using System.Collections; 
+using System.Collections; 
 using UnityEngine;
 using Project_S.Runtime.Gameplay.Character.Input;
 using Project_S.Runtime.Gameplay.Character.Stats;
@@ -186,7 +186,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             if (ActiveWeapon.IsTwoHanded) return;
             if (_currentOffhandModel != null) DestroyObjectSafe(_currentOffhandModel);
 
-            if (!_isCombatOffhandInHand && _isOffhandSkillUnlocked && _equippedOffhandItem != null)
+            if (!_isCombatOffhandInHand && _isOffhandSkillUnlocked && _equippedOffhandItem != null && _equippedOffhandItem != _unarmedWeapon)
             {
                 _isCombatOffhandInHand = true; _isPhylacteryInHand = false;
                 _currentOffhandModel = Instantiate(_equippedOffhandItem.WeaponPrefab, _offhandHolder);
@@ -224,7 +224,8 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
         public void TryShowCombatOffhand()
         {
-            if (!_isOffhandSkillUnlocked || _equippedOffhandItem == null || _equippedOffhandItem.WeaponPrefab == null || ActiveWeapon == null || ActiveWeapon.IsTwoHanded)
+            if (!_isOffhandSkillUnlocked || _equippedOffhandItem == null || _equippedOffhandItem == _unarmedWeapon) return;
+            if (_isCombatOffhandInHand || _equippedOffhandItem.WeaponPrefab == null || ActiveWeapon == null || ActiveWeapon.IsTwoHanded)
                 return;
 
             if (_currentOffhandModel != null)
@@ -244,6 +245,8 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
         public void EquipOffhand(WeaponItemData newOffhandItem)
         {
+            if (newOffhandItem == _unarmedWeapon) newOffhandItem = null;
+
             _equippedOffhandItem = newOffhandItem;
             if (_isOffhandActive)
             {
