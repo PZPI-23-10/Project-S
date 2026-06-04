@@ -1,4 +1,4 @@
-using System.Collections; 
+п»їusing System.Collections; 
 using UnityEngine;
 using Project_S.Runtime.Gameplay.Character.Input;
 using Project_S.Runtime.Gameplay.Character.Stats;
@@ -23,7 +23,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
     public class CombatController : MonoBehaviour
     {
-        [Header("Зв'язки")]
+        [Header("Р—РІ'СЏР·РєРё")]
         [SerializeField] private StaminaController _stamina;
         [SerializeField] private BlockController _blockController;
         [SerializeField] private AudioSource _audioSource;
@@ -31,13 +31,13 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
         private PoiseController _poiseController;
 
-        [Header("Візуал (Права рука)")]
+        [Header("Р’С–Р·СѓР°Р» (РџСЂР°РІР° СЂСѓРєР°)")]
         [SerializeField] private Transform _weaponHolder;
         private GameObject _currentWeaponModel;
         private MeleeHitTester _currentHitTester;
         private Animator _weaponAnimator;
 
-        [Header("Візуал (Ліва рука)")]
+        [Header("Р’С–Р·СѓР°Р» (Р›С–РІР° СЂСѓРєР°)")]
         [SerializeField] private Transform _offhandHolder;
         [SerializeField] private GameObject _phylacteryPrefab;
         private GameObject _currentOffhandModel;
@@ -46,12 +46,12 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         private bool _isCombatOffhandInHand = false;
         private bool _isOffhandActive => _isPhylacteryInHand || _isCombatOffhandInHand;
 
-        [Header("Екіпірування")]
+        [Header("Р•РєС–РїС–СЂСѓРІР°РЅРЅСЏ")]
         [SerializeField] private WeaponItemData _unarmedWeapon;
         [SerializeField] private WeaponItemData _currentWeapon;
         [SerializeField] private WeaponItemData _equippedOffhandItem;
 
-        [Header("Прогресія (Скіли)")]
+        [Header("РџСЂРѕРіСЂРµСЃС–СЏ (РЎРєС–Р»Рё)")]
         [SerializeField] private bool _isOffhandSkillUnlocked;
 
         public WeaponItemData ActiveWeapon => _currentWeapon != null ? _currentWeapon : _unarmedWeapon;
@@ -60,6 +60,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         public WeaponItemData EquippedOffhandItem => _equippedOffhandItem;
         public bool IsOffhandSkillUnlocked => _isOffhandSkillUnlocked;
         public CombatState CurrentState { get; private set; } = CombatState.Idle;
+        public event System.Action Changed;
 
         private bool _isComboWindowOpen = false;
         private bool _nextAttackBuffered = false;
@@ -83,7 +84,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         }
 
         // ==========================================
-        // ФІКС: Запобіжник, щоб час ніколи не залишався зупиненим назавжди!
+        // Р¤Р†РљРЎ: Р—Р°РїРѕР±С–Р¶РЅРёРє, С‰РѕР± С‡Р°СЃ РЅС–РєРѕР»Рё РЅРµ Р·Р°Р»РёС€Р°РІСЃСЏ Р·СѓРїРёРЅРµРЅРёРј РЅР°Р·Р°РІР¶РґРё!
         // ==========================================
         private void OnDisable()
         {
@@ -114,7 +115,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             if (input.HeavyAttackPressed && !_isOffhandActive)
             {
                 if (_currentHeavyCharge >= ActiveWeapon.HitsToChargeHeavy) PerformHeavySkill();
-                else Debug.Log($"<color=orange>[Боївка]</color> Вміння ще не заряджено! ({_currentHeavyCharge}/{ActiveWeapon.HitsToChargeHeavy})");
+                else Debug.Log($"<color=orange>[Р‘РѕС—РІРєР°]</color> Р’РјС–РЅРЅСЏ С‰Рµ РЅРµ Р·Р°СЂСЏРґР¶РµРЅРѕ! ({_currentHeavyCharge}/{ActiveWeapon.HitsToChargeHeavy})");
                 return;
             }
 
@@ -154,7 +155,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 else
                 {
                     float timeLeft = (_lastAbilityTime + _equippedOffhandItem.AbilityCooldown) - Time.time;
-                    Debug.Log($"<color=grey>[Кулдаун]</color> Здібність ще заряджається! Залишилось: {timeLeft:F1} сек.");
+                    Debug.Log($"<color=grey>[РљСѓР»РґР°СѓРЅ]</color> Р—РґС–Р±РЅС–СЃС‚СЊ С‰Рµ Р·Р°СЂСЏРґР¶Р°С”С‚СЊСЃСЏ! Р—Р°Р»РёС€РёР»РѕСЃСЊ: {timeLeft:F1} СЃРµРє.");
                 }
             }
         }
@@ -168,7 +169,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             _comboStep++;
             if (_comboStep > ActiveWeapon.MaxComboHits) _comboStep = 1;
 
-            Debug.Log($"<color=cyan>[Боївка]</color> Удар: {ActiveWeapon.name} | Крок: {_comboStep}");
+            Debug.Log($"<color=cyan>[Р‘РѕС—РІРєР°]</color> РЈРґР°СЂ: {ActiveWeapon.name} | РљСЂРѕРє: {_comboStep}");
 
             CancelInvoke(nameof(FailsafeReset));
             Invoke(nameof(FailsafeReset), 4.5f);
@@ -297,7 +298,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         }
 
         // ==========================================
-        // ФІКС: БЕЗПЕЧНА ЗУПИНКА ЧАСУ ТУТ (Щоб гра більше не лагала)
+        // Р¤Р†РљРЎ: Р‘Р•Р—РџР•Р§РќРђ Р—РЈРџРРќРљРђ Р§РђРЎРЈ РўРЈРў (Р©РѕР± РіСЂР° Р±С–Р»СЊС€Рµ РЅРµ Р»Р°РіР°Р»Р°)
         // ==========================================
         public void TriggerHitImpact()
         {
@@ -307,7 +308,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
         private IEnumerator HitImpactRoutine()
         {
-            Time.timeScale = 0.05f; // Уповільнюємо час
+            Time.timeScale = 0.05f; // РЈРїРѕРІС–Р»СЊРЅСЋС”РјРѕ С‡Р°СЃ
 
             if (UnityEngine.Camera.main != null)
             {
@@ -315,22 +316,22 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 if (camJuice != null) camJuice.PlayImpactShake(0.1f, 0.02f);
             }
 
-            // Чекаємо в РЕАЛЬНОМУ часі, щоб не застрягти назавжди
+            // Р§РµРєР°С”РјРѕ РІ Р Р•РђР›Р¬РќРћРњРЈ С‡Р°СЃС–, С‰РѕР± РЅРµ Р·Р°СЃС‚СЂСЏРіС‚Рё РЅР°Р·Р°РІР¶РґРё
             yield return new WaitForSecondsRealtime(0.04f);
-            Time.timeScale = 1f; // Повертаємо час у норму
+            Time.timeScale = 1f; // РџРѕРІРµСЂС‚Р°С”РјРѕ С‡Р°СЃ Сѓ РЅРѕСЂРјСѓ
         }
         // ==========================================
 
         private IEnumerator DrawWeaponRoutine(Transform weaponTransform)
         {
-            float duration = 0.25f; // Швидкість діставання зброї (0.25 сек)
+            float duration = 0.25f; // РЁРІРёРґРєС–СЃС‚СЊ РґС–СЃС‚Р°РІР°РЅРЅСЏ Р·Р±СЂРѕС— (0.25 СЃРµРє)
             float elapsed = 0f;
 
-            // Зброя з'являється знизу екрана і трохи нахилена вперед
+            // Р—Р±СЂРѕСЏ Р·'СЏРІР»СЏС”С‚СЊСЃСЏ Р·РЅРёР·Сѓ РµРєСЂР°РЅР° С– С‚СЂРѕС…Рё РЅР°С…РёР»РµРЅР° РІРїРµСЂРµРґ
             Vector3 startPos = new Vector3(0f, -0.6f, 0.2f);
             Vector3 endPos = Vector3.zero;
 
-            // Нахил зброї: від 45 градусів (лежить) до 0 (рівно в руці)
+            // РќР°С…РёР» Р·Р±СЂРѕС—: РІС–Рґ 45 РіСЂР°РґСѓСЃС–РІ (Р»РµР¶РёС‚СЊ) РґРѕ 0 (СЂС–РІРЅРѕ РІ СЂСѓС†С–)
             Quaternion startRot = Quaternion.Euler(45f, 0f, 0f);
             Quaternion endRot = Quaternion.identity;
 
@@ -342,7 +343,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 elapsed += Time.deltaTime;
                 float t = elapsed / duration;
 
-                // Математична формула для плавності (Ease Out - різко починається, плавно закінчується)
+                // РњР°С‚РµРјР°С‚РёС‡РЅР° С„РѕСЂРјСѓР»Р° РґР»СЏ РїР»Р°РІРЅРѕСЃС‚С– (Ease Out - СЂС–Р·РєРѕ РїРѕС‡РёРЅР°С”С‚СЊСЃСЏ, РїР»Р°РІРЅРѕ Р·Р°РєС–РЅС‡СѓС”С‚СЊСЃСЏ)
                 float smoothT = 1f - Mathf.Pow(1f - t, 3f);
 
                 if (weaponTransform != null)
@@ -354,7 +355,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 yield return null;
             }
 
-            // На всяк випадок жорстко ставимо нулі в кінці
+            // РќР° РІСЃСЏРє РІРёРїР°РґРѕРє Р¶РѕСЂСЃС‚РєРѕ СЃС‚Р°РІРёРјРѕ РЅСѓР»С– РІ РєС–РЅС†С–
             if (weaponTransform != null)
             {
                 weaponTransform.localPosition = endPos;
@@ -366,14 +367,14 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         {
             if (CurrentState == CombatState.HeavySkill)
             {
-                Debug.Log("<color=grey>[Боївка]</color> Важкий удар не заряджає зброю.");
+                Debug.Log("<color=grey>[Р‘РѕС—РІРєР°]</color> Р’Р°Р¶РєРёР№ СѓРґР°СЂ РЅРµ Р·Р°СЂСЏРґР¶Р°С” Р·Р±СЂРѕСЋ.");
                 return;
             }
 
             if (_currentHeavyCharge < ActiveWeapon.HitsToChargeHeavy)
             {
                 _currentHeavyCharge++;
-                Debug.Log($"<color=yellow>[Боївка]</color> Влучання! Заряд: {_currentHeavyCharge} / {ActiveWeapon.HitsToChargeHeavy}");
+                Debug.Log($"<color=yellow>[Р‘РѕС—РІРєР°]</color> Р’Р»СѓС‡Р°РЅРЅСЏ! Р—Р°СЂСЏРґ: {_currentHeavyCharge} / {ActiveWeapon.HitsToChargeHeavy}");
             }
         }
 
@@ -418,7 +419,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             if (_activeWeaponVFX != null)
             {
                 DestroyObjectSafe(_activeWeaponVFX);
-                Debug.Log("<color=cyan>[Combat]</color> Дія змазки закінчилася.");
+                Debug.Log("<color=cyan>[Combat]</color> Р”С–СЏ Р·РјР°Р·РєРё Р·Р°РєС–РЅС‡РёР»Р°СЃСЏ.");
             }
             ActiveCoatingSwingSound = null;
             ActiveCoatingHitSound = null;
@@ -450,7 +451,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
 
             if (_equippedOffhandItem != null && _currentOffhandModel != null)
             {
-                Debug.Log($"<color=yellow>[Ліва рука]</color> Застосовуємо здібність: {_equippedOffhandItem.name}!");
+                Debug.Log($"<color=yellow>[Р›С–РІР° СЂСѓРєР°]</color> Р—Р°СЃС‚РѕСЃРѕРІСѓС”РјРѕ Р·РґС–Р±РЅС–СЃС‚СЊ: {_equippedOffhandItem.name}!");
 
                 IOffhandAbility offhandSkill = _currentOffhandModel.GetComponentInChildren<IOffhandAbility>();
 
@@ -460,7 +461,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 }
                 else
                 {
-                    Debug.LogWarning("На префабі лівої руки немає скрипта, який реалізує IOffhandAbility!");
+                    Debug.LogWarning("РќР° РїСЂРµС„Р°Р±С– Р»С–РІРѕС— СЂСѓРєРё РЅРµРјР°С” СЃРєСЂРёРїС‚Р°, СЏРєРёР№ СЂРµР°Р»С–Р·СѓС” IOffhandAbility!");
                 }
             }
 
@@ -490,7 +491,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         {
             if (CurrentState == CombatState.Attacking)
             {
-                Debug.LogWarning("<color=red>[Запобіжник]</color> Анімація зависла!");
+                Debug.LogWarning("<color=red>[Р—Р°РїРѕР±С–Р¶РЅРёРє]</color> РђРЅС–РјР°С†С–СЏ Р·Р°РІРёСЃР»Р°!");
                 _isTransitioningToNextCombo = false;
                 ForceResetToIdle();
             }
@@ -582,7 +583,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
                 _weaponAnimator.SetInteger("ComboStep", 0);
             }
 
-            Debug.Log("<color=lime>[Аніматор]</color> Стан Idle! Комбо успішно скинуто.");
+            Debug.Log("<color=lime>[РђРЅС–РјР°С‚РѕСЂ]</color> РЎС‚Р°РЅ Idle! РљРѕРјР±Рѕ СѓСЃРїС–С€РЅРѕ СЃРєРёРЅСѓС‚Рѕ.");
         }
     }
 }

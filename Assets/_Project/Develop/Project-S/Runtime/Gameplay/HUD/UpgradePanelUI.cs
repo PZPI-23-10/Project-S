@@ -20,6 +20,11 @@ namespace Project_S.Runtime.Gameplay.HUD
         [SerializeField] private TMP_Text _costText;
         [SerializeField] private Transform _costIconRoot;
         [SerializeField] private Sprite _soulAshIcon;
+        
+        [Header("Cost Icon Settings")]
+        [SerializeField] private float _costIconSize = 64f; // Збільшив дефолтний розмір
+        [SerializeField] private float _costTextSize = 20f; // Трохи збільшив текст
+        
         [SerializeField] private TMP_Text _statusText;
         [SerializeField] private Button _purchaseButton;
         [SerializeField] private TMP_Text _purchaseButtonText;
@@ -278,11 +283,11 @@ namespace Project_S.Runtime.Gameplay.HUD
             slot.transform.SetParent(_costIconRoot, false);
 
             var slotRect = (RectTransform)slot.transform;
-            slotRect.sizeDelta = new Vector2(54f, 54f);
+            slotRect.sizeDelta = new Vector2(_costIconSize, _costIconSize);
 
             var slotLayout = slot.AddComponent<LayoutElement>();
-            slotLayout.preferredWidth = 54f;
-            slotLayout.preferredHeight = 54f;
+            slotLayout.preferredWidth = _costIconSize;
+            slotLayout.preferredHeight = _costIconSize;
 
             var background = slot.AddComponent<Image>();
             background.color = new Color(0.15f, 0.15f, 0.15f, 1f);
@@ -309,11 +314,11 @@ namespace Project_S.Runtime.Gameplay.HUD
             amountRect.anchorMax = new Vector2(1f, 0f);
             amountRect.pivot = new Vector2(1f, 0f);
             amountRect.anchoredPosition = new Vector2(-3f, 3f);
-            amountRect.sizeDelta = new Vector2(72f, 22f);
+            amountRect.sizeDelta = new Vector2(_costIconSize * 1.5f, _costTextSize + 4f); // Динамічна ширина тексту
 
             var amountText = amountObject.AddComponent<TextMeshProUGUI>();
             amountText.text = $"{owned}/{required}";
-            amountText.fontSize = 18f;
+            amountText.fontSize = _costTextSize;
             amountText.fontStyle = FontStyles.Bold;
             amountText.alignment = TextAlignmentOptions.BottomRight;
             amountText.color = owned >= required ? Color.white : new Color(1f, 0.4f, 0.4f);
@@ -442,5 +447,21 @@ namespace Project_S.Runtime.Gameplay.HUD
         {
             Refresh();
         }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (Application.isPlaying && _selectedUpgrade != null && _controller != null)
+            {
+                UnityEditor.EditorApplication.delayCall += () =>
+                {
+                    if (this != null && gameObject != null && gameObject.activeInHierarchy)
+                    {
+                        RefreshCostIcons(_selectedUpgrade);
+                    }
+                };
+            }
+        }
+#endif
     }
 }

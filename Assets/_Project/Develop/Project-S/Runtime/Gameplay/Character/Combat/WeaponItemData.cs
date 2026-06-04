@@ -18,6 +18,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
     {
         [Header("Equip Settings")]
         public bool IsTwoHanded = false;
+        public bool CanEquipInOffhand = false;
 
         [Header("Passive Abilities")]
         public List<WeaponPassiveData> Passives = new List<WeaponPassiveData>();

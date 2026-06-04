@@ -1,0 +1,5 @@
+public WeaponItemData EquippedOffhandItem => _equippedOffhandItem;
+        public bool IsOffhandSkillUnlocked => _isOffhandSkillUnlocked;
+        public CombatState CurrentState { get; private set; } = CombatState.Idle;
+
+        public event System.Action Changed;

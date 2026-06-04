@@ -13,6 +13,10 @@ public class PauseMenuController : MonoBehaviour
 
     private void Start()
     {
+        // Застосовуємо збережені налаштування гучності одразу при появі гравця
+        float savedVol = PlayerPrefs.GetFloat("MusicVolume", 1f);
+        AudioListener.volume = savedVol;
+
         // Отримуємо GameSaveService вручну на випадок, якщо [Inject] не спрацював
         if (_saveService == null)
         {

@@ -46,6 +46,9 @@ namespace Project_S.Runtime.Gameplay.HUD
         [SerializeField] private float _defaultInteractionCloseDistance = 3f;
         [SerializeField] private PlayerActionGate _actionGate;
 
+        [Header("Offhand")]
+        [SerializeField] private InventorySlotUI _offhandSlot;
+
         private InventorySlotUI[] _createdSlots;
         private ItemStack _draggedStack;
         private DragSourceType _dragSourceType;
@@ -57,6 +60,8 @@ namespace Project_S.Runtime.Gameplay.HUD
         private UpgradePanelUI _upgradePanel;
         private AccessorySlotController _accessories;
         private PlayerUpgradeController _upgrades;
+        private Project_S.Runtime.Gameplay.Character.Combat.CombatController _combatController;
+        
         private IItemStorage _activeStorage;
         private ICraftingRecipeProvider _activeCraftingRecipeProvider;
         private SoulAshWallet _soulAshWallet;
@@ -103,6 +108,11 @@ namespace Project_S.Runtime.Gameplay.HUD
 
             if (_inventory != null)
             {
+                _combatController = _inventory.GetComponent<Project_S.Runtime.Gameplay.Character.Combat.CombatController>();
+                if (_combatController == null) _combatController = _inventory.GetComponentInParent<Project_S.Runtime.Gameplay.Character.Combat.CombatController>();
+                if (_combatController != null) _combatController.Changed += Refresh;
+                if (_offhandSlot != null) _offhandSlot.Init(-1, this, OnOffhandSlotClicked);
+
                 _inventory.OnInventoryChanged += Refresh;
                 GenerateSlots();
                 InitializeCraftingPanel();
@@ -114,6 +124,9 @@ namespace Project_S.Runtime.Gameplay.HUD
         {
             if (_inventory != null)
                 _inventory.OnInventoryChanged -= Refresh;
+
+            if (_combatController != null)
+                _combatController.Changed -= Refresh;
 
             _storagePanel?.ClearStorage();
         }
@@ -434,6 +447,14 @@ namespace Project_S.Runtime.Gameplay.HUD
                             return;
                         }
                     }
+                    else if (_draggedStack == null && targetSlotStack.Item is Project_S.Runtime.Gameplay.Character.Combat.WeaponItemData weaponData && weaponData.CanEquipInOffhand && _combatController != null && _combatController.IsOffhandSkillUnlocked)
+                    {
+                        var oldOffhand = _combatController.EquippedOffhandItem;
+                        _combatController.EquipOffhand(weaponData);
+                        if (oldOffhand != null) _inventory.SetSlot(slotIndex, new ItemStack(oldOffhand, 1));
+                        else _inventory.SetSlot(slotIndex, null);
+                        Refresh();
+                    }
                     else if (_draggedStack == null)
                     {
                         EquipmentSlots eq = FindFirstObjectByType<EquipmentSlots>();
@@ -665,6 +686,12 @@ namespace Project_S.Runtime.Gameplay.HUD
             _storagePanel?.Refresh();
             _accessoryPanel?.Refresh();
             _upgradePanel?.Refresh();
+
+            if (_offhandSlot != null && _combatController != null)
+            {
+                var offhandItem = _combatController.EquippedOffhandItem;
+                _offhandSlot.UpdateView(offhandItem != null ? new ItemStack(offhandItem, 1) : null);
+            }
 
             UpdateOverloadHUDVisibility(IsOpen);
         }
@@ -1144,6 +1171,50 @@ namespace Project_S.Runtime.Gameplay.HUD
 
             // 3. Зберігаємо залишок, якщо місця не вистачило
             _inventory.SetSlot(sourceSlotIndex, sourceSlot);
+            Refresh();
+        }
+        private void OnOffhandSlotClicked(int slotIndex, PointerEventData.InputButton button)
+        {
+            if (_combatController == null) return;
+
+            if (button == PointerEventData.InputButton.Left)
+            {
+                if (_draggedStack != null && _draggedStack.Item is Project_S.Runtime.Gameplay.Character.Combat.WeaponItemData weaponData && weaponData.CanEquipInOffhand && _combatController.IsOffhandSkillUnlocked)
+                {
+                    var oldOffhand = _combatController.EquippedOffhandItem;
+                    _combatController.EquipOffhand(weaponData);
+                    
+                    if (oldOffhand != null)
+                        SetDraggedStack(new ItemStack(oldOffhand, 1), DragSourceType.PlayerInventory, -1, null);
+                    else
+                        ClearDraggedItem();
+                    
+                    Refresh();
+                }
+                else if (_draggedStack == null && _combatController.EquippedOffhandItem != null)
+                {
+                    BeginDragFromOffhand();
+                }
+            }
+            else if (button == PointerEventData.InputButton.Right)
+            {
+                if (_draggedStack == null && _combatController.EquippedOffhandItem != null)
+                {
+                    if (_inventory.AddItem(_combatController.EquippedOffhandItem, 1))
+                    {
+                        _combatController.EquipOffhand(null);
+                        Refresh();
+                    }
+                }
+            }
+        }
+
+        private void BeginDragFromOffhand()
+        {
+            if (_combatController == null || _combatController.EquippedOffhandItem == null) return;
+            var item = _combatController.EquippedOffhandItem;
+            _combatController.EquipOffhand(null);
+            SetDraggedStack(new ItemStack(item, 1), DragSourceType.PlayerInventory, -1, null);
             Refresh();
         }
     }
