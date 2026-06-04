@@ -1,4 +1,4 @@
-using KinematicCharacterController;
+ï»¿using KinematicCharacterController;
 using Project_S.Runtime.Gameplay.Ambient;
 using Project_S.Runtime.Gameplay.Character.Combat;
 using Project_S.Runtime.Gameplay.Character.Input;
@@ -19,7 +19,7 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
         [SerializeField] private PoiseController _poiseController;
         [SerializeField] private InventoryController _inventory;
 
-        [Header("Àóä³î")]
+        [Header("ÐÑƒÐ´Ñ–Ð¾")]
         [SerializeField] private AudioSource _audioSource;
         [SerializeField] private AudioClip _jumpSound;
         [SerializeField] private AudioClip _dodgeSound;
@@ -50,7 +50,7 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
         private float _attackDashTurnSpeed;
         private float _attackDashCurrentYaw;
 
-        // Çì³íí³ äëÿ êðîê³â òà ïðèçåìëåííÿ
+        // Ð—Ð¼Ñ–Ð½Ð½Ñ– Ð´Ð»Ñ ÐºÑ€Ð¾ÐºÑ–Ð² Ñ‚Ð° Ð¿Ñ€Ð¸Ð·ÐµÐ¼Ð»ÐµÐ½Ð½Ñ
         private bool _wasGrounded;
         private float _nextStepTime;
 
@@ -197,7 +197,7 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
             bool isGroundedNow = _motor.GroundingStatus.IsStableOnGround;
 
             // ==========================================
-            // ÇÂÓÊ ÏÐÈÇÅÌËÅÍÍß
+            // Ð—Ð’Ð£Ðš ÐŸÐ Ð˜Ð—Ð•ÐœÐ›Ð•ÐÐÐ¯
             // ==========================================
             if (isGroundedNow && !_wasGrounded)
             {
@@ -208,7 +208,7 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
             }
 
             // ==========================================
-            // ÇÂÓÊÈ ÊÐÎÊ²Â (Òàéìåð)
+            // Ð—Ð’Ð£ÐšÐ˜ ÐšÐ ÐžÐšÐ†Ð’ (Ð¢Ð°Ð¹Ð¼ÐµÑ€)
             // ==========================================
             if (isGroundedNow && _moveInputVector.sqrMagnitude > 0.01f)
             {
@@ -217,7 +217,7 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
                     if (_footstepSound != null && _audioSource != null)
                     {
                         _audioSource.pitch = Random.Range(0.85f, 1.15f);
-                        _audioSource.PlayOneShot(_footstepSound, 0.4f); // 0.4f ðîáèòü êðîêè òèõ³øèìè
+                        _audioSource.PlayOneShot(_footstepSound, 0.4f); // 0.4f Ñ€Ð¾Ð±Ð¸Ñ‚ÑŒ ÐºÑ€Ð¾ÐºÐ¸ Ñ‚Ð¸Ñ…Ñ–ÑˆÐ¸Ð¼Ð¸
                     }
 
                     _nextStepTime = Time.time + (_sprintHeld ? 0.3f : 0.5f);
@@ -257,6 +257,7 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
         private void UpdateView(Vector2 look)
         {
             if (_config == null) return;
+            if (Time.timeScale == 0f) return;
 
             _yaw += look.x * _config.MouseSensitivity;
             _pitch = Mathf.Clamp(_pitch - look.y * _config.MouseSensitivity, _config.MinPitch, _config.MaxPitch);
@@ -444,3 +445,4 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
         }
     }
 }
+

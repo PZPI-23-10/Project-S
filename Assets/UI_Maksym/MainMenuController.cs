@@ -3,6 +3,15 @@ using UnityEngine.SceneManagement;
 
 public class MainMenuController : MonoBehaviour
 {
+    private void Start()
+    {
+        // Якщо ми вийшли з меню паузи, час міг залишитися зупиненим (Time.timeScale = 0). 
+        // Тому в головному меню обов'язково відновлюємо його.
+        Time.timeScale = 1f;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
     // Цей метод буде викликатися при натисканні на кнопку "Вихід"
     public void QuitGame()
     {
@@ -12,9 +21,11 @@ public class MainMenuController : MonoBehaviour
         // Закриває саму гру (працює тільки у скомпільованій версії, не в редакторі)
         Application.Quit();
     }
+    
     public void PlayGame()
     {
-        // В дужках має бути ТОЧНА назва твоєї ігрової сцени
-        SceneManager.LoadScene("YavWorld");
+        // Завантажуємо Core, бо саме в Core знаходиться гравець, камера і логіка гри,
+        // яка вже сама завантажить світ (YavWorld).
+        SceneManager.LoadScene("Core");
     }
 }

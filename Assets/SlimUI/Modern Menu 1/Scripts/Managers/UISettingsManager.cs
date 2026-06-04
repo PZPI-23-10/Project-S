@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 using TMPro;
@@ -59,43 +59,46 @@ namespace SlimUI.ModernMenu{
 		public void  Start (){
 			// check difficulty
 			if(PlayerPrefs.GetInt("NormalDifficulty") == 1){
-				difficultynormaltextLINE.gameObject.SetActive(true);
-				difficultyhardcoretextLINE.gameObject.SetActive(false);
+				if (difficultynormaltextLINE != null) difficultynormaltextLINE.gameObject.SetActive(true);
+				if (difficultyhardcoretextLINE != null) difficultyhardcoretextLINE.gameObject.SetActive(false);
 			}
 			else
 			{
-				difficultyhardcoretextLINE.gameObject.SetActive(true);
-				difficultynormaltextLINE.gameObject.SetActive(false);
+				if (difficultyhardcoretextLINE != null) difficultyhardcoretextLINE.gameObject.SetActive(true);
+				if (difficultynormaltextLINE != null) difficultynormaltextLINE.gameObject.SetActive(false);
 			}
 
 			// check slider values
-			musicSlider.GetComponent<Slider>().value = PlayerPrefs.GetFloat("MusicVolume");
-			sensitivityXSlider.GetComponent<Slider>().value = PlayerPrefs.GetFloat("XSensitivity");
-			sensitivityYSlider.GetComponent<Slider>().value = PlayerPrefs.GetFloat("YSensitivity");
-			mouseSmoothSlider.GetComponent<Slider>().value = PlayerPrefs.GetFloat("MouseSmoothing");
+			float savedVol = PlayerPrefs.GetFloat("MusicVolume", 1f);
+			if (musicSlider != null) musicSlider.GetComponent<Slider>().value = savedVol;
+			AudioListener.volume = savedVol; // Застосовуємо гучність при старті
+
+			if (sensitivityXSlider != null) sensitivityXSlider.GetComponent<Slider>().value = PlayerPrefs.GetFloat("XSensitivity");
+			if (sensitivityYSlider != null) sensitivityYSlider.GetComponent<Slider>().value = PlayerPrefs.GetFloat("YSensitivity");
+			if (mouseSmoothSlider != null) mouseSmoothSlider.GetComponent<Slider>().value = PlayerPrefs.GetFloat("MouseSmoothing");
 
 			// check full screen
 			if(Screen.fullScreen == true){
-				fullscreentext.GetComponent<TMP_Text>().text = "on";
+				if (fullscreentext != null) fullscreentext.GetComponent<TMP_Text>().text = "on";
 			}
 			else if(Screen.fullScreen == false){
-				fullscreentext.GetComponent<TMP_Text>().text = "off";
+				if (fullscreentext != null) fullscreentext.GetComponent<TMP_Text>().text = "off";
 			}
 
-			// check hud value
-			if(PlayerPrefs.GetInt("ShowHUD")==0){
-				showhudtext.GetComponent<TMP_Text>().text = "off";
+			// check hud value (зверни увагу: за замовчуванням HUD увімкнено)
+			if(PlayerPrefs.GetInt("ShowHUD", 1) == 0){
+				if (showhudtext != null) showhudtext.GetComponent<TMP_Text>().text = "off";
 			}
 			else{
-				showhudtext.GetComponent<TMP_Text>().text = "on";
+				if (showhudtext != null) showhudtext.GetComponent<TMP_Text>().text = "on";
 			}
 
 			// check tool tip value
 			if(PlayerPrefs.GetInt("ToolTips")==0){
-				tooltipstext.GetComponent<TMP_Text>().text = "off";
+				if (tooltipstext != null) tooltipstext.GetComponent<TMP_Text>().text = "off";
 			}
 			else{
-				tooltipstext.GetComponent<TMP_Text>().text = "on";
+				if (tooltipstext != null) tooltipstext.GetComponent<TMP_Text>().text = "on";
 			}
 
 			// check shadow distance/enabled
@@ -218,8 +221,10 @@ namespace SlimUI.ModernMenu{
 		}
 
 		public void MusicSlider (){
-			//PlayerPrefs.SetFloat("MusicVolume", sliderValue);
-			PlayerPrefs.SetFloat("MusicVolume", musicSlider.GetComponent<Slider>().value);
+			float vol = musicSlider.GetComponent<Slider>().value;
+			PlayerPrefs.SetFloat("MusicVolume", vol);
+			// Підв'язуємо цей слайдер до ВСІХ звуків у грі!
+			AudioListener.volume = vol;
 		}
 
 		public void SensitivityXSlider (){
