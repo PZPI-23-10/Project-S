@@ -11,6 +11,7 @@ using Project_S.Runtime.Gameplay.HUD;
 using Project_S.Runtime.Gameplay.Upgrades;
 using Project_S.Runtime.Services.Storage;
 using UnityEditor.SceneManagement;
+using TMPro;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
@@ -310,6 +311,48 @@ namespace Project_S.Editor.Tests
         }
 
         [Test]
+        public void UpgradePanel_CreatesCostIconsForItemCostsAndClearsFreeUpgrade()
+        {
+            var wood = CreateItem("Wood", true, 20);
+            wood.Icon = CreateSprite();
+            var player = CreatePlayer(out var inventory, out var wallet);
+            var controller = player.AddComponent<PlayerUpgradeController>();
+            var paidUpgrade = CreateUpgrade("paid", itemCosts: new[] { new UpgradeItemCost { Item = wood, Amount = 4 } });
+            var freeUpgrade = CreateUpgrade("free");
+            ConfigureController(controller, inventory, null, new[] { paidUpgrade, freeUpgrade });
+            inventory.AddItem(wood, 2);
+
+            var panelObject = new GameObject("UpgradePanel", typeof(RectTransform));
+            var costTextObject = new GameObject("CostText", typeof(RectTransform));
+            costTextObject.transform.SetParent(panelObject.transform, false);
+            costTextObject.AddComponent<TextMeshProUGUI>();
+            var panel = panelObject.AddComponent<UpgradePanelUI>();
+            _objects.AddRange(new Object[] { panelObject, costTextObject });
+
+            panel.Initialize(controller, inventory, wallet);
+            SetPrivateField(panel, "_selectedUpgrade", paidUpgrade);
+            panel.Refresh();
+
+            var costIconRoot = GetPrivateField<Transform>(panel, "_costIconRoot");
+            Assert.That(costIconRoot, Is.Not.Null);
+            Assert.That(costIconRoot.gameObject.activeSelf, Is.True);
+            Assert.That(costIconRoot.childCount, Is.EqualTo(1));
+
+            var costSlot = costIconRoot.GetChild(0);
+            var icon = costSlot.Find("Icon").GetComponent<Image>();
+            var amount = costSlot.Find("AmountText").GetComponent<TMP_Text>();
+            Assert.That(icon.sprite, Is.EqualTo(wood.Icon));
+            Assert.That(amount.text, Is.EqualTo("2/4"));
+            Assert.That(amount.color, Is.EqualTo(new Color(1f, 0.4f, 0.4f)));
+
+            SetPrivateField(panel, "_selectedUpgrade", freeUpgrade);
+            panel.Refresh();
+
+            Assert.That(costIconRoot.gameObject.activeSelf, Is.False);
+            Assert.That(costIconRoot.childCount, Is.EqualTo(0));
+        }
+
+        [Test]
         public void InventoryUI_TabMethodsShowOnlySelectedPanel()
         {
             var uiObject = new GameObject("InventoryUI");
@@ -404,6 +447,15 @@ namespace Project_S.Editor.Tests
             item.IsStackable = stackable;
             item.MaxStack = maxStack;
             return item;
+        }
+
+        private Sprite CreateSprite()
+        {
+            var texture = new Texture2D(1, 1);
+            var sprite = Sprite.Create(texture, new Rect(0f, 0f, 1f, 1f), Vector2.one * 0.5f);
+            _objects.Add(texture);
+            _objects.Add(sprite);
+            return sprite;
         }
 
         private UpgradeDefinition CreateUpgrade(

@@ -18,9 +18,13 @@ namespace Project_S.Runtime.Gameplay.HUD
         [SerializeField] private TMP_Text _titleText;
         [SerializeField] private TMP_Text _descriptionText;
         [SerializeField] private TMP_Text _costText;
+        [SerializeField] private Transform _costIconRoot;
+        [SerializeField] private Sprite _soulAshIcon;
         [SerializeField] private TMP_Text _statusText;
         [SerializeField] private Button _purchaseButton;
         [SerializeField] private TMP_Text _purchaseButtonText;
+
+        private readonly List<GameObject> _spawnedCostIconSlots = new List<GameObject>();
 
         private PlayerUpgradeController _controller;
         private InventoryController _inventory;
@@ -91,6 +95,9 @@ namespace Project_S.Runtime.Gameplay.HUD
 
             if (_costText == null)
                 _costText = FindChildComponent<TMP_Text>("CostText");
+
+            if (_costIconRoot == null)
+                _costIconRoot = FindChildComponent<Transform>("CostIconList");
 
             if (_statusText == null)
                 _statusText = FindChildComponent<TMP_Text>("StatusText");
@@ -182,6 +189,7 @@ namespace Project_S.Runtime.Gameplay.HUD
                 SetText(_statusText, string.Empty);
                 SetButtonState(false, "Купити");
                 SetDetailsIcon(null);
+                ClearCostIcons();
                 return;
             }
 
@@ -191,6 +199,7 @@ namespace Project_S.Runtime.Gameplay.HUD
             SetText(_titleText, _selectedUpgrade.Title);
             SetText(_descriptionText, _selectedUpgrade.Description);
             SetText(_costText, BuildCostText(_selectedUpgrade));
+            RefreshCostIcons(_selectedUpgrade);
             SetText(_statusText, purchased
                 ? "<color=#82e6a2>Куплено</color>"
                 : check.CanPurchase
@@ -199,6 +208,138 @@ namespace Project_S.Runtime.Gameplay.HUD
 
             SetDetailsIcon(_selectedUpgrade.Icon);
             SetButtonState(!purchased && check.CanPurchase, purchased ? "Куплено" : check.CanPurchase ? "Купити" : "Закрито");
+        }
+
+        private void RefreshCostIcons(UpgradeDefinition upgrade)
+        {
+            ClearCostIcons();
+
+            if (upgrade == null)
+                return;
+
+            EnsureCostIconRoot();
+            if (_costIconRoot == null)
+                return;
+
+            if (upgrade.SoulAshCost > 0 && _soulAshIcon != null)
+                SpawnCostIcon(_soulAshIcon, _controller.GetOwnedSoulAsh(), upgrade.SoulAshCost);
+
+            foreach (var cost in upgrade.ItemCosts ?? Enumerable.Empty<UpgradeItemCost>())
+            {
+                if (cost == null || cost.Item == null || cost.Amount <= 0)
+                    continue;
+
+                SpawnCostIcon(cost.Item.Icon, _controller.GetOwnedItemCount(cost.Item), cost.Amount);
+            }
+
+            _costIconRoot.gameObject.SetActive(_spawnedCostIconSlots.Count > 0);
+        }
+
+        private void EnsureCostIconRoot()
+        {
+            if (_costIconRoot == null)
+            {
+                Transform parent = _costText != null && _costText.transform.parent != null
+                    ? _costText.transform.parent
+                    : transform;
+
+                var root = new GameObject("CostIconList", typeof(RectTransform));
+                root.transform.SetParent(parent, false);
+                _costIconRoot = root.transform;
+
+                var rect = (RectTransform)_costIconRoot;
+                rect.anchorMin = new Vector2(0.5f, 0.5f);
+                rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.sizeDelta = new Vector2(240f, 58f);
+
+                if (_costText != null)
+                {
+                    var costRect = _costText.rectTransform;
+                    rect.anchoredPosition = costRect.anchoredPosition + new Vector2(0f, -54f);
+                }
+            }
+
+            var layout = _costIconRoot.GetComponent<HorizontalLayoutGroup>();
+            if (layout == null)
+                layout = _costIconRoot.gameObject.AddComponent<HorizontalLayoutGroup>();
+
+            layout.spacing = 8f;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+        }
+
+        private void SpawnCostIcon(Sprite icon, int owned, int required)
+        {
+            var slot = new GameObject("CostIconSlot", typeof(RectTransform));
+            slot.transform.SetParent(_costIconRoot, false);
+
+            var slotRect = (RectTransform)slot.transform;
+            slotRect.sizeDelta = new Vector2(54f, 54f);
+
+            var slotLayout = slot.AddComponent<LayoutElement>();
+            slotLayout.preferredWidth = 54f;
+            slotLayout.preferredHeight = 54f;
+
+            var background = slot.AddComponent<Image>();
+            background.color = new Color(0.15f, 0.15f, 0.15f, 1f);
+            background.raycastTarget = false;
+
+            var iconObject = new GameObject("Icon", typeof(RectTransform));
+            iconObject.transform.SetParent(slot.transform, false);
+            var iconRect = (RectTransform)iconObject.transform;
+            iconRect.anchorMin = Vector2.zero;
+            iconRect.anchorMax = Vector2.one;
+            iconRect.offsetMin = new Vector2(4f, 4f);
+            iconRect.offsetMax = new Vector2(-4f, -4f);
+
+            var iconImage = iconObject.AddComponent<Image>();
+            iconImage.sprite = icon;
+            iconImage.enabled = icon != null;
+            iconImage.preserveAspect = true;
+            iconImage.raycastTarget = false;
+
+            var amountObject = new GameObject("AmountText", typeof(RectTransform));
+            amountObject.transform.SetParent(slot.transform, false);
+            var amountRect = (RectTransform)amountObject.transform;
+            amountRect.anchorMin = new Vector2(1f, 0f);
+            amountRect.anchorMax = new Vector2(1f, 0f);
+            amountRect.pivot = new Vector2(1f, 0f);
+            amountRect.anchoredPosition = new Vector2(-3f, 3f);
+            amountRect.sizeDelta = new Vector2(72f, 22f);
+
+            var amountText = amountObject.AddComponent<TextMeshProUGUI>();
+            amountText.text = $"{owned}/{required}";
+            amountText.fontSize = 18f;
+            amountText.fontStyle = FontStyles.Bold;
+            amountText.alignment = TextAlignmentOptions.BottomRight;
+            amountText.color = owned >= required ? Color.white : new Color(1f, 0.4f, 0.4f);
+            amountText.enableWordWrapping = false;
+            amountText.raycastTarget = false;
+
+            _spawnedCostIconSlots.Add(slot);
+        }
+
+        private void ClearCostIcons()
+        {
+            foreach (var slot in _spawnedCostIconSlots)
+            {
+                if (slot != null)
+                {
+                    if (Application.isPlaying)
+                        Destroy(slot);
+                    else
+                        DestroyImmediate(slot);
+                }
+            }
+
+            _spawnedCostIconSlots.Clear();
+
+            if (_costIconRoot != null)
+                _costIconRoot.gameObject.SetActive(false);
         }
 
         private void SetDetailsIcon(Sprite icon)
