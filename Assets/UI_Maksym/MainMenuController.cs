@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Project_S.Runtime.Services.Save;
+using Zenject;
 
 public class MainMenuController : MonoBehaviour
 {
@@ -22,10 +24,26 @@ public class MainMenuController : MonoBehaviour
         Application.Quit();
     }
     
+    // Для кнопки "Продовжити"
     public void PlayGame()
     {
         // Завантажуємо Core, бо саме в Core знаходиться гравець, камера і логіка гри,
         // яка вже сама завантажить світ (YavWorld).
+        SceneManager.LoadScene("Core");
+    }
+
+    // Для кнопки "Нова гра"
+    public void NewGame()
+    {
+        // Отримуємо сервіс збережень
+        var saveService = ProjectContext.Instance.Container.TryResolve<GameSaveService>();
+        if (saveService != null)
+        {
+            // Очищаємо всі старі збереження
+            saveService.DeleteSave();
+        }
+
+        // І тепер, як і при продовженні, завантажуємо Core (але цього разу без старих даних)
         SceneManager.LoadScene("Core");
     }
 }

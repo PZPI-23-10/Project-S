@@ -1,4 +1,5 @@
 using UnityEngine;
+using Project_S.Runtime.Services.Save;
 
 public class PauseMenuController : MonoBehaviour
 {
@@ -8,9 +9,16 @@ public class PauseMenuController : MonoBehaviour
 
     private bool _isPaused = false;
     private GameObject _optionsMenuUI;
+    private GameSaveService _saveService;
 
     private void Start()
     {
+        // Отримуємо GameSaveService вручну на випадок, якщо [Inject] не спрацював
+        if (_saveService == null)
+        {
+            _saveService = Zenject.ProjectContext.Instance.Container.TryResolve<GameSaveService>();
+        }
+
         // Шукаємо меню налаштувань, якщо воно є поруч із Canv_Main
         if (_pauseMenuUI != null && _pauseMenuUI.transform.parent != null)
         {
@@ -137,5 +145,25 @@ public class PauseMenuController : MonoBehaviour
                 }
             }
         }
+    }
+
+    public void OnSaveClicked()
+    {
+        if (_saveService != null)
+        {
+            _saveService.SaveNow("ManualSave");
+            Debug.Log("Гра збережена!");
+        }
+    }
+
+    public void OnSaveAndExitClicked()
+    {
+        if (_saveService != null)
+        {
+            _saveService.SaveNow("ExitGame");
+        }
+        
+        Time.timeScale = 1f;
+        UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
     }
 }
