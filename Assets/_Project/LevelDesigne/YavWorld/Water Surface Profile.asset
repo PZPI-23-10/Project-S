@@ -23,8 +23,8 @@ MonoBehaviour:
     m_OverrideState: 1
     m_Value: 5
   gaussianMaxRadius:
-    m_OverrideState: 0
-    m_Value: 1
+    m_OverrideState: 1
+    m_Value: 1.251
   highQualitySampling:
     m_OverrideState: 0
     m_Value: 0
@@ -82,7 +82,7 @@ MonoBehaviour:
     m_Value: 0
   colorFilter:
     m_OverrideState: 1
-    m_Value: {r: 0.07271269, g: 0.34795615, b: 0.8113208, a: 1}
+    m_Value: {r: 0.047058813, g: 0.22728164, b: 0.34901962, a: 1}
   hueShift:
     m_OverrideState: 0
     m_Value: 0
