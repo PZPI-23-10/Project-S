@@ -1,9 +1,13 @@
 using Project_S.Runtime.Gameplay.Loot;
 using Project_S.Runtime.Gameplay.Navigation;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Enemies
 {
+    [ExecuteAlways]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(EnemyHealth))]
     [RequireComponent(typeof(EnemyMeleeAttack))]
@@ -29,14 +33,35 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
         private void Awake()
         {
+            if (!Application.isPlaying)
+            {
+#if UNITY_EDITOR
+                QueueEditorVisualRefresh();
+#endif
+                return;
+            }
+
             EnsureVisualInstance();
             Apply();
+        }
+
+        private void OnEnable()
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                QueueEditorVisualRefresh();
+#endif
         }
 
         private void OnValidate()
         {
             ResolveVisualReferences();
             Apply();
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                QueueEditorVisualRefresh();
+#endif
         }
 
         public void Configure(
@@ -135,7 +160,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
                 return;
             }
 
-            var visual = Instantiate(_visualPrefab, _visualRoot);
+            var visual = InstantiateVisualPrefab(_visualRoot);
             visual.name = "minotaur1";
             visual.transform.localPosition = Vector3.zero;
             visual.transform.localRotation = Quaternion.identity;
@@ -186,5 +211,39 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
             return null;
         }
+
+        private GameObject InstantiateVisualPrefab(Transform parent)
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                var editorVisual = PrefabUtility.InstantiatePrefab(_visualPrefab, parent) as GameObject;
+                if (editorVisual != null)
+                    return editorVisual;
+            }
+#endif
+
+            return Instantiate(_visualPrefab, parent);
+        }
+
+#if UNITY_EDITOR
+        private void QueueEditorVisualRefresh()
+        {
+            EditorApplication.delayCall -= RefreshEditorVisual;
+            EditorApplication.delayCall += RefreshEditorVisual;
+        }
+
+        private void RefreshEditorVisual()
+        {
+            if (this == null || Application.isPlaying)
+                return;
+
+            if (PrefabUtility.IsPartOfPrefabAsset(this))
+                return;
+
+            EnsureVisualInstance();
+            Apply();
+        }
+#endif
     }
 }
