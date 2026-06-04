@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Project_S.Runtime.Gameplay.Character.Combat;
 using Project_S.Runtime.Gameplay.Character.Stats;
 using Project_S.Runtime.Gameplay.HUD;
+using Project_S.Runtime.Services.Save;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Character.Inventory
@@ -224,6 +225,61 @@ namespace Project_S.Runtime.Gameplay.Character.Inventory
         }
 
         public int GetSize() => _inventorySize;
+
+        public List<ItemStackSaveData> CaptureSaveSlots(SaveAssetRegistry registry)
+        {
+            EnsureSlots();
+            var result = new List<ItemStackSaveData>(_slots.Length);
+            for (int i = 0; i < _slots.Length; i++)
+                result.Add(CaptureSlot(_slots[i], registry));
+
+            return result;
+        }
+
+        public void RestoreSaveSlots(IReadOnlyList<ItemStackSaveData> slots, SaveAssetRegistry registry)
+        {
+            EnsureSlots();
+
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                var savedSlot = slots != null && i < slots.Count ? slots[i] : null;
+                _slots[i] = RestoreSlot(savedSlot, registry);
+                NormalizeSlot(i);
+            }
+
+            NotifyInventoryChanged();
+        }
+
+        public static ItemStackSaveData CaptureSlot(ItemStack stack, SaveAssetRegistry registry)
+        {
+            if (stack == null || stack.Item == null || stack.Amount <= 0 || registry == null)
+                return null;
+
+            string itemId = registry.GetItemId(stack.Item);
+            if (string.IsNullOrWhiteSpace(itemId))
+                return null;
+
+            return new ItemStackSaveData
+            {
+                ItemId = itemId,
+                Amount = stack.Amount
+            };
+        }
+
+        public static ItemStack RestoreSlot(ItemStackSaveData savedSlot, SaveAssetRegistry registry)
+        {
+            if (savedSlot == null || savedSlot.Amount <= 0 || registry == null)
+                return null;
+
+            ItemData item = registry.GetItem(savedSlot.ItemId);
+            if (item == null)
+            {
+                Debug.LogWarning($"[Save] Item '{savedSlot.ItemId}' was not found while restoring inventory slot.");
+                return null;
+            }
+
+            return new ItemStack(item, savedSlot.Amount);
+        }
 
         private bool ApplyConsumableEffect(ItemData item)
         {

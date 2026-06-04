@@ -7,7 +7,6 @@ using Project_S.Runtime.Gameplay.Diagnostics;
 using Project_S.Runtime.Gameplay.Enemies;
 using Project_S.Runtime.Gameplay.Navigation;
 using UnityEngine;
-using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 
 namespace Project_S.Runtime.Gameplay.Ambient
@@ -203,10 +202,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
 
         private static Vector3 SampleNavMeshPosition(Vector3 position, float searchRadius)
         {
-            if (NavMesh.SamplePosition(position, out NavMeshHit hit, Mathf.Max(0.5f, searchRadius), NavMesh.AllAreas))
-                return hit.position;
-
-            return position;
+            return GroundPositionSampler.SampleNavMeshNearGround(position, searchRadius);
         }
 
         private readonly struct AnimalSpawnDefinition

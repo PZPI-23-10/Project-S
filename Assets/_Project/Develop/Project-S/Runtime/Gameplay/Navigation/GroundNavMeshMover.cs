@@ -90,7 +90,8 @@ namespace Project_S.Runtime.Gameplay.Navigation
             if (_agent.isOnNavMesh)
                 return true;
 
-            if (!NavMesh.SamplePosition(transform.position, out NavMeshHit hit, Mathf.Max(0.01f, searchRadius), NavMesh.AllAreas))
+            Vector3 warpPosition = GroundPositionSampler.SampleNavMeshNearGround(transform.position, searchRadius);
+            if (!NavMesh.SamplePosition(warpPosition, out NavMeshHit hit, 0.25f, NavMesh.AllAreas))
                 return false;
 
             _agent.Warp(hit.position);
@@ -105,7 +106,8 @@ namespace Project_S.Runtime.Gameplay.Navigation
                 return false;
 
             float radius = Mathf.Max(0.01f, sampleRadius > 0f ? sampleRadius : _sampleRadius);
-            if (!NavMesh.SamplePosition(destination, out NavMeshHit hit, radius, NavMesh.AllAreas))
+            Vector3 movePosition = GroundPositionSampler.SampleNavMeshNearGround(destination, radius);
+            if (!NavMesh.SamplePosition(movePosition, out NavMeshHit hit, 0.25f, NavMesh.AllAreas))
             {
                 Stop();
                 return false;

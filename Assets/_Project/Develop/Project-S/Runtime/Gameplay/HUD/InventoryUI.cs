@@ -1,6 +1,7 @@
 using Project_S.Runtime.Gameplay.Character.Inventory;
 using Project_S.Runtime.Gameplay.Character.Input;
 using Project_S.Runtime.Gameplay.Crafting;
+using Project_S.Runtime.Gameplay.Upgrades;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -16,6 +17,12 @@ namespace Project_S.Runtime.Gameplay.HUD
         [SerializeField] private GameObject _contextPanel;
         [SerializeField] private GameObject _lootingPanel;
         [SerializeField] private GameObject _tabButtons;
+        [SerializeField] private GameObject _upgradePanelRoot;
+
+        [Header("Tabs")]
+        [SerializeField] private Button _inventoryTabButton;
+        [SerializeField] private Button _craftingTabButton;
+        [SerializeField] private Button _upgradeTabButton;
 
         [Header("Inventory")]
         [SerializeField] private Transform _slotsGrid; // Основна сітка рюкзака
@@ -47,7 +54,9 @@ namespace Project_S.Runtime.Gameplay.HUD
         private CraftingPanelUI _craftingPanel;
         private StoragePanelUI _storagePanel;
         private AccessoryPanelUI _accessoryPanel;
+        private UpgradePanelUI _upgradePanel;
         private AccessorySlotController _accessories;
+        private PlayerUpgradeController _upgrades;
         private IItemStorage _activeStorage;
         private ICraftingRecipeProvider _activeCraftingRecipeProvider;
         private SoulAshWallet _soulAshWallet;
@@ -56,12 +65,20 @@ namespace Project_S.Runtime.Gameplay.HUD
         private Transform _distanceCloseObserver;
         private float _distanceCloseRange;
         private bool _hasDistanceCloseTarget;
+        private InventoryTab _activeTab = InventoryTab.Inventory;
 
         private enum DragSourceType
         {
             None,
             PlayerInventory,
             ExternalStorage
+        }
+
+        private enum InventoryTab
+        {
+            Inventory,
+            Crafting,
+            Upgrades
         }
 
         public bool IsOpen => _mainInventoryWindow != null ? _mainInventoryWindow.activeSelf : (_inventoryPanel != null && _inventoryPanel.activeSelf);
@@ -73,6 +90,7 @@ namespace Project_S.Runtime.Gameplay.HUD
             else if (_inventoryPanel != null) _inventoryPanel.SetActive(false);
 
             if (_contextPanel != null) _contextPanel.SetActive(false);
+            if (_upgradePanelRoot != null) _upgradePanelRoot.SetActive(false);
             SetDraggedIconActive(false);
 
             if (_overloadHUDText != null) _overloadHUDText.gameObject.SetActive(false);
@@ -81,6 +99,8 @@ namespace Project_S.Runtime.Gameplay.HUD
 
         private void Start()
         {
+            BindTabButtons();
+
             if (_inventory != null)
             {
                 _inventory.OnInventoryChanged += Refresh;
@@ -139,14 +159,16 @@ namespace Project_S.Runtime.Gameplay.HUD
 
         public void OpenWithCraftingContext(CraftingContext context)
         {
+            _activeTab = InventoryTab.Crafting;
             _activeStorage = null;
             _activeCraftingRecipeProvider = null;
             ClearDistanceCloseTarget();
-            SetInventoryOpen(true, context);
+            SetInventoryOpenInternal(true, context);
         }
 
         public void OpenWithCraftingContext(CraftingContext context, ICraftingRecipeProvider recipeProvider)
         {
+            _activeTab = InventoryTab.Crafting;
             _activeStorage = null;
             _activeCraftingRecipeProvider = recipeProvider;
             ClearDistanceCloseTarget();
@@ -169,6 +191,7 @@ namespace Project_S.Runtime.Gameplay.HUD
             float closeDistance,
             ICraftingRecipeProvider recipeProvider)
         {
+            _activeTab = InventoryTab.Crafting;
             _activeStorage = null;
             _activeCraftingRecipeProvider = recipeProvider;
             SetDistanceCloseTarget(closeTarget, closeObserver, closeDistance);
@@ -184,6 +207,7 @@ namespace Project_S.Runtime.Gameplay.HUD
             if (storage == null)
                 return;
 
+            _activeTab = InventoryTab.Inventory;
             _activeStorage = storage;
             _activeCraftingRecipeProvider = null;
             SetDistanceCloseTarget(closeTarget, closeObserver, closeDistance);
@@ -208,6 +232,7 @@ namespace Project_S.Runtime.Gameplay.HUD
             if (storage == null)
                 return;
 
+            _activeTab = InventoryTab.Inventory;
             _activeStorage = storage;
             _activeCraftingRecipeProvider = null;
             SetDistanceCloseTarget(closeTarget, closeObserver, closeDistance);
@@ -224,6 +249,7 @@ namespace Project_S.Runtime.Gameplay.HUD
 
         public void SetInventoryOpen(bool open, CraftingContext context)
         {
+            _activeTab = InventoryTab.Inventory;
             _activeStorage = null;
             _activeCraftingRecipeProvider = null;
 
@@ -236,51 +262,9 @@ namespace Project_S.Runtime.Gameplay.HUD
         private void SetInventoryOpenInternal(bool open, CraftingContext context)
         {
             if (_mainInventoryWindow != null)
-            {
                 _mainInventoryWindow.SetActive(open);
-
-                if (open)
-                {
-                    RectTransform mainWinRect = _mainInventoryWindow.GetComponent<RectTransform>();
-
-                    if (_activeStorage != null)
-                    {
-                        if (mainWinRect != null) mainWinRect.anchoredPosition = new Vector2(-515f, mainWinRect.anchoredPosition.y);
-
-                        if (_inventoryPanel != null) _inventoryPanel.SetActive(true);
-                        if (_contextPanel != null) _contextPanel.SetActive(false);
-                        if (_lootingPanel != null) _lootingPanel.SetActive(true);
-                        if (_tabButtons != null) _tabButtons.SetActive(false); // <--- ХОВАЄМО
-                    }
-                    else if (context != CraftingContext.Hand)
-                    {
-                        if (mainWinRect != null) mainWinRect.anchoredPosition = new Vector2(0f, mainWinRect.anchoredPosition.y);
-
-                        if (_inventoryPanel != null) _inventoryPanel.SetActive(false);
-                        if (_contextPanel != null) _contextPanel.SetActive(true);
-                        if (_lootingPanel != null) _lootingPanel.SetActive(false);
-                        if (_tabButtons != null) _tabButtons.SetActive(true); // <--- ПОКАЗУЄМО
-                    }
-                    else
-                    {
-                        if (mainWinRect != null) mainWinRect.anchoredPosition = new Vector2(0f, mainWinRect.anchoredPosition.y);
-
-                        if (_inventoryPanel != null) _inventoryPanel.SetActive(true);
-                        if (_contextPanel != null) _contextPanel.SetActive(false);
-                        if (_lootingPanel != null) _lootingPanel.SetActive(false);
-                        if (_tabButtons != null) _tabButtons.SetActive(true);
-                    }
-                }
-            }
             else
             {
-                ClearDistanceCloseTarget();
-
-                RectTransform mainWinRect = _mainInventoryWindow.GetComponent<RectTransform>();
-                if (mainWinRect != null) mainWinRect.anchoredPosition = new Vector2(0f, mainWinRect.anchoredPosition.y);
-
-                if (_lootingPanel != null) _lootingPanel.SetActive(false);
-
                 if (_inventoryPanel != null) _inventoryPanel.SetActive(open);
                 if (_contextPanel != null) _contextPanel.SetActive(open);
             }
@@ -296,19 +280,8 @@ namespace Project_S.Runtime.Gameplay.HUD
                 InitializeCraftingPanel();
                 InitializeStoragePanel();
                 InitializeAccessoryPanel();
-
-                bool storageMode = _activeStorage != null;
-                _craftingPanel?.SetPanelVisible(!storageMode);
-
-                if (storageMode)
-                {
-                    _storagePanel?.SetStorage(_activeStorage);
-                }
-                else
-                {
-                    _storagePanel?.ClearStorage();
-                    _craftingPanel.SetContext(_currentCraftingContext);
-                }
+                InitializeUpgradePanel();
+                ApplyOpenPanelState(context);
 
                 Refresh();
                 Cursor.lockState = CursorLockMode.None;
@@ -322,6 +295,8 @@ namespace Project_S.Runtime.Gameplay.HUD
                 ReturnDraggedStackToSource();
                 _storagePanel?.ClearStorage();
                 _craftingPanel?.SetPanelVisible(true);
+                SetUpgradePanelVisible(false);
+                _activeTab = InventoryTab.Inventory;
                 _activeStorage = null;
                 _activeCraftingRecipeProvider = null;
                 TooltipUI.Instance?.Hide();
@@ -333,6 +308,61 @@ namespace Project_S.Runtime.Gameplay.HUD
             }
 
             UpdateOverloadHUDVisibility(open);
+        }
+
+        private void ApplyOpenPanelState(CraftingContext context)
+        {
+            bool storageMode = _activeStorage != null;
+            SetMainWindowX(storageMode ? -515f : 0f);
+
+            if (_tabButtons != null)
+                _tabButtons.SetActive(!storageMode);
+
+            if (_lootingPanel != null)
+                _lootingPanel.SetActive(storageMode);
+
+            if (storageMode)
+            {
+                if (_inventoryPanel != null) _inventoryPanel.SetActive(true);
+                if (_contextPanel != null) _contextPanel.SetActive(false);
+                _craftingPanel?.SetPanelVisible(false);
+                SetUpgradePanelVisible(false);
+                _storagePanel?.SetStorage(_activeStorage);
+                return;
+            }
+
+            bool showUpgrades = _activeTab == InventoryTab.Upgrades;
+            bool showCrafting = !showUpgrades && _activeTab == InventoryTab.Crafting;
+            bool showInventory = !showUpgrades && !showCrafting;
+
+            if (_inventoryPanel != null) _inventoryPanel.SetActive(showInventory);
+            if (_contextPanel != null) _contextPanel.SetActive(showCrafting);
+            if (_lootingPanel != null) _lootingPanel.SetActive(false);
+
+            _storagePanel?.ClearStorage();
+            _craftingPanel?.SetPanelVisible(showCrafting);
+            SetUpgradePanelVisible(showUpgrades);
+
+            if (showCrafting)
+                _craftingPanel?.SetContext(_currentCraftingContext);
+        }
+
+        private void SetMainWindowX(float x)
+        {
+            if (_mainInventoryWindow == null)
+                return;
+
+            RectTransform mainWinRect = _mainInventoryWindow.GetComponent<RectTransform>();
+            if (mainWinRect != null)
+                mainWinRect.anchoredPosition = new Vector2(x, mainWinRect.anchoredPosition.y);
+        }
+
+        private void SetUpgradePanelVisible(bool visible)
+        {
+            if (_upgradePanel != null)
+                _upgradePanel.SetPanelVisible(visible);
+            else if (_upgradePanelRoot != null)
+                _upgradePanelRoot.SetActive(visible);
         }
 
         public void OnSlotClicked(int slotIndex, PointerEventData.InputButton button)
@@ -634,6 +664,7 @@ namespace Project_S.Runtime.Gameplay.HUD
             _craftingPanel?.Refresh();
             _storagePanel?.Refresh();
             _accessoryPanel?.Refresh();
+            _upgradePanel?.Refresh();
 
             UpdateOverloadHUDVisibility(IsOpen);
         }
@@ -720,6 +751,98 @@ namespace Project_S.Runtime.Gameplay.HUD
 
                 _accessoryPanel.Initialize(accessories, _slotPrefab);
             }
+        }
+
+        private void InitializeUpgradePanel()
+        {
+            if (_inventory == null)
+                return;
+
+            EnsureSoulAshWallet();
+
+            if (_upgrades == null)
+            {
+                _upgrades = _inventory.GetComponent<PlayerUpgradeController>()
+                    ?? _inventory.GetComponentInParent<PlayerUpgradeController>();
+
+                if (_upgrades == null)
+                    _upgrades = _inventory.gameObject.AddComponent<PlayerUpgradeController>();
+            }
+
+            _upgrades.EnsureInitialized();
+
+            if (_upgradePanel == null)
+            {
+                if (_upgradePanelRoot != null)
+                    _upgradePanel = _upgradePanelRoot.GetComponent<UpgradePanelUI>();
+
+                if (_upgradePanel == null && _mainInventoryWindow != null)
+                    _upgradePanel = _mainInventoryWindow.GetComponentInChildren<UpgradePanelUI>(true);
+
+                if (_upgradePanel == null)
+                    return;
+            }
+
+            _upgradePanel.Initialize(_upgrades, _inventory, _soulAshWallet);
+            SetUpgradePanelVisible(_activeTab == InventoryTab.Upgrades && IsOpen && _activeStorage == null);
+        }
+
+        public void ShowInventoryTab()
+        {
+            _activeTab = InventoryTab.Inventory;
+            SetInventoryOpenInternal(true, _currentCraftingContext);
+        }
+
+        public void ShowCraftingTab()
+        {
+            _activeTab = InventoryTab.Crafting;
+            SetInventoryOpenInternal(true, _currentCraftingContext);
+        }
+
+        public void ShowUpgradeTab()
+        {
+            _activeTab = InventoryTab.Upgrades;
+            SetInventoryOpenInternal(true, _currentCraftingContext);
+        }
+
+        private void BindTabButtons()
+        {
+            if (_tabButtons == null)
+                return;
+
+            if (_inventoryTabButton == null)
+                _inventoryTabButton = _tabButtons.transform.Find("Inventory")?.GetComponent<Button>();
+
+            if (_craftingTabButton == null)
+                _craftingTabButton = _tabButtons.transform.Find("Craft")?.GetComponent<Button>();
+
+            if (_upgradeTabButton == null)
+                _upgradeTabButton = _tabButtons.transform.Find("UpgradeTabButton")?.GetComponent<Button>();
+
+            BindTabButton(_inventoryTabButton, ShowInventoryTab, nameof(ShowInventoryTab));
+            BindTabButton(_craftingTabButton, ShowCraftingTab, nameof(ShowCraftingTab));
+            BindTabButton(_upgradeTabButton, ShowUpgradeTab, nameof(ShowUpgradeTab));
+        }
+
+        private static void BindTabButton(Button button, UnityEngine.Events.UnityAction action, string persistentMethodName)
+        {
+            if (button == null)
+                return;
+
+            button.onClick.RemoveListener(action);
+            if (!HasPersistentListener(button, persistentMethodName))
+                button.onClick.AddListener(action);
+        }
+
+        private static bool HasPersistentListener(Button button, string methodName)
+        {
+            for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++)
+            {
+                if (button.onClick.GetPersistentMethodName(i) == methodName)
+                    return true;
+            }
+
+            return false;
         }
 
         private AccessorySlotController ResolveAccessorySlots()

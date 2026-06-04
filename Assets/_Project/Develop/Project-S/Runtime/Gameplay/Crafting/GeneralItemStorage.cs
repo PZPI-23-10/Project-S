@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using Project_S.Runtime.Gameplay.Character.Interaction;
 using Project_S.Runtime.Gameplay.Character.Inventory;
 using Project_S.Runtime.Gameplay.HUD;
+using Project_S.Runtime.Services.Save;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Crafting
@@ -48,6 +50,30 @@ namespace Project_S.Runtime.Gameplay.Crafting
         {
             EnsureSlots();
             return index >= 0 && index < _slots.Length ? _slots[index] : null;
+        }
+
+        public List<ItemStackSaveData> CaptureSaveSlots(SaveAssetRegistry registry)
+        {
+            EnsureSlots();
+            var result = new List<ItemStackSaveData>(_slots.Length);
+            for (int i = 0; i < _slots.Length; i++)
+                result.Add(InventoryController.CaptureSlot(_slots[i], registry));
+
+            return result;
+        }
+
+        public void RestoreSaveSlots(IReadOnlyList<ItemStackSaveData> slots, SaveAssetRegistry registry)
+        {
+            EnsureSlots();
+
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                var savedSlot = slots != null && i < slots.Count ? slots[i] : null;
+                _slots[i] = InventoryController.RestoreSlot(savedSlot, registry);
+                NormalizeSlot(i);
+            }
+
+            NotifyChanged();
         }
 
         public void SetSlot(int index, ItemStack stack)

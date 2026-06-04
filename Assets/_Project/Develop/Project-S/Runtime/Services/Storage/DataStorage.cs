@@ -86,6 +86,16 @@ namespace Project_S.Runtime.Services.Storage
             PlayerPrefs.Save();
         }
 
+        public bool HasKey(string key)
+        {
+            return PlayerPrefs.HasKey(key);
+        }
+
+        public void DeleteKey(string key)
+        {
+            PlayerPrefs.DeleteKey(key);
+        }
+
         public void ReleaseStored(string key, IResetable resetable)
         {
             PlayerPrefs.DeleteKey(key);

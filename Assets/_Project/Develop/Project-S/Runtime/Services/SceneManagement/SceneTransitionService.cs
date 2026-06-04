@@ -4,6 +4,7 @@ using KinematicCharacterController;
 using Project_S.Runtime.Common.Constants;
 using Project_S.Runtime.Core.Services;
 using Project_S.Runtime.Gameplay.Character.Player;
+using Project_S.Runtime.Services.Save;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -13,13 +14,15 @@ namespace Project_S.Runtime.Services.SceneManagement
     {
         private readonly SceneLoader _sceneLoader;
         private readonly PlayerProvider _playerProvider;
+        private readonly GameSaveService _saveService;
         private bool _isTransitioning;
         private string _currentLevelSceneName;
 
-        public SceneTransitionService(SceneLoader sceneLoader, PlayerProvider playerProvider)
+        public SceneTransitionService(SceneLoader sceneLoader, PlayerProvider playerProvider, GameSaveService saveService)
         {
             _sceneLoader = sceneLoader;
             _playerProvider = playerProvider;
+            _saveService = saveService;
             SceneTransitionRequestBus.TransitionRequested += TransitionTo;
         }
 
@@ -50,6 +53,8 @@ namespace Project_S.Runtime.Services.SceneManagement
                 await EnsureCoreLoaded();
 
                 string previousLevelSceneName = ResolvePreviousLevelSceneName(levelSceneName);
+                if (!string.IsNullOrWhiteSpace(previousLevelSceneName))
+                    _saveService?.SaveNow("SceneTransitionBeforeUnload");
 
                 if (!_sceneLoader.IsLoaded(levelSceneName))
                     await _sceneLoader.LoadAsync(levelSceneName, LoadSceneMode.Additive);
@@ -58,7 +63,8 @@ namespace Project_S.Runtime.Services.SceneManagement
                 if (targetScene.IsValid() && targetScene.isLoaded)
                     SceneManager.SetActiveScene(targetScene);
 
-                MovePlayerToSpawn(targetScene, spawnId);
+                if (_saveService == null || !_saveService.ShouldRestorePlayerFromSave(levelSceneName))
+                    MovePlayerToSpawn(targetScene, spawnId);
 
                 if (!string.IsNullOrWhiteSpace(previousLevelSceneName)
                     && previousLevelSceneName != levelSceneName)
@@ -70,6 +76,8 @@ namespace Project_S.Runtime.Services.SceneManagement
                     await _sceneLoader.UnloadAsync(SceneNames.Boot);
 
                 _currentLevelSceneName = levelSceneName;
+                _saveService?.ApplyAfterSceneLoaded(targetScene);
+                _saveService?.RequestAutosave("SceneTransitionCompleted");
             }
             finally
             {

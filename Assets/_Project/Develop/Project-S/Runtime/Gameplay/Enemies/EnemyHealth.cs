@@ -28,6 +28,25 @@ namespace Project_S.Runtime.Gameplay.Enemies
         public float NormalizedHealth => Mathf.Clamp01(_currentHealth / MaxHealth);
         public bool IsDead => _dead;
 
+        public void RestoreSaveState(float currentHealth, bool dead)
+        {
+            _dead = dead;
+            _currentHealth = dead ? 0f : Mathf.Clamp(currentHealth, 0f, MaxHealth);
+
+            if (_dead || _currentHealth <= 0f)
+            {
+                _dead = true;
+                _currentHealth = 0f;
+                gameObject.SetActive(false);
+            }
+            else if (!gameObject.activeSelf)
+            {
+                gameObject.SetActive(true);
+            }
+
+            HealthChanged?.Invoke(this);
+        }
+
         private void Awake()
         {
             EnsureReferences();

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Project_S.Runtime.Gameplay.Ambient;
+using Project_S.Runtime.Gameplay.Navigation;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
@@ -21,9 +22,6 @@ namespace Project_S.Runtime.Gameplay.Enemies
         private const string DeathState = "Death";
         private const float DeathFallFallbackSeconds = 5f;
         private const float DeathGroundOffset = 0.08f;
-        private const float GroundProbeHeight = 25f;
-        private const float GroundProbeDistance = 80f;
-        private const int GroundLayerMask = 1 << 8;
         private static readonly int DeathStateHash = Animator.StringToHash(DeathState);
 
         [SerializeField] private FlyingEnemyController _controller;
@@ -305,12 +303,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
         private static Vector3 SampleGround(Vector3 position)
         {
-            Vector3 origin = position + Vector3.up * GroundProbeHeight;
-            if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, GroundProbeDistance, GroundLayerMask, QueryTriggerInteraction.Ignore))
-                return hit.point;
-
-            position.y = 0f;
-            return position;
+            return GroundPositionSampler.SampleGround(position);
         }
 
         private void SetBool(int hash, bool value)
