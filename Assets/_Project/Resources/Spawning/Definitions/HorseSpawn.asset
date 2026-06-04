@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f6ad63a8e824f4fa1e83fcdfd4a7188, type: 3}
+  m_Name: HorseSpawn
+  m_EditorClassIdentifier: 
+  _displayName: Horse
+  _behaviour: 0
+  _prefab: {fileID: 5491645057472104677, guid: a66e06778de11364192ad40d4f02133c, type: 3}
+  _usePrefabAsRoot: 1
+  _visualLocalPosition: {x: 0, y: 0, z: 0}
+  _visualLocalEulerAngles: {x: 0, y: 0, z: 0}
+  _visualLocalScale: {x: 1, y: 1, z: 1}
+  _disablePrefabBehaviours: 0
+  _disablePrefabColliders: 0
+  _enemyConfig: {fileID: 0}
+  _lootTable: {fileID: 0}
+  _attackProfiles: []
+  _attackSelectionMode: 0
+  _idleClip: {fileID: 0}
+  _walkClip: {fileID: 0}
+  _attackClip: {fileID: 0}
+  _deathClip: {fileID: 0}
+  _hitReactionClips: []
+  _animatorController: {fileID: 0}
+  _colliderRadius: 0.8
+  _colliderHeight: 1.8
+  _colliderCenter: {x: 0, y: 0.9, z: 0}
+  _healthBarOffset: {x: 0, y: 2, z: 0}
+  _walkSpeed: 1.1
+  _runSpeed: 4.5
+  _scareRadius: 6
+  _hoverHeight: 12
+  _diveStopHeight: 1.2
+  _retreatDistanceThreshold: 0.35
+  _destroyAfterDeath: 0
+  _slotReleaseDelayAfterDeath: 3

@@ -31,6 +31,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
         [SerializeField] private EnemyMeleeAttack _meleeAttack;
         [SerializeField] private GroundNavMeshMover _mover;
         [SerializeField] private Animator _animator;
+        [SerializeField] private Transform _visualRoot;
         [SerializeField] private Vector3 _homeCenter;
         [SerializeField] private float _wanderRadius = 9f;
         [SerializeField] private float _walkSpeed = 1.1f;
@@ -44,16 +45,21 @@ namespace Project_S.Runtime.Gameplay.Ambient
         private bool _isAggro;
         private float _lastKnownHealth;
         private int _currentStateHash;
+        private Vector3 _baseVisualLocalPosition;
+        private Quaternion _baseVisualLocalRotation;
+        private bool _hasBaseVisualPose;
 
         private void Awake()
         {
             ResolveReferences();
+            CacheBaseVisualPose();
             _lastKnownHealth = _health != null ? _health.CurrentHealth : 0f;
         }
 
         private void OnEnable()
         {
             ResolveReferences();
+            CacheBaseVisualPose();
 
             if (_health != null)
             {
@@ -95,6 +101,11 @@ namespace Project_S.Runtime.Gameplay.Ambient
                 TickFriendly();
         }
 
+        private void LateUpdate()
+        {
+            KeepVisualRootAnchored();
+        }
+
         public void Configure(
             Transform player,
             EnemyHealth health,
@@ -116,6 +127,14 @@ namespace Project_S.Runtime.Gameplay.Ambient
             _lastKnownHealth = _health != null ? _health.CurrentHealth : 0f;
             ResolveReferences();
             ConfigureMover(_walkSpeed, 0.15f);
+        }
+
+        public void ConfigureSpawnContext(Transform player, Vector3 homeCenter, float wanderRadius)
+        {
+            _player = player;
+            _homeCenter = homeCenter;
+            _wanderRadius = Mathf.Max(0.5f, wanderRadius);
+            ResolveReferences();
         }
 
         public static Vector3 SampleGround(Vector3 position)
@@ -297,7 +316,33 @@ namespace Project_S.Runtime.Gameplay.Ambient
                 _animator = GetComponentInChildren<Animator>();
 
             if (_animator != null)
+            {
                 _animator.applyRootMotion = false;
+
+                if (_visualRoot == null)
+                    _visualRoot = _animator.transform;
+            }
+        }
+
+        private void CacheBaseVisualPose()
+        {
+            if (_visualRoot == null || _hasBaseVisualPose)
+                return;
+
+            _baseVisualLocalPosition = _visualRoot.localPosition;
+            _baseVisualLocalRotation = _visualRoot.localRotation;
+            _hasBaseVisualPose = true;
+        }
+
+        private void KeepVisualRootAnchored()
+        {
+            if (_visualRoot == null || !_hasBaseVisualPose)
+                return;
+
+            _visualRoot.localPosition = _baseVisualLocalPosition;
+
+            if (_state != BoarState.Dead)
+                _visualRoot.localRotation = _baseVisualLocalRotation;
         }
 
         private void ResolvePlayer()

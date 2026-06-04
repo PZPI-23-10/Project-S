@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c4ef8d4623094103a12dd5f3a83ce23c, type: 3}
   m_Name: MinotaurBossConfig
   m_EditorClassIdentifier: 
-  DisplayName: "\u041C\u0438\u043D\u043E\u0442\u0430\u0432\u0440"
+  DisplayName: Minotaur
   MaxHealth: 650
   SoulAshReward: 80
-  MoveSpeed: 2.8
+  MoveSpeed: 4
   AggroRange: 18
   LoseTargetRange: 28
-  AttackRange: 2.4
+  AttackRange: 4
   RotationSpeed: 620
   AgentRadius: 0.85
   AgentHeight: 3.2
@@ -31,8 +31,23 @@ MonoBehaviour:
   AttackWindup: 0.55
   UseAttackClipDamageMoment: 1
   AttackDamageMomentNormalized: 0.48
-  AttackRadius: 1.05
-  HealthDamage: 30
+  AttackRadius: 2.05
+  HealthDamage: 100
   PoiseDamage: 20
   DamageType: 2
+  UseRangedAttack: 0
+  RangedAttackRange: 10
+  RangedPreferredDistance: 8
+  RangedRetreatDistance: 4
+  RangedAttackCooldown: 2.4
+  RangedAttackWindup: 0.55
+  UseRangedAttackClipDamageMoment: 1
+  RangedAttackDamageMomentNormalized: 0.58
+  RangedAttackAnimationSpeed: 1
+  RangedProjectileSpeed: 16
+  RangedProjectileLifetime: 4
+  RangedProjectileRadius: 0.08
+  RangedHealthDamage: 9
+  RangedPoiseDamage: 4
+  RangedDamageType: 0
   DestroyDelayAfterDeath: 0

@@ -18,6 +18,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
         private const string HarpyName = "[MVP] Harpy";
         private const string HarpyVisualPath = "Enemies/Harpy/HarpyVisual";
         private const string HarpyAnimatorPath = "Enemies/Harpy/HarpyAnimator";
+        private static readonly bool AutoSpawnEnabled = false;
 
         private const float HoverHeight = 12f;
         private const float HoverRadius = 24f;
@@ -34,6 +35,9 @@ namespace Project_S.Runtime.Gameplay.Enemies
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
         {
+            if (!AutoSpawnEnabled)
+                return;
+
             if (GameObject.Find(RunnerName) != null)
                 return;
 
@@ -134,7 +138,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
             controller.Configure(config, target, HoverHeight, HoverRadius, DiveStopHeight, RetreatDistanceThreshold);
             animationController.Configure(controller, attack, health, visual != null ? visual.GetComponentInChildren<Animator>() : null);
             CreateHarpyCorpseHarvest(harpy, health);
-            worldHealthBar.Configure("Гарпия", new Vector3(0f, 2.2f, 0f));
+            worldHealthBar.Configure("Harpy", new Vector3(0f, 2.2f, 0f));
         }
 
         private static void CreateHarpyCorpseHarvest(GameObject harpy, EnemyHealth health)

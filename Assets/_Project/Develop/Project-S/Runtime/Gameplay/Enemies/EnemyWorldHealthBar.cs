@@ -8,7 +8,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
     public class EnemyWorldHealthBar : MonoBehaviour
     {
         [SerializeField] private EnemyHealth _health;
-        [SerializeField] private string _displayName = "Скелет";
+        [SerializeField] private string _displayName = "Enemy";
         [SerializeField] private Vector3 _worldOffset = new Vector3(0f, 1.1f, 0f);
         [SerializeField] private Vector2 _barSize = new Vector2(92f, 8f);
 

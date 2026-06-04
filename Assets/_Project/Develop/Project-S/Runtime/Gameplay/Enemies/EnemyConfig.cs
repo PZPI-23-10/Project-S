@@ -39,6 +39,23 @@ namespace Project_S.Runtime.Gameplay.Enemies
         [Min(0f)] public float PoiseDamage = 8f;
         public DamageType DamageType = DamageType.Blunt;
 
+        [Header("Ranged Attack")]
+        public bool UseRangedAttack = false;
+        [Min(0f)] public float RangedAttackRange = 10f;
+        [Min(0f)] public float RangedPreferredDistance = 8f;
+        [Min(0f)] public float RangedRetreatDistance = 4f;
+        [Min(0f)] public float RangedAttackCooldown = 2.4f;
+        [Min(0f)] public float RangedAttackWindup = 0.55f;
+        public bool UseRangedAttackClipDamageMoment = true;
+        [Range(0f, 1f)] public float RangedAttackDamageMomentNormalized = 0.58f;
+        [Min(0.01f)] public float RangedAttackAnimationSpeed = 1f;
+        [Min(0.01f)] public float RangedProjectileSpeed = 16f;
+        [Min(0.01f)] public float RangedProjectileLifetime = 4f;
+        [Min(0.01f)] public float RangedProjectileRadius = 0.08f;
+        [Min(0f)] public float RangedHealthDamage = 9f;
+        [Min(0f)] public float RangedPoiseDamage = 4f;
+        public DamageType RangedDamageType = DamageType.Piercing;
+
         [Header("Death")]
         [Min(0f)] public float DestroyDelayAfterDeath = 0f;
     }

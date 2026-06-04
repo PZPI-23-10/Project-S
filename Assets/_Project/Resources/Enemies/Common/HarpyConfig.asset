@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4ef8d4623094103a12dd5f3a83ce23c, type: 3}
+  m_Name: HarpyConfig
+  m_EditorClassIdentifier: 
+  DisplayName: Harpy
+  MaxHealth: 35
+  SoulAshReward: 16
+  MoveSpeed: 7
+  AggroRange: 35
+  LoseTargetRange: 48
+  AttackRange: 1.8
+  RotationSpeed: 720
+  AgentRadius: 0.5
+  AgentHeight: 2
+  AgentBaseOffset: 0
+  MaxStepHeight: 0.4
+  MaxSlope: 45
+  StoppingDistancePadding: 0.05
+  RepathInterval: 0.2
+  AttackCooldown: 5.5
+  AttackWindup: 0.35
+  UseAttackClipDamageMoment: 0
+  AttackDamageMomentNormalized: 0.5
+  AttackRadius: 0.75
+  HealthDamage: 10
+  PoiseDamage: 6
+  DamageType: 1
+  UseRangedAttack: 0
+  RangedAttackRange: 10
+  RangedPreferredDistance: 8
+  RangedRetreatDistance: 4
+  RangedAttackCooldown: 2.4
+  RangedAttackWindup: 0.55
+  UseRangedAttackClipDamageMoment: 1
+  RangedAttackDamageMomentNormalized: 0.58
+  RangedAttackAnimationSpeed: 1
+  RangedProjectileSpeed: 16
+  RangedProjectileLifetime: 4
+  RangedProjectileRadius: 0.08
+  RangedHealthDamage: 9
+  RangedPoiseDamage: 4
+  RangedDamageType: 0
+  DestroyDelayAfterDeath: 30
