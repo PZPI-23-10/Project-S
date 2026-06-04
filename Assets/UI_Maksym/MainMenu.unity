@@ -3045,32 +3045,47 @@ PrefabInstance:
     - target: {fileID: 8125261551530020267, guid: 0a68be1bd13d8694e8d8fe85574ac075,
         type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8125261551530020267, guid: 0a68be1bd13d8694e8d8fe85574ac075,
         type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8125261551530020267, guid: 0a68be1bd13d8694e8d8fe85574ac075,
         type: 3}
       propertyPath: m_SizeDelta.x
-      value: 457
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8125261551530020267, guid: 0a68be1bd13d8694e8d8fe85574ac075,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 228.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8125261551530020267, guid: 0a68be1bd13d8694e8d8fe85574ac075,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -390.04996
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8234190697642760141, guid: 0a68be1bd13d8694e8d8fe85574ac075,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1159109117}
+    - target: {fileID: 8234190697642760141, guid: 0a68be1bd13d8694e8d8fe85574ac075,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: Credits
+      objectReference: {fileID: 0}
+    - target: {fileID: 8234190697642760141, guid: 0a68be1bd13d8694e8d8fe85574ac075,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: MainMenuController, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 8234861005737994333, guid: 0a68be1bd13d8694e8d8fe85574ac075,
         type: 3}
       propertyPath: m_text
-      value: 
+      value: "\u0410\u0432\u0442\u043E\u0440\u0438"
       objectReference: {fileID: 0}
     - target: {fileID: 8333314972647556651, guid: 0a68be1bd13d8694e8d8fe85574ac075,
         type: 3}
@@ -3080,7 +3095,7 @@ PrefabInstance:
     - target: {fileID: 8348427602791365427, guid: 0a68be1bd13d8694e8d8fe85574ac075,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9198041564950110052, guid: 0a68be1bd13d8694e8d8fe85574ac075,
         type: 3}
@@ -3144,6 +3159,10 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 0}
     - targetCorrespondingSourceObject: {fileID: 353319853915849886, guid: 0a68be1bd13d8694e8d8fe85574ac075,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
+    - targetCorrespondingSourceObject: {fileID: 8348478992732101241, guid: 0a68be1bd13d8694e8d8fe85574ac075,
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 0}

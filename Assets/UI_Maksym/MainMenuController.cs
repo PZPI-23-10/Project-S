@@ -31,6 +31,12 @@ public class MainMenuController : MonoBehaviour
         // яка вже сама завантажить світ (YavWorld).
         SceneManager.LoadScene("Core");
     }
+    public void Credits()
+    {
+        // Завантажуємо Core, бо саме в Core знаходиться гравець, камера і логіка гри,
+        // яка вже сама завантажить світ (YavWorld).
+        SceneManager.LoadScene("Credits");
+    }
 
     // Для кнопки "Нова гра"
     public void NewGame()
