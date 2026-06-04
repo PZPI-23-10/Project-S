@@ -28,6 +28,8 @@ namespace Project_S.Runtime.Gameplay.Enemies
         [SerializeField] private float _retreatDistanceThreshold = 0.35f;
         [SerializeField] private float _hoverPointRefreshTime = 5f;
         [SerializeField] private float _preAttackDelay = 1.2f;
+        [SerializeField] private Vector3 _homeCenter;
+        [SerializeField] private float _homeRadius = 24f;
 
         private FlyingEnemyState _state = FlyingEnemyState.Hover;
         private bool _hasAggro;
@@ -79,7 +81,10 @@ namespace Project_S.Runtime.Gameplay.Enemies
             EnsureTarget();
 
             if (_target == null)
+            {
+                TickAmbientHover();
                 return;
+            }
 
             Vector3 toTarget = _target.position - transform.position;
             Vector3 flatToTarget = toTarget;
@@ -87,10 +92,14 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
             float flatDistance = flatToTarget.magnitude;
             UpdateAggro(flatDistance);
-            RotateToward(flatToTarget);
 
             if (!_hasAggro)
+            {
+                TickAmbientHover();
                 return;
+            }
+
+            RotateToward(flatToTarget);
 
             TickState(flatDistance);
         }
@@ -109,6 +118,8 @@ namespace Project_S.Runtime.Gameplay.Enemies
             _hoverRadius = Mathf.Max(0f, hoverRadius);
             _diveStopHeight = Mathf.Max(0f, diveStopHeight);
             _retreatDistanceThreshold = Mathf.Max(0.01f, retreatDistanceThreshold);
+            _homeCenter = transform.position;
+            _homeRadius = Mathf.Max(0.5f, hoverRadius);
             PickNewHoverOffset();
 
             if (_health == null)
@@ -125,6 +136,13 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
             if (_meleeAttack != null)
                 _meleeAttack.Configure(config);
+        }
+
+        public void ConfigureHomeArea(Vector3 center, float radius)
+        {
+            _homeCenter = center;
+            _homeRadius = Mathf.Max(0.5f, radius);
+            PickNewHoverOffset();
         }
 
         private void EnsureTarget()
@@ -145,6 +163,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
                 {
                     _hasAggro = false;
                     _state = FlyingEnemyState.Hover;
+                    PickNewHoverOffset();
                 }
 
                 return;
@@ -221,6 +240,19 @@ namespace Project_S.Runtime.Gameplay.Enemies
             }
         }
 
+        private void TickAmbientHover()
+        {
+            Vector3 hoverPosition = GetHomeHoverPosition();
+            Vector3 toHover = hoverPosition - transform.position;
+            Vector3 flatToHover = toHover;
+            flatToHover.y = 0f;
+            RotateToward(flatToHover);
+            MoveToward(hoverPosition);
+
+            if (Time.time >= _nextHoverPointTime || Vector3.Distance(transform.position, hoverPosition) <= _retreatDistanceThreshold)
+                PickNewHoverOffset();
+        }
+
         private Vector3 GetHoverPosition()
         {
             if (_hoverOffset.sqrMagnitude <= 0.0001f)
@@ -229,13 +261,22 @@ namespace Project_S.Runtime.Gameplay.Enemies
             return _target.position + _hoverOffset;
         }
 
+        private Vector3 GetHomeHoverPosition()
+        {
+            if (_hoverOffset.sqrMagnitude <= 0.0001f)
+                PickNewHoverOffset();
+
+            return _homeCenter + _hoverOffset;
+        }
+
         private void PickNewHoverOffset()
         {
             Vector2 randomCircle = Random.insideUnitCircle;
             if (randomCircle.sqrMagnitude <= 0.001f)
                 randomCircle = Vector2.right;
 
-            Vector2 horizontal = randomCircle.normalized * Random.Range(_hoverRadius * 0.8f, _hoverRadius * 1.35f);
+            float radius = _hasAggro ? _hoverRadius : _homeRadius;
+            Vector2 horizontal = randomCircle.normalized * Random.Range(radius * 0.35f, radius);
             float height = Random.Range(_hoverHeight * 0.75f, _hoverHeight * 1.35f);
             _hoverOffset = new Vector3(horizontal.x, height, horizontal.y);
             _nextHoverPointTime = Time.time + _hoverPointRefreshTime;

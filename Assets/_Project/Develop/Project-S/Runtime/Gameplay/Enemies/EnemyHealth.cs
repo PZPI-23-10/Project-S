@@ -122,11 +122,18 @@ namespace Project_S.Runtime.Gameplay.Enemies
         private void CancelPendingAttacks()
         {
             var meleeAttack = GetComponent<EnemyMeleeAttack>();
-            if (meleeAttack == null)
-                return;
+            if (meleeAttack != null)
+            {
+                meleeAttack.CancelAttack();
+                meleeAttack.enabled = false;
+            }
 
-            meleeAttack.CancelAttack();
-            meleeAttack.enabled = false;
+            var rangedAttack = GetComponent<EnemyRangedAttack>();
+            if (rangedAttack != null)
+            {
+                rangedAttack.CancelAttack();
+                rangedAttack.enabled = false;
+            }
         }
 
         private string EnemyName()

@@ -17,6 +17,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
         [SerializeField] private EnemyController _controller;
         [SerializeField] private EnemyMeleeAttack _meleeAttack;
+        [SerializeField] private EnemyRangedAttack _rangedAttack;
         [SerializeField] private EnemyHealth _health;
         [SerializeField] private Transform _visualRoot;
         [SerializeField] private Animator _animator;
@@ -26,6 +27,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
         [SerializeField] private AnimationClip _hitReactionClip;
         [SerializeField] private AnimationClip[] _hitReactionClips;
         [SerializeField] private AnimationClip _attackClip;
+        [SerializeField] private bool _anchorVisualRootToGround = true;
 
         private readonly HashSet<int> _parameters = new HashSet<int>();
         private PlayableGraph _locomotionGraph;
@@ -60,6 +62,12 @@ namespace Project_S.Runtime.Gameplay.Enemies
                 _meleeAttack.AttackResolved += OnAttackResolved;
             }
 
+            if (_rangedAttack != null)
+            {
+                _rangedAttack.AttackStarted += OnRangedAttackStarted;
+                _rangedAttack.AttackResolved += OnRangedAttackResolved;
+            }
+
             if (_health != null)
             {
                 _health.Damaged += OnDamaged;
@@ -78,6 +86,12 @@ namespace Project_S.Runtime.Gameplay.Enemies
             {
                 _meleeAttack.AttackStarted -= OnAttackStarted;
                 _meleeAttack.AttackResolved -= OnAttackResolved;
+            }
+
+            if (_rangedAttack != null)
+            {
+                _rangedAttack.AttackStarted -= OnRangedAttackStarted;
+                _rangedAttack.AttackResolved -= OnRangedAttackResolved;
             }
 
             if (_health != null)
@@ -146,6 +160,31 @@ namespace Project_S.Runtime.Gameplay.Enemies
             _hitReactionClips = hitReactionClips;
         }
 
+        public void ConfigureRangedAttack(EnemyRangedAttack rangedAttack, AnimationClip attackClip = null)
+        {
+            if (isActiveAndEnabled && _rangedAttack != null)
+            {
+                _rangedAttack.AttackStarted -= OnRangedAttackStarted;
+                _rangedAttack.AttackResolved -= OnRangedAttackResolved;
+            }
+
+            _rangedAttack = rangedAttack;
+
+            if (attackClip != null)
+                _attackClip = attackClip;
+
+            if (isActiveAndEnabled && _rangedAttack != null)
+            {
+                _rangedAttack.AttackStarted += OnRangedAttackStarted;
+                _rangedAttack.AttackResolved += OnRangedAttackResolved;
+            }
+        }
+
+        public void ConfigureGroundAnchoring(bool anchorVisualRootToGround)
+        {
+            _anchorVisualRootToGround = anchorVisualRootToGround;
+        }
+
         private void ResolveReferences()
         {
             if (_controller == null)
@@ -153,6 +192,9 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
             if (_meleeAttack == null)
                 _meleeAttack = GetComponent<EnemyMeleeAttack>();
+
+            if (_rangedAttack == null)
+                _rangedAttack = GetComponent<EnemyRangedAttack>();
 
             if (_health == null)
                 _health = GetComponent<EnemyHealth>();
@@ -252,8 +294,9 @@ namespace Project_S.Runtime.Gameplay.Enemies
             var clip = attack != null && attack.CurrentAttackClip != null
                 ? attack.CurrentAttackClip
                 : _attackClip;
+            float animationSpeed = attack != null ? attack.CurrentAttackAnimationSpeed : 1f;
             _swingDuration = clip != null && clip.length > 0.01f
-                ? clip.length
+                ? clip.length / animationSpeed
                 : (attack != null ? attack.WindupDuration : 0.45f);
 
             if (attack != null)
@@ -261,7 +304,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
             StopLocomotionPlayable();
 
-            if (PlayAttackClip(clip))
+            if (PlayAttackClip(clip, animationSpeed))
                 _swingRemaining = 0f;
             else
                 _swingRemaining = _swingDuration;
@@ -270,6 +313,38 @@ namespace Project_S.Runtime.Gameplay.Enemies
         }
 
         private void OnAttackResolved(EnemyMeleeAttack attack)
+        {
+            if (_visualRoot != null && _swingRemaining <= 0f)
+                _visualRoot.localRotation = _baseLocalRotation;
+        }
+
+        private void OnRangedAttackStarted(EnemyRangedAttack attack)
+        {
+            if (_hitReactionGraph.IsValid())
+                return;
+
+            var clip = attack != null && attack.CurrentAttackClip != null
+                ? attack.CurrentAttackClip
+                : _attackClip;
+            float animationSpeed = attack != null ? attack.CurrentAttackAnimationSpeed : 1f;
+            _swingDuration = clip != null && clip.length > 0.01f
+                ? clip.length / animationSpeed
+                : (attack != null ? attack.WindupDuration : 0.55f);
+
+            if (attack != null && clip != null)
+                attack.OverrideCurrentWindupFromClip(clip.length);
+
+            StopLocomotionPlayable();
+
+            if (PlayAttackClip(clip, animationSpeed))
+                _swingRemaining = 0f;
+            else
+                _swingRemaining = _swingDuration;
+
+            SetTrigger(AttackHash);
+        }
+
+        private void OnRangedAttackResolved(EnemyRangedAttack attack)
         {
             if (_visualRoot != null && _swingRemaining <= 0f)
                 _visualRoot.localRotation = _baseLocalRotation;
@@ -316,7 +391,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
                 _hitReactionRemaining = duration;
         }
 
-        private bool PlayAttackClip(AnimationClip clip)
+        private bool PlayAttackClip(AnimationClip clip, float speed)
         {
             if (_animator == null || clip == null)
                 return false;
@@ -330,12 +405,13 @@ namespace Project_S.Runtime.Gameplay.Enemies
             var clipPlayable = AnimationClipPlayable.Create(_attackGraph, clip);
             clipPlayable.SetApplyFootIK(false);
             clipPlayable.SetApplyPlayableIK(false);
+            clipPlayable.SetSpeed(Mathf.Max(0.01f, speed));
             clipPlayable.SetDuration(clip.length);
 
             var output = AnimationPlayableOutput.Create(_attackGraph, "Attack", _animator);
             output.SetSourcePlayable(clipPlayable);
 
-            _attackClipRemaining = clip.length;
+            _attackClipRemaining = clip.length / Mathf.Max(0.01f, speed);
             _attackGraph.Play();
             _attackGraph.Evaluate(0f);
             return true;
@@ -464,19 +540,15 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
         private void KeepAliveVisualRootAnchored()
         {
-            if (_visualRoot == null)
+            if (_visualRoot == null || !_anchorVisualRootToGround)
                 return;
 
-            var localPosition = _visualRoot.localPosition;
-            localPosition.x = _baseLocalPosition.x;
-            localPosition.z = _baseLocalPosition.z;
-            _visualRoot.localPosition = localPosition;
-            AnchorVisualRootToGround(transform.position.y);
+            _visualRoot.localPosition = _baseLocalPosition;
         }
 
         private void KeepDeadVisualRootAnchored()
         {
-            if (!_isDead || _visualRoot == null)
+            if (!_isDead || _visualRoot == null || !_anchorVisualRootToGround)
                 return;
 
             var localPosition = _visualRoot.localPosition;
