@@ -98,6 +98,11 @@ namespace Project_S.Runtime.Services.Save
             if (_isApplying || _storedSave == null || _playerStorage == null)
                 return;
 
+            // Не зберігаємо гру, якщо ми знаходимось в головному меню або поза ігровим рівнем
+            Scene activeScene = SceneManager.GetActiveScene();
+            if (!activeScene.IsValid() || !IsLevelScene(activeScene.name))
+                return;
+
             _registry.EnsureLoaded();
 
             GameSaveData data = _storedSave.Value ?? new GameSaveData();
