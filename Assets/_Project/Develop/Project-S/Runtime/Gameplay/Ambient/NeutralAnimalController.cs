@@ -108,6 +108,14 @@ namespace Project_S.Runtime.Gameplay.Ambient
             ConfigureMover(_walkSpeed, 0.15f);
         }
 
+        public void ConfigureSpawnContext(Transform player, Vector3 herdCenter, float herdRadius)
+        {
+            _player = player;
+            _herdCenter = herdCenter;
+            _herdRadius = Mathf.Max(0.5f, herdRadius);
+            ResolveReferences();
+        }
+
         public static Vector3 SampleGround(Vector3 position)
         {
             return GroundPositionSampler.SampleGroundOrNavMesh(position);

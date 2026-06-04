@@ -16,6 +16,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
         private const string RunnerName = "[MVP] Animal Herd Bootstrapper";
         private const string AmbientRootName = "[MVP] Ambient";
         private const string HerdRootName = "[MVP] Animal Herds";
+        private static readonly bool AutoSpawnEnabled = false;
 
         private const float MinSpawnDistance = 20f;
         private const float MaxSpawnDistance = 40f;
@@ -31,6 +32,9 @@ namespace Project_S.Runtime.Gameplay.Ambient
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
         {
+            if (!AutoSpawnEnabled)
+                return;
+
             if (GameObject.Find(RunnerName) != null)
                 return;
 
@@ -267,7 +271,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
                     10f,
                     0.8f,
                     2.2f,
-                    "Лошадь",
+                    "Horse",
                     new Vector3(0f, 2.45f, 0f),
                     AnimalCorpseDefinition.Horse());
             }
@@ -285,7 +289,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
                     12f,
                     0.55f,
                     1.7f,
-                    "Олень",
+                    "Deer",
                     new Vector3(0f, 1.9f, 0f),
                     AnimalCorpseDefinition.Deer());
             }
@@ -303,7 +307,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
                     5f,
                     0.22f,
                     0.55f,
-                    "Курица",
+                    "Chicken",
                     new Vector3(0f, 0.8f, 0f),
                     AnimalCorpseDefinition.Chicken());
             }
@@ -347,7 +351,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
                 9f,
                 0.55f,
                 1.15f,
-                "Кабан",
+                "Boar",
                 new Vector3(0f, 1.35f, 0f),
                 AnimalCorpseDefinition.Boar()));
             var config = ScriptableObject.CreateInstance<EnemyConfig>();
@@ -386,7 +390,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
                 4.8f,
                 config.AttackRange);
             CreateCorpseHarvest(boar, health, AnimalCorpseDefinition.Boar(), visual.transform, scriptedDeathPose: false, 0.55f, 1.15f);
-            worldHealthBar.Configure("Кабан", new Vector3(0f, 1.35f, 0f));
+            worldHealthBar.Configure("Boar", new Vector3(0f, 1.35f, 0f));
         }
 
         private static void CreateCorpseHarvest(

@@ -1,7 +1,9 @@
 using System.Collections;
 using Project_S.Runtime.Gameplay.Character.Player;
 using Project_S.Runtime.Gameplay.Diagnostics;
+using Project_S.Runtime.Gameplay.Navigation;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 
 namespace Project_S.Runtime.Gameplay.Ambient
@@ -12,6 +14,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
         private const string AmbientRootName = "[MVP] Ambient";
         private const string FlockRootName = "[MVP] Sparrow Flocks";
         private const string SparrowPrefabPath = "Ambient/Sparrow/Sparrow";
+        private static readonly bool AutoSpawnEnabled = false;
 
         private const int FlockCount = 2;
         private const int BirdsPerFlock = 5;
@@ -27,6 +30,9 @@ namespace Project_S.Runtime.Gameplay.Ambient
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
         {
+            if (!AutoSpawnEnabled)
+                return;
+
             if (GameObject.Find(RunnerName) != null)
                 return;
 
@@ -109,6 +115,16 @@ namespace Project_S.Runtime.Gameplay.Ambient
                 animator.updateMode = AnimatorUpdateMode.Normal;
                 animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
             }
+
+            if (bird.GetComponent<NavMeshAgent>() == null)
+                bird.AddComponent<NavMeshAgent>();
+
+            var mover = bird.GetComponent<GroundNavMeshMover>();
+            if (mover == null)
+                mover = bird.AddComponent<GroundNavMeshMover>();
+
+            mover.Configure(GroundMoveSpeed, 0.12f, 0.15f, 0.35f, 0f, Mathf.Max(8f, GroundMoveSpeed * 4f), 540f, 0.25f, 70);
+            mover.TryWarpToNearestNavMesh(Mathf.Max(2f, FlockRadius));
 
             var controller = bird.AddComponent<SparrowAmbientController>();
             controller.Configure(

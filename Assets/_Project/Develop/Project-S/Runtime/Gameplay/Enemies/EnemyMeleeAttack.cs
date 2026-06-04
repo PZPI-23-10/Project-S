@@ -16,7 +16,9 @@ namespace Project_S.Runtime.Gameplay.Enemies
         private Transform _pendingTarget;
         private float _cooldownRemaining;
         private float _windupRemaining;
+        private float _additionalDamageIntervalRemaining;
         private bool _isWindingUp;
+        private int _additionalDamageApplicationsRemaining;
         private int _nextAttackProfileIndex;
         private EnemyAttackProfile _currentAttackProfile;
 
@@ -26,6 +28,9 @@ namespace Project_S.Runtime.Gameplay.Enemies
         public EnemyAttackProfile CurrentAttackProfile => _currentAttackProfile;
         public string CurrentAttackId => _currentAttackProfile != null ? _currentAttackProfile.Id : string.Empty;
         public AnimationClip CurrentAttackClip => _currentAttackProfile != null ? _currentAttackProfile.Clip : null;
+        public float CurrentAttackAnimationSpeed => _currentAttackProfile != null && _currentAttackProfile.AnimationSpeed > 0f
+            ? Mathf.Max(0.01f, _currentAttackProfile.AnimationSpeed)
+            : 1f;
 
         public event Action<EnemyMeleeAttack> AttackStarted;
         public event Action<EnemyMeleeAttack> AttackResolved;
@@ -68,7 +73,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
             if (!_isWindingUp)
                 return;
 
-            float duration = Mathf.Max(0f, clipLength);
+            float duration = Mathf.Max(0f, clipLength) / CurrentAttackAnimationSpeed;
             if (_currentAttackProfile != null)
             {
                 if (_currentAttackProfile.UseAttackClipDamageMoment)
@@ -86,7 +91,9 @@ namespace Project_S.Runtime.Gameplay.Enemies
         {
             _pendingTarget = null;
             _windupRemaining = 0f;
+            _additionalDamageIntervalRemaining = 0f;
             _isWindingUp = false;
+            _additionalDamageApplicationsRemaining = 0;
             _currentAttackProfile = null;
         }
 
@@ -114,6 +121,8 @@ namespace Project_S.Runtime.Gameplay.Enemies
             if (_cooldownRemaining > 0f)
                 _cooldownRemaining = Mathf.Max(0f, _cooldownRemaining - deltaTime);
 
+            TickAdditionalDamageApplications(deltaTime);
+
             if (!_isWindingUp)
                 return;
 
@@ -128,12 +137,47 @@ namespace Project_S.Runtime.Gameplay.Enemies
             _cooldownRemaining = CurrentAttackCooldown();
             AttackResolved?.Invoke(this);
 
-            if (_config == null || _pendingTarget == null)
+            if (TryApplyDamage())
+            {
+                _additionalDamageApplicationsRemaining = Mathf.Max(0, CurrentDamageApplicationCount() - 1);
+                _additionalDamageIntervalRemaining = CurrentDamageApplicationInterval();
+            }
+            else
+            {
+                _additionalDamageApplicationsRemaining = 0;
+                _additionalDamageIntervalRemaining = 0f;
+            }
+        }
+
+        private void TickAdditionalDamageApplications(float deltaTime)
+        {
+            if (_additionalDamageApplicationsRemaining <= 0)
                 return;
+
+            _additionalDamageIntervalRemaining -= deltaTime;
+            if (_additionalDamageIntervalRemaining > 0f)
+                return;
+
+            if (TryApplyDamage())
+            {
+                _additionalDamageApplicationsRemaining--;
+                _additionalDamageIntervalRemaining = CurrentDamageApplicationInterval();
+            }
+            else
+            {
+                _additionalDamageApplicationsRemaining = 0;
+                _additionalDamageIntervalRemaining = 0f;
+            }
+        }
+
+        private bool TryApplyDamage()
+        {
+            if (_config == null || _pendingTarget == null)
+                return false;
 
             var origin = _attackOrigin != null ? _attackOrigin : transform;
             if (TryDamagePendingTarget(origin))
-                return;
+                return true;
 
             Vector3 center = origin.position + origin.forward * Mathf.Max(0f, CurrentAttackRange() * 0.5f);
             float radius = Mathf.Max(0.01f, CurrentAttackRadius());
@@ -154,8 +198,10 @@ namespace Project_S.Runtime.Gameplay.Enemies
                 var request = CreateDamageRequest();
 
                 receiver.ReceiveDamage(request);
-                return;
+                return true;
             }
+
+            return false;
         }
 
         private bool TryDamagePendingTarget(Transform origin)
@@ -258,6 +304,22 @@ namespace Project_S.Runtime.Gameplay.Enemies
 
             return _config != null ? Mathf.Max(0f, _config.AttackRange) : 1.7f;
         }
+
+        private int CurrentDamageApplicationCount()
+        {
+            if (_currentAttackProfile != null)
+                return Mathf.Max(1, _currentAttackProfile.DamageApplicationCount);
+
+            return 1;
+        }
+
+        private float CurrentDamageApplicationInterval()
+        {
+            if (_currentAttackProfile != null)
+                return Mathf.Max(0.01f, _currentAttackProfile.DamageApplicationInterval);
+
+            return 0.12f;
+        }
     }
 
     public enum AttackSelectionMode
@@ -272,6 +334,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
         public bool Enabled = true;
         public string Id = "attack";
         public AnimationClip Clip;
+        [Min(0.01f)] public float AnimationSpeed = 1f;
         [Min(0f)] public float AttackCooldown = 2f;
         [Min(0f)] public float AttackWindup = 0.45f;
         public bool UseAttackClipDamageMoment = true;
@@ -281,5 +344,7 @@ namespace Project_S.Runtime.Gameplay.Enemies
         [Min(0f)] public float HealthDamage = 10f;
         [Min(0f)] public float PoiseDamage = 8f;
         public DamageType DamageType = DamageType.Blunt;
+        [Min(1)] public int DamageApplicationCount = 1;
+        [Min(0.01f)] public float DamageApplicationInterval = 0.12f;
     }
 }
