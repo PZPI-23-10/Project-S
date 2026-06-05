@@ -5,12 +5,13 @@ using Project_S.Runtime.Gameplay.Character.Input;
 using Project_S.Runtime.Gameplay.Character.Stats;
 using Project_S.Runtime.Gameplay.Character.Inventory;
 using Project_S.Runtime.Gameplay.Enemies;
+using Project_S.Runtime.Gameplay.Respawn;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Character.Movement
 {
     [RequireComponent(typeof(KinematicCharacterMotor))]
-    public class CharacterMotor : MonoBehaviour, ICharacterController
+    public class CharacterMotor : MonoBehaviour, ICharacterController, IPlayerRespawnResettable
     {
         [SerializeField] private MovementConfig _config;
         [SerializeField] private Transform _viewRoot;
@@ -58,6 +59,33 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
 
         public bool IsDodging => Time.time < _dodgeUntil;
         public bool IsGrounded => _motor != null && _motor.GroundingStatus.IsStableOnGround;
+
+        public void ResetForRespawn()
+        {
+            _moveInput = Vector2.zero;
+            _moveInputVector = Vector3.zero;
+            _dodgeVelocity = Vector3.zero;
+            _sprintHeld = false;
+            _crouchHeld = false;
+            _jumpRequested = false;
+            _jumpConsumed = false;
+            _dodgeUntil = 0f;
+            _dodgeCooldownUntil = 0f;
+            _attackDashUntil = 0f;
+            _attackDashSpeed = 0f;
+            _attackDashTurnSpeed = 0f;
+            _nextStepTime = 0f;
+            _wasGrounded = true;
+
+            _yaw = transform.eulerAngles.y;
+            _pitch = 0f;
+            _attackDashCurrentYaw = _yaw;
+
+            if (_motor != null)
+                _motor.BaseVelocity = Vector3.zero;
+
+            RestoreStandingPose();
+        }
 
         private void Awake()
         {
@@ -433,6 +461,22 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
         private float GetCrouchCapsuleYOffset(float crouchHeight)
         {
             return _standingCapsuleYOffset - ((_standingCapsuleHeight - crouchHeight) * 0.5f);
+        }
+
+        private void RestoreStandingPose()
+        {
+            if (_motor != null && _motor.Capsule != null && _standingCapsuleHeight > 0f)
+            {
+                _motor.SetCapsuleDimensions(_standingCapsuleRadius, _standingCapsuleHeight, _standingCapsuleYOffset);
+            }
+
+            _isCrouching = false;
+
+            if (_viewRoot != null)
+            {
+                _viewRoot.localPosition = _standingViewLocalPosition;
+                _viewRoot.localRotation = Quaternion.identity;
+            }
         }
 
         private void ValidateRequiredReferences()

@@ -1,9 +1,10 @@
 using System.Collections;
+using Project_S.Runtime.Gameplay.Respawn;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Character.Camera
 {
-    public class CameraJuice : MonoBehaviour
+    public class CameraJuice : MonoBehaviour, IPlayerRespawnResettable
     {
         [Header("Зв'язки")]
         [SerializeField] private Transform _weaponRoot;
@@ -97,6 +98,27 @@ namespace Project_S.Runtime.Gameplay.Character.Camera
             _targetRoll = 0f;
             _targetHeightOffset = 0f;
             _targetWeaponPos = _originalWeaponPos;
+        }
+
+        public void ResetForRespawn()
+        {
+            if (_shakeCoroutine != null)
+            {
+                StopCoroutine(_shakeCoroutine);
+                _shakeCoroutine = null;
+            }
+
+            _targetRoll = 0f;
+            _currentRoll = 0f;
+            _targetHeightOffset = 0f;
+            _currentHeightOffset = 0f;
+            _targetWeaponPos = _originalWeaponPos;
+
+            transform.localPosition = _originalCamPos;
+            transform.localRotation = _originalCamRot;
+
+            if (_weaponRoot != null)
+                _weaponRoot.localPosition = _originalWeaponPos;
         }
 
         private IEnumerator ImpactShakeRoutine(float duration, float magnitude)

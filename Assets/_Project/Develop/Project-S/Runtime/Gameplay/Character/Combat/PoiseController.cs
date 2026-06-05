@@ -2,11 +2,12 @@ using Project_S.Runtime.Gameplay.Character.Camera;
 using Project_S.Runtime.Gameplay.Character.Input;
 using Project_S.Runtime.Gameplay.Character.Stats;
 using Project_S.Runtime.Gameplay.HUD;
+using Project_S.Runtime.Gameplay.Respawn;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Character.Combat
 {
-    public class PoiseController : MonoBehaviour
+    public class PoiseController : MonoBehaviour, IPlayerRespawnResettable
     {
         [Header("Зв'язки")]
         [SerializeField] private CharacterStats _stats;
@@ -38,6 +39,31 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
             Vector3 knockback = _knockbackVector;
             _knockbackVector = Vector3.zero;
             return knockback;
+        }
+
+        public void ResetForRespawn()
+        {
+            _isQTEActive = false;
+            _currentQteButton = KeyCode.None;
+            _recoveryBlockedUntil = 0f;
+            _knockbackVector = Vector3.zero;
+
+            float max = 0f;
+            if (_stats != null)
+            {
+                max = _stats.GetMax(StatType.Poise);
+                if (max <= 0f)
+                    max = _stats.Get(StatType.MaxPoise);
+
+                if (max > 0f)
+                    _stats.Set(StatType.Poise, max);
+            }
+
+            if (_cameraJuice != null)
+                _cameraJuice.ResetForRespawn();
+
+            if (_qteUI != null)
+                _qteUI.UpdateUI(_stats != null ? _stats.Get(StatType.Poise) : 0f, max, false, KeyCode.None);
         }
 
         private void Start()

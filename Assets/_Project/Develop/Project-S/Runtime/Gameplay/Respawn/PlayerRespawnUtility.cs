@@ -22,6 +22,19 @@ namespace Project_S.Runtime.Gameplay.Respawn
             player.transform.SetPositionAndRotation(position, rotation);
         }
 
+        public static void ResetPlayerState(Component player)
+        {
+            if (player == null)
+                return;
+
+            MonoBehaviour[] behaviours = player.GetComponentsInChildren<MonoBehaviour>(true);
+            foreach (MonoBehaviour behaviour in behaviours)
+            {
+                if (behaviour is IPlayerRespawnResettable resettable)
+                    resettable.ResetForRespawn();
+            }
+        }
+
         public static void RestoreHealthToMax(CharacterStats stats)
         {
             if (stats == null)

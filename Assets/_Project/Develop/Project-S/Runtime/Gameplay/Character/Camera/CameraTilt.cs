@@ -1,7 +1,8 @@
 using UnityEngine;
 using Project_S.Runtime.Gameplay.Character.Input;
+using Project_S.Runtime.Gameplay.Respawn;
 
-public class CameraTilt : MonoBehaviour
+public class CameraTilt : MonoBehaviour, IPlayerRespawnResettable
 {
     [Header("Налаштування")]
     [SerializeField] private Transform _cameraTransform;
@@ -12,6 +13,15 @@ public class CameraTilt : MonoBehaviour
     private bool _isEnabled = true; 
 
     public void SetEnabled(bool enabled) => _isEnabled = enabled;
+
+    public void ResetForRespawn()
+    {
+        _currentTilt = 0f;
+        _isEnabled = true;
+
+        if (_cameraTransform != null)
+            _cameraTransform.localRotation = Quaternion.identity;
+    }
 
     public void Tick(PlayerInputSnapshot input)
     {

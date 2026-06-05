@@ -138,6 +138,7 @@ namespace Project_S.Runtime.Gameplay.Character.Phylactery
                 PlayerRespawnUtility.RestoreStatFraction(_stats, StatType.Stamina, StatType.MaxStamina, GetReviveStaminaFraction());
 
                 RespawnAtNearestPoint();
+                PlayerRespawnUtility.ResetPlayerState(this);
 
                 _isDead = false;
                 _hasDeathPosition = false;

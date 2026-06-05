@@ -1,10 +1,11 @@
 using Project_S.Runtime.Gameplay.Character.Combat;
 using Project_S.Runtime.Gameplay.Character.Inventory;
+using Project_S.Runtime.Gameplay.Respawn;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Character.Stats
 {
-    public class StaminaController : MonoBehaviour
+    public class StaminaController : MonoBehaviour, IPlayerRespawnResettable
     {
         [Header("References")]
         [SerializeField] private CharacterStats _stats;
@@ -17,6 +18,11 @@ namespace Project_S.Runtime.Gameplay.Character.Stats
         [SerializeField] private float _blockRegenMultiplier = 0.3f;
 
         private float _regenBlockedUntil;
+
+        public void ResetForRespawn()
+        {
+            _regenBlockedUntil = 0f;
+        }
 
         private void Awake()
         {

@@ -265,6 +265,31 @@ namespace Project_S.Editor.Tests
         }
 
         [Test]
+        public void PlayerDeathController_ResetsTransientPlayerStateOnRespawn()
+        {
+            var player = CreatePlayer(out _, out _, out var stats, out _, out _);
+            var poise = player.gameObject.AddComponent<PoiseController>();
+            SetPrivateField(poise, "_stats", stats);
+            var block = player.gameObject.AddComponent<BlockController>();
+            block.StartBlock();
+            poise.ApplyPoiseDamage(40f, new Vector3(-5f, 0f, 0f));
+            Assert.That(poise.IsBroken, Is.True);
+            Assert.That(block.IsBlocking, Is.True);
+
+            var respawn = CreateRespawnPoint("Respawn", new Vector3(2f, 0f, 0f));
+            var controller = CreateDeathController(player, stats);
+            PrepareDeadPlayer(controller, player.transform.position);
+            stats.Set(StatType.Health, 0f);
+
+            controller.OnRespawnButtonClicked();
+
+            Assert.That(player.transform.position, Is.EqualTo(respawn.Position));
+            Assert.That(poise.IsBroken, Is.False);
+            Assert.That(stats.GetRaw(StatType.Poise), Is.EqualTo(30f).Within(0.001f));
+            Assert.That(block.IsBlocking, Is.False);
+        }
+
+        [Test]
         public void PlayerDeathController_UsesFallbackWhenNoRespawnPointExists()
         {
             var player = CreatePlayer(out _, out _, out var stats, out _, out _);

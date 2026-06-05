@@ -3,6 +3,7 @@ using UnityEngine;
 using Project_S.Runtime.Gameplay.Character.Input;
 using Project_S.Runtime.Gameplay.Character.Stats;
 using Project_S.Runtime.Gameplay.Character.Camera;
+using Project_S.Runtime.Gameplay.Respawn;
 
 namespace Project_S.Runtime.Gameplay.Character.Combat
 {
@@ -21,7 +22,7 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         Center, Left, Right
     }
 
-    public class CombatController : MonoBehaviour
+    public class CombatController : MonoBehaviour, IPlayerRespawnResettable
     {
         [Header("Зв'язки")]
         [SerializeField] private StaminaController _stamina;
@@ -81,6 +82,61 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         private void Start()
         {
             _poiseController = GetComponent<PoiseController>();
+        }
+
+        public void ResetForRespawn()
+        {
+            if (_drawWeaponCoroutine != null)
+            {
+                StopCoroutine(_drawWeaponCoroutine);
+                _drawWeaponCoroutine = null;
+            }
+
+            if (_hitStopCoroutine != null)
+            {
+                StopCoroutine(_hitStopCoroutine);
+                _hitStopCoroutine = null;
+            }
+
+            CancelInvoke(nameof(FailsafeReset));
+            CancelInvoke(nameof(ForceResetToIdle));
+            CancelInvoke(nameof(RemoveWeaponCoating));
+
+            if (_blockController != null)
+                _blockController.StopBlock();
+
+            if (_currentHitTester != null)
+                _currentHitTester.StopHitDetection();
+
+            RemoveWeaponCoating();
+
+            _isComboWindowOpen = false;
+            _nextAttackBuffered = false;
+            _isTransitioningToNextCombo = false;
+            _comboStep = 0;
+            CurrentState = CombatState.Idle;
+
+            if (_currentWeaponModel != null)
+            {
+                _currentWeaponModel.transform.localPosition = Vector3.zero;
+                _currentWeaponModel.transform.localRotation = Quaternion.identity;
+            }
+
+            if (_currentOffhandModel != null)
+            {
+                _currentOffhandModel.transform.localPosition = Vector3.zero;
+                _currentOffhandModel.transform.localRotation = Quaternion.identity;
+            }
+
+            if (_weaponAnimator != null)
+            {
+                _weaponAnimator.SetInteger("ComboStep", 0);
+                _weaponAnimator.SetBool("IsBlocking", false);
+                _weaponAnimator.SetBool("PhylacteryActive", _isOffhandActive);
+                _weaponAnimator.Update(0f);
+            }
+
+            Time.timeScale = 1f;
         }
 
         // ==========================================

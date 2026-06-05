@@ -1,9 +1,10 @@
 using System.Collections.Generic;
+using Project_S.Runtime.Gameplay.Respawn;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Character.Combat
 {
-    public class BlockController : MonoBehaviour
+    public class BlockController : MonoBehaviour, IPlayerRespawnResettable
     {
         [SerializeField] private CombatController _combatController;
 
@@ -14,6 +15,12 @@ namespace Project_S.Runtime.Gameplay.Character.Combat
         private float _blockStartedAt;
 
         public bool IsBlocking { get; private set; }
+
+        public void ResetForRespawn()
+        {
+            _blockStartedAt = 0f;
+            StopBlock();
+        }
 
         public void StartBlock()
         {
