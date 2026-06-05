@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
+using Project_S.Runtime.Common.Constants;
+using Project_S.Runtime.Services.Save;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Zenject;
 
 namespace Project_S.Runtime.Gameplay.Portals
 {
@@ -10,7 +13,9 @@ namespace Project_S.Runtime.Gameplay.Portals
         private const string RunnerName = "[Project-S] Portal Completion Manager";
 
         private readonly List<BossPortal> _portals = new List<BossPortal>();
+        [SerializeField] private bool _loadCreditsOnCompletion = true;
         private bool _allClosedReported;
+        private bool _endingStarted;
 
         public static event Action AllPortalsClosed;
 
@@ -57,7 +62,6 @@ namespace Project_S.Runtime.Gameplay.Portals
         {
             UnsubscribePortals();
             _portals.Clear();
-            _allClosedReported = false;
 
             for (int i = 0; i < SceneManager.sceneCount; i++)
             {
@@ -74,6 +78,16 @@ namespace Project_S.Runtime.Gameplay.Portals
                 BossPortal portal = _portals[i];
                 if (portal != null)
                     portal.Changed += OnPortalChanged;
+            }
+
+            if (HasOpenPortal())
+            {
+                _allClosedReported = false;
+                _endingStarted = false;
+            }
+            else if (!_endingStarted)
+            {
+                _allClosedReported = false;
             }
 
             CheckCompletion();
@@ -96,7 +110,7 @@ namespace Project_S.Runtime.Gameplay.Portals
 
         private void CheckCompletion()
         {
-            if (_allClosedReported || _portals.Count == 0)
+            if (_endingStarted || _allClosedReported || _portals.Count == 0)
                 return;
 
             int activePortalCount = 0;
@@ -115,8 +129,42 @@ namespace Project_S.Runtime.Gameplay.Portals
                 return;
 
             _allClosedReported = true;
-            Debug.Log("[Portals] All portals are closed. Game ending hook is ready.");
+            StartEnding();
+        }
+
+        private bool HasOpenPortal()
+        {
+            for (int i = 0; i < _portals.Count; i++)
+            {
+                BossPortal portal = _portals[i];
+                if (portal != null && !portal.IsClosed)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private void StartEnding()
+        {
+            if (_endingStarted)
+                return;
+
+            _endingStarted = true;
+            SaveFinalState();
+            Debug.Log("[Portals] All portals are closed. Loading credits.");
             AllPortalsClosed?.Invoke();
+
+            if (_loadCreditsOnCompletion)
+                SceneManager.LoadScene(SceneNames.Credits);
+        }
+
+        private static void SaveFinalState()
+        {
+            if (!ProjectContext.HasInstance)
+                return;
+
+            GameSaveService saveService = ProjectContext.Instance.Container.TryResolve<GameSaveService>();
+            saveService?.SaveNow("AllPortalsClosed");
         }
     }
 }

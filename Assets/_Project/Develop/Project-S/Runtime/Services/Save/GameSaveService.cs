@@ -687,7 +687,7 @@ namespace Project_S.Runtime.Services.Save
                 && sceneName != SceneNames.Boot
                 && sceneName != SceneNames.Core
                 && sceneName != SceneNames.Menu
-                && sceneName != "Credits";
+                && sceneName != SceneNames.Credits;
         }
 
         private static PlayerFacade FindPlayer()

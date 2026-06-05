@@ -11,7 +11,7 @@ namespace Project_S.Runtime.Boot
 
         private void Awake()
         {
-            _sceneLoader.Load(SceneNames.Core);
+            _sceneLoader.Load(SceneNames.Menu);
         }
     }
 }

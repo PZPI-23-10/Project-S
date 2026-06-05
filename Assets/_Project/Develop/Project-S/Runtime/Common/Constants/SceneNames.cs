@@ -5,6 +5,7 @@ namespace Project_S.Runtime.Common.Constants
         public const string Boot = "Boot";
         public const string Core = "Core";
         public const string Menu = "MainMenu";
+        public const string Credits = "Credits";
         public const string YavWorld = "YavWorld";
         public const string Dungeon01 = "Dungeon_01_Scene";
     }

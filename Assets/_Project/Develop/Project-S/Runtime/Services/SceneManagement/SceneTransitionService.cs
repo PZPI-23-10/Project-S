@@ -137,7 +137,8 @@ namespace Project_S.Runtime.Services.SceneManagement
             return !string.IsNullOrWhiteSpace(sceneName)
                 && sceneName != SceneNames.Boot
                 && sceneName != SceneNames.Core
-                && sceneName != SceneNames.Menu;
+                && sceneName != SceneNames.Menu
+                && sceneName != SceneNames.Credits;
         }
 
         private void MovePlayerToSpawn(Scene targetScene, string spawnId)

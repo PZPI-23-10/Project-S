@@ -1,5 +1,6 @@
 using System;
 using Project_S.Runtime.Gameplay.Character.Interaction;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Portals
@@ -98,6 +99,12 @@ namespace Project_S.Runtime.Gameplay.Portals
             _bossDefeated = bossDefeated || closed;
             ApplyStateToScene();
             NotifyChanged();
+        }
+
+        [Button("Debug: Kill Boss And Close Portal")]
+        private void DebugKillBossAndClosePortal()
+        {
+            Close();
         }
 
         private void EnsureReferences()
