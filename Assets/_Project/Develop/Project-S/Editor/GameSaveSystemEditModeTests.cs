@@ -310,6 +310,23 @@ namespace Project_S.Editor.Tests
         }
 
         [Test]
+        public void StaminaController_BlocksRegenerationAfterDirectStaminaDecrease()
+        {
+            var player = CreatePlayer(out _, out _, out var stats, out _, out _);
+            var stamina = player.gameObject.AddComponent<StaminaController>();
+            SetPrivateField(stamina, "_stats", stats);
+            SetPrivateField(stamina, "_regenDelay", 1.25f);
+            InvokePrivate(stamina, "Awake");
+            InvokePrivate(stamina, "OnEnable");
+
+            stats.Set(StatType.Stamina, 40f);
+
+            float blockedUntil = GetPrivateField<float>(stamina, "_regenBlockedUntil");
+            Assert.That(blockedUntil, Is.GreaterThan(Time.time));
+            Assert.That(blockedUntil - Time.time, Is.EqualTo(1.25f).Within(0.05f));
+        }
+
+        [Test]
         public void GameSaveService_SaveWithoutPlayerDoesNotOverwriteExistingPlayerSnapshot()
         {
             Scene scene = SceneManager.GetActiveScene();
@@ -631,6 +648,13 @@ namespace Project_S.Editor.Tests
             var field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null, fieldName);
             field.SetValue(target, value);
+        }
+
+        private static T GetPrivateField<T>(object target, string fieldName)
+        {
+            var field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, fieldName);
+            return (T)field.GetValue(target);
         }
 
         private static void InvokePrivate(object target, string methodName)

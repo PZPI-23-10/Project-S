@@ -14,14 +14,19 @@ namespace Project_S.Runtime.Gameplay.Character.Stats
         [SerializeField] private BuffController _buffs;
 
         [Header("Regeneration")]
+        [Min(0f)]
+        [Tooltip("Seconds after stamina decreases before regeneration can start.")]
         [SerializeField] private float _regenDelay = 0.65f;
         [SerializeField] private float _blockRegenMultiplier = 0.3f;
 
         private float _regenBlockedUntil;
+        private float _lastObservedStamina;
+        private bool _isRegenerating;
 
         public void ResetForRespawn()
         {
             _regenBlockedUntil = 0f;
+            SyncLastObservedStamina();
         }
 
         private void Awake()
@@ -30,6 +35,24 @@ namespace Project_S.Runtime.Gameplay.Character.Stats
             if (_blockController == null) _blockController = GetComponent<BlockController>();
             if (_inventory == null) _inventory = GetComponent<InventoryController>();
             if (_buffs == null) _buffs = GetComponent<BuffController>();
+            SyncLastObservedStamina();
+        }
+
+        private void OnEnable()
+        {
+            if (_stats == null) _stats = GetComponent<CharacterStats>();
+            if (_stats != null)
+            {
+                _stats.Changed -= OnStatChanged;
+                _stats.Changed += OnStatChanged;
+                SyncLastObservedStamina();
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (_stats != null)
+                _stats.Changed -= OnStatChanged;
         }
 
         public bool Has(float amount)
@@ -47,7 +70,7 @@ namespace Project_S.Runtime.Gameplay.Character.Stats
             if (finalAmount > 0f)
                 _stats.Add(StatType.Stamina, -finalAmount);
 
-            _regenBlockedUntil = Time.time + _regenDelay;
+            BlockRegeneration();
             return true;
         }
 
@@ -69,8 +92,23 @@ namespace Project_S.Runtime.Gameplay.Character.Stats
             if (_inventory != null)
                 regenRate *= _inventory.GetWeightPenaltyMultiplier();
 
+            if (regenRate <= 0f)
+                return;
+
             float nextStamina = Mathf.Min(maxStamina, currentStamina + regenRate * Time.deltaTime);
-            _stats.Set(StatType.Stamina, nextStamina);
+            if (nextStamina <= currentStamina)
+                return;
+
+            _isRegenerating = true;
+            try
+            {
+                _stats.Set(StatType.Stamina, nextStamina);
+            }
+            finally
+            {
+                _isRegenerating = false;
+                SyncLastObservedStamina();
+            }
         }
 
         private float GetFinalSpendAmount(float amount)
@@ -82,6 +120,34 @@ namespace Project_S.Runtime.Gameplay.Character.Stats
 
             float multiplier = _buffs != null ? _buffs.StaminaCostMultiplier : 1f;
             return Mathf.Max(0f, amount * multiplier);
+        }
+
+        private void OnStatChanged(StatType type, float value)
+        {
+            if (type != StatType.Stamina)
+                return;
+
+            if (_isRegenerating)
+            {
+                _lastObservedStamina = value;
+                return;
+            }
+
+            if (value < _lastObservedStamina - 0.001f)
+                BlockRegeneration();
+
+            _lastObservedStamina = value;
+        }
+
+        private void BlockRegeneration()
+        {
+            float delay = Mathf.Max(0f, _regenDelay);
+            _regenBlockedUntil = Mathf.Max(_regenBlockedUntil, Time.time + delay);
+        }
+
+        private void SyncLastObservedStamina()
+        {
+            _lastObservedStamina = _stats != null ? _stats.Get(StatType.Stamina) : 0f;
         }
     }
 }
