@@ -55,6 +55,8 @@ namespace Project_S.Runtime.Services.Save
         public float CurrentHealth;
         public bool Depleted;
         public bool Dead;
+        public bool BossDefeated;
+        public bool PortalClosed;
         public string ItemId;
         public int Amount;
         public bool Collected;

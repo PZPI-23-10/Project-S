@@ -10,7 +10,9 @@ using Project_S.Runtime.Gameplay.Character.Stats;
 using Project_S.Runtime.Gameplay.Crafting;
 using Project_S.Runtime.Gameplay.Enemies;
 using Project_S.Runtime.Gameplay.Harvesting;
+using Project_S.Runtime.Gameplay.Portals;
 using Project_S.Runtime.Gameplay.Respawn;
+using Project_S.Runtime.Gameplay.Spawning;
 using Project_S.Runtime.Gameplay.Upgrades;
 using Project_S.Runtime.Services.Save;
 using Project_S.Runtime.Services.SceneManagement;
@@ -388,6 +390,9 @@ namespace Project_S.Editor.Tests
             var enemy = CreateEnemy("Enemy", 30f);
             enemy.RestoreSaveState(8f, false);
 
+            var portal = CreateBossPortal("BossPortal");
+            portal.Close();
+
             var authoredPickup = CreateScenePickup("AuthoredPickup", wood, 2);
             authoredPickup.RestoreSaveState(wood, 2, true);
 
@@ -402,6 +407,7 @@ namespace Project_S.Editor.Tests
             station.RestoreSaveState(0f, null, 0f, 0f, null);
             resource.RestoreSaveState(50f, false);
             enemy.RestoreSaveState(30f, false);
+            portal.RestoreSaveState(false, false);
             authoredPickup.RestoreSaveState(wood, 2, false);
             UnityEngine.Object.DestroyImmediate(pickup.gameObject);
 
@@ -419,6 +425,8 @@ namespace Project_S.Editor.Tests
             Assert.That(station.RemainingCraftSeconds, Is.EqualTo(5f).Within(0.001f));
             Assert.That(resource.IsDepleted, Is.True);
             Assert.That(enemy.CurrentHealth, Is.EqualTo(8f).Within(0.001f));
+            Assert.That(portal.IsBossDefeated, Is.True);
+            Assert.That(portal.IsClosed, Is.True);
             Assert.That(authoredPickup.IsCollected, Is.True);
             Assert.That(authoredPickup.gameObject.activeSelf, Is.False);
 
@@ -427,6 +435,71 @@ namespace Project_S.Editor.Tests
             var restoredItemPickup = restoredPickup.GetComponent<ItemPickup>();
             Assert.That(restoredItemPickup.Item, Is.EqualTo(stone));
             Assert.That(restoredItemPickup.Amount, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void BossPortal_EnablesInteractionAfterBossDeathAndDisablesParticlesWhenClosed()
+        {
+            var root = new GameObject("BossPortal");
+            _objects.Add(root);
+            var collider = root.AddComponent<BoxCollider>();
+            var particleObject = new GameObject("PortalParticles");
+            _objects.Add(particleObject);
+            particleObject.transform.SetParent(root.transform);
+            particleObject.AddComponent<ParticleSystem>();
+            var portal = root.AddComponent<BossPortal>();
+
+            InvokePrivate(portal, "Awake");
+
+            Assert.That(collider.enabled, Is.False);
+            Assert.That(particleObject.activeSelf, Is.True);
+
+            portal.MarkBossDefeated();
+
+            Assert.That(portal.IsBossDefeated, Is.True);
+            Assert.That(collider.enabled, Is.True);
+
+            portal.Close();
+
+            Assert.That(portal.IsClosed, Is.True);
+            Assert.That(collider.enabled, Is.False);
+            Assert.That(particleObject.activeSelf, Is.False);
+        }
+
+        [Test]
+        public void BossSpawnTrigger_MarksLinkedPortalDefeatedAndBlocksRespawn()
+        {
+            var portalObject = new GameObject("BossPortal");
+            _objects.Add(portalObject);
+            portalObject.AddComponent<BoxCollider>();
+            var portal = portalObject.AddComponent<BossPortal>();
+            InvokePrivate(portal, "Awake");
+
+            var spawnerObject = new GameObject("BossSpawner");
+            _objects.Add(spawnerObject);
+            spawnerObject.transform.SetParent(portalObject.transform);
+            spawnerObject.AddComponent<SphereCollider>();
+            var spawner = spawnerObject.AddComponent<BossSpawnTrigger>();
+            InvokePrivate(spawner, "Awake");
+
+            var bossPrefab = CreateEnemy("BossPrefab", 10f).gameObject;
+            SetPrivateField(spawner, "_bossPrefab", bossPrefab);
+
+            spawner.SpawnBossIfNeeded();
+            var spawnedBoss = spawner.CurrentBoss;
+
+            Assert.That(spawnedBoss, Is.Not.Null);
+            Assert.That(portal.IsBossDefeated, Is.False);
+
+            var health = spawnedBoss.GetComponent<EnemyHealth>();
+            health.ReceiveDamage(new DamageRequest(null, 20f, 0f, DamageType.Blunt));
+
+            Assert.That(portal.IsBossDefeated, Is.True);
+            Assert.That(spawner.CurrentBoss, Is.Null);
+
+            spawner.SpawnBossIfNeeded();
+
+            Assert.That(spawner.CurrentBoss, Is.Null);
         }
 
         [Test]
@@ -526,6 +599,16 @@ namespace Project_S.Editor.Tests
             var enemy = obj.AddComponent<EnemyHealth>();
             enemy.Configure(config);
             return enemy;
+        }
+
+        private BossPortal CreateBossPortal(string name)
+        {
+            var obj = new GameObject(name);
+            _objects.Add(obj);
+            obj.AddComponent<BoxCollider>();
+            var portal = obj.AddComponent<BossPortal>();
+            InvokePrivate(portal, "Awake");
+            return portal;
         }
 
         private ItemPickup CreateScenePickup(string name, ItemData item, int amount)

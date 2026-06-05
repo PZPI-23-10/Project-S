@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using Project_S.Runtime.Gameplay.Character.Player;
+using Project_S.Runtime.Gameplay.Enemies;
+using Project_S.Runtime.Gameplay.Portals;
 using UnityEngine;
 
 namespace Project_S.Runtime.Gameplay.Spawning
@@ -11,6 +13,7 @@ namespace Project_S.Runtime.Gameplay.Spawning
         [SerializeField] private GameObject _bossPrefab;
         [SerializeField] private Transform _spawnPoint;
         [SerializeField] private Transform _spawnParent;
+        [SerializeField] private BossPortal _linkedPortal;
         [SerializeField] private bool _useSpawnPointRotation = true;
         [SerializeField] private bool _despawnOnPlayerExit = true;
         [SerializeField] private bool _logDiagnostics;
@@ -18,6 +21,7 @@ namespace Project_S.Runtime.Gameplay.Spawning
         private readonly HashSet<Collider> _playerCollidersInside = new HashSet<Collider>();
         private readonly List<Collider> _playerColliderBuffer = new List<Collider>(16);
         private GameObject _currentBoss;
+        private EnemyHealth _currentBossHealth;
         private Collider _triggerCollider;
         private PlayerFacade _player;
         private bool _playerInsideByPolling;
@@ -25,6 +29,7 @@ namespace Project_S.Runtime.Gameplay.Spawning
 
         public GameObject CurrentBoss => _currentBoss;
         public bool HasBossSpawned => _currentBoss != null;
+        public BossPortal LinkedPortal => ResolveLinkedPortal();
 
         private void Awake()
         {
@@ -56,6 +61,11 @@ namespace Project_S.Runtime.Gameplay.Spawning
             _playerInsideByPolling = false;
         }
 
+        private void OnDestroy()
+        {
+            UnsubscribeCurrentBoss();
+        }
+
         private void OnTriggerEnter(Collider other)
         {
             if (!IsPlayerCollider(other))
@@ -81,6 +91,9 @@ namespace Project_S.Runtime.Gameplay.Spawning
             if (_currentBoss != null)
                 return;
 
+            if (!CanSpawnBoss())
+                return;
+
             if (_bossPrefab == null)
             {
                 if (_logDiagnostics)
@@ -93,6 +106,7 @@ namespace Project_S.Runtime.Gameplay.Spawning
             Quaternion rotation = _useSpawnPointRotation ? point.rotation : Quaternion.identity;
             _currentBoss = Instantiate(_bossPrefab, point.position, rotation, _spawnParent);
             _currentBoss.name = $"{_bossPrefab.name} (Spawned)";
+            SubscribeCurrentBoss();
 
             if (_logDiagnostics)
                 Debug.Log($"[BossSpawn] '{name}' spawned '{_currentBoss.name}' at {point.position}.", this);
@@ -105,6 +119,7 @@ namespace Project_S.Runtime.Gameplay.Spawning
 
             GameObject boss = _currentBoss;
             _currentBoss = null;
+            UnsubscribeCurrentBoss();
 
             if (Application.isPlaying)
                 Destroy(boss);
@@ -118,6 +133,55 @@ namespace Project_S.Runtime.Gameplay.Spawning
         private bool IsPlayerCollider(Collider other)
         {
             return other != null && other.GetComponentInParent<PlayerFacade>() != null;
+        }
+
+        private bool CanSpawnBoss()
+        {
+            BossPortal portal = ResolveLinkedPortal();
+            return portal == null || (!portal.IsBossDefeated && !portal.IsClosed);
+        }
+
+        private BossPortal ResolveLinkedPortal()
+        {
+            if (_linkedPortal == null)
+                _linkedPortal = GetComponentInParent<BossPortal>();
+
+            return _linkedPortal;
+        }
+
+        private void SubscribeCurrentBoss()
+        {
+            UnsubscribeCurrentBoss();
+
+            if (_currentBoss == null)
+                return;
+
+            _currentBossHealth = _currentBoss.GetComponentInChildren<EnemyHealth>();
+            if (_currentBossHealth != null)
+                _currentBossHealth.Died += OnBossDied;
+        }
+
+        private void UnsubscribeCurrentBoss()
+        {
+            if (_currentBossHealth != null)
+                _currentBossHealth.Died -= OnBossDied;
+
+            _currentBossHealth = null;
+        }
+
+        private void OnBossDied(EnemyHealth health)
+        {
+            UnsubscribeCurrentBoss();
+
+            BossPortal portal = ResolveLinkedPortal();
+            if (portal != null)
+            {
+                _currentBoss = null;
+                portal.MarkBossDefeated();
+            }
+
+            if (_logDiagnostics)
+                Debug.Log($"[BossSpawn] '{name}' boss defeated.", this);
         }
 
         private void TickPlayerPresence()

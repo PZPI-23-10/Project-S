@@ -57253,6 +57253,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1612961510}
     m_Modifications:
+    - target: {fileID: 1590597001770662468, guid: 759953a11aee00e489d70dc6c056e232,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2254732455164524452, guid: 759953a11aee00e489d70dc6c056e232,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -57308,9 +57313,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: portal3 (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 4129057478159557921, guid: 759953a11aee00e489d70dc6c056e232,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 2254732455164524452, guid: 759953a11aee00e489d70dc6c056e232,
+        type: 3}
+      insertIndex: 0
+      addedObject: {fileID: 1424571100}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 759953a11aee00e489d70dc6c056e232, type: 3}
 --- !u!4 &563740863 stripped
@@ -137901,6 +137915,100 @@ MonoBehaviour:
   - {fileID: 1013533074}
   - {fileID: 355437165}
   - {fileID: 2113364953}
+--- !u!1001 &1362213416
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 2082340969}
+    m_Modifications:
+    - target: {fileID: 659005955617631674, guid: bb0ea75c001082344a7c68bc83110109,
+        type: 3}
+      propertyPath: m_Name
+      value: GhoulZombieBossSpawner
+      objectReference: {fileID: 0}
+    - target: {fileID: 2823940187707425852, guid: bb0ea75c001082344a7c68bc83110109,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 43.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2823940187707425852, guid: bb0ea75c001082344a7c68bc83110109,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -14.06
+      objectReference: {fileID: 0}
+    - target: {fileID: 2823940187707425852, guid: bb0ea75c001082344a7c68bc83110109,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 44.9
+      objectReference: {fileID: 0}
+    - target: {fileID: 2823940187707425852, guid: bb0ea75c001082344a7c68bc83110109,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2823940187707425852, guid: bb0ea75c001082344a7c68bc83110109,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2823940187707425852, guid: bb0ea75c001082344a7c68bc83110109,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2823940187707425852, guid: bb0ea75c001082344a7c68bc83110109,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2823940187707425852, guid: bb0ea75c001082344a7c68bc83110109,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2823940187707425852, guid: bb0ea75c001082344a7c68bc83110109,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2823940187707425852, guid: bb0ea75c001082344a7c68bc83110109,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2906300718157148375, guid: bb0ea75c001082344a7c68bc83110109,
+        type: 3}
+      propertyPath: m_Radius
+      value: 80
+      objectReference: {fileID: 0}
+    - target: {fileID: 7680001023896619139, guid: bb0ea75c001082344a7c68bc83110109,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -36
+      objectReference: {fileID: 0}
+    - target: {fileID: 7680001023896619139, guid: bb0ea75c001082344a7c68bc83110109,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 14.844
+      objectReference: {fileID: 0}
+    - target: {fileID: 7680001023896619139, guid: bb0ea75c001082344a7c68bc83110109,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -35.78
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: bb0ea75c001082344a7c68bc83110109, type: 3}
+--- !u!4 &1362213417 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2823940187707425852, guid: bb0ea75c001082344a7c68bc83110109,
+    type: 3}
+  m_PrefabInstance: {fileID: 1362213416}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1363480581
 GameObject:
   m_ObjectHideFlags: 3
@@ -144179,6 +144287,100 @@ MonoBehaviour:
     initialized: 0
     min: {x: 0, y: 0, z: 0}
     max: {x: 0, y: 0, z: 0}
+--- !u!1001 &1424571099
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 563740863}
+    m_Modifications:
+    - target: {fileID: 651836189828121817, guid: 914af9742d859214f9abcd8ecc86ed9a,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -12.07
+      objectReference: {fileID: 0}
+    - target: {fileID: 651836189828121817, guid: 914af9742d859214f9abcd8ecc86ed9a,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 2.758
+      objectReference: {fileID: 0}
+    - target: {fileID: 651836189828121817, guid: 914af9742d859214f9abcd8ecc86ed9a,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -18.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 4336141912336065097, guid: 914af9742d859214f9abcd8ecc86ed9a,
+        type: 3}
+      propertyPath: m_Name
+      value: MinotaurBossSpawner
+      objectReference: {fileID: 0}
+    - target: {fileID: 5676317141501529742, guid: 914af9742d859214f9abcd8ecc86ed9a,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -5.3938847
+      objectReference: {fileID: 0}
+    - target: {fileID: 5676317141501529742, guid: 914af9742d859214f9abcd8ecc86ed9a,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -3.331975
+      objectReference: {fileID: 0}
+    - target: {fileID: 5676317141501529742, guid: 914af9742d859214f9abcd8ecc86ed9a,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 26.837751
+      objectReference: {fileID: 0}
+    - target: {fileID: 5676317141501529742, guid: 914af9742d859214f9abcd8ecc86ed9a,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.9295252
+      objectReference: {fileID: 0}
+    - target: {fileID: 5676317141501529742, guid: 914af9742d859214f9abcd8ecc86ed9a,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.0000000037252894
+      objectReference: {fileID: 0}
+    - target: {fileID: 5676317141501529742, guid: 914af9742d859214f9abcd8ecc86ed9a,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.3687585
+      objectReference: {fileID: 0}
+    - target: {fileID: 5676317141501529742, guid: 914af9742d859214f9abcd8ecc86ed9a,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -4.6566118e-10
+      objectReference: {fileID: 0}
+    - target: {fileID: 5676317141501529742, guid: 914af9742d859214f9abcd8ecc86ed9a,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5676317141501529742, guid: 914af9742d859214f9abcd8ecc86ed9a,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5676317141501529742, guid: 914af9742d859214f9abcd8ecc86ed9a,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8593348787409119930, guid: 914af9742d859214f9abcd8ecc86ed9a,
+        type: 3}
+      propertyPath: m_Radius
+      value: 50
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 914af9742d859214f9abcd8ecc86ed9a, type: 3}
+--- !u!4 &1424571100 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5676317141501529742, guid: 914af9742d859214f9abcd8ecc86ed9a,
+    type: 3}
+  m_PrefabInstance: {fileID: 1424571099}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1424629658
 GameObject:
   m_ObjectHideFlags: 3
@@ -148603,6 +148805,120 @@ MonoBehaviour:
   randomSeed: 12345
   alignToNormal: 1
   verticalOffset: 0.02
+--- !u!1001 &1469856325
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1700676374}
+    m_Modifications:
+    - target: {fileID: 1099565710831498022, guid: 006013452ae92724f9d1c3a078845810,
+        type: 3}
+      propertyPath: m_Name
+      value: NightmareBeetleBossSpawner
+      objectReference: {fileID: 0}
+    - target: {fileID: 6886522436676481987, guid: 006013452ae92724f9d1c3a078845810,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.6119232
+      objectReference: {fileID: 0}
+    - target: {fileID: 6886522436676481987, guid: 006013452ae92724f9d1c3a078845810,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -2.0320532
+      objectReference: {fileID: 0}
+    - target: {fileID: 6886522436676481987, guid: 006013452ae92724f9d1c3a078845810,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 21.573444
+      objectReference: {fileID: 0}
+    - target: {fileID: 6886522436676481987, guid: 006013452ae92724f9d1c3a078845810,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: -0.11016838
+      objectReference: {fileID: 0}
+    - target: {fileID: 6886522436676481987, guid: 006013452ae92724f9d1c3a078845810,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.00086489494
+      objectReference: {fileID: 0}
+    - target: {fileID: 6886522436676481987, guid: 006013452ae92724f9d1c3a078845810,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.99388194
+      objectReference: {fileID: 0}
+    - target: {fileID: 6886522436676481987, guid: 006013452ae92724f9d1c3a078845810,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.007802635
+      objectReference: {fileID: 0}
+    - target: {fileID: 6886522436676481987, guid: 006013452ae92724f9d1c3a078845810,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6886522436676481987, guid: 006013452ae92724f9d1c3a078845810,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6886522436676481987, guid: 006013452ae92724f9d1c3a078845810,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7713760134703783741, guid: 006013452ae92724f9d1c3a078845810,
+        type: 3}
+      propertyPath: m_Radius
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 8018511346807818888, guid: 006013452ae92724f9d1c3a078845810,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8018511346807818888, guid: 006013452ae92724f9d1c3a078845810,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.53
+      objectReference: {fileID: 0}
+    - target: {fileID: 8018511346807818888, guid: 006013452ae92724f9d1c3a078845810,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 14.37
+      objectReference: {fileID: 0}
+    - target: {fileID: 8018511346807818888, guid: 006013452ae92724f9d1c3a078845810,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.1605704
+      objectReference: {fileID: 0}
+    - target: {fileID: 8018511346807818888, guid: 006013452ae92724f9d1c3a078845810,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8018511346807818888, guid: 006013452ae92724f9d1c3a078845810,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.98702437
+      objectReference: {fileID: 0}
+    - target: {fileID: 8018511346807818888, guid: 006013452ae92724f9d1c3a078845810,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -161.52
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 006013452ae92724f9d1c3a078845810, type: 3}
+--- !u!4 &1469856326 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6886522436676481987, guid: 006013452ae92724f9d1c3a078845810,
+    type: 3}
+  m_PrefabInstance: {fileID: 1469856325}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1474611152
 GameObject:
   m_ObjectHideFlags: 0
@@ -161812,6 +162128,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1612961510}
+  - component: {fileID: 1612961511}
+  - component: {fileID: 1612961512}
+  - component: {fileID: 1612961513}
   m_Layer: 0
   m_Name: portal3
   m_TagString: Untagged
@@ -161844,6 +162163,60 @@ Transform:
   - {fileID: 563740863}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 4.034, y: 373.385, z: -0.012}
+--- !u!65 &1612961511
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1612961509}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 0
+  serializedVersion: 3
+  m_Size: {x: 5, y: 4, z: 2}
+  m_Center: {x: 0, y: 2, z: 0}
+--- !u!114 &1612961512
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1612961509}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f58d118375f4fe5a0ca7af41ba6e3b4, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _interactionPrompt: Portal
+  _interactionActionText: E - Close
+  _interactionCollider: {fileID: 1612961511}
+  _particleSystems: []
+  _particleRoots: []
+  _disableParticleGameObjects: 1
+  _bossDefeated: 0
+  _closed: 0
+--- !u!114 &1612961513
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1612961509}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7907834d6890e749982ecb398848bb5, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _id: YavWorld.Portal.Minotaur
 --- !u!1 &1614259034
 GameObject:
   m_ObjectHideFlags: 3
@@ -171266,6 +171639,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1700676374}
+  - component: {fileID: 1700676375}
+  - component: {fileID: 1700676376}
+  - component: {fileID: 1700676377}
   m_Layer: 0
   m_Name: portal2
   m_TagString: Untagged
@@ -171286,6 +171662,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1469856326}
   - {fileID: 2088403225}
   - {fileID: 1114849337}
   - {fileID: 1611176596}
@@ -171298,6 +171675,60 @@ Transform:
   - {fileID: 1981376593}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0.9, y: 192.65, z: 0}
+--- !u!65 &1700676375
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1700676373}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 0
+  serializedVersion: 3
+  m_Size: {x: 5, y: 4, z: 2}
+  m_Center: {x: 0, y: 2, z: 0}
+--- !u!114 &1700676376
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1700676373}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f58d118375f4fe5a0ca7af41ba6e3b4, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _interactionPrompt: Portal
+  _interactionActionText: E - Close
+  _interactionCollider: {fileID: 1700676375}
+  _particleSystems: []
+  _particleRoots: []
+  _disableParticleGameObjects: 1
+  _bossDefeated: 0
+  _closed: 0
+--- !u!114 &1700676377
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1700676373}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7907834d6890e749982ecb398848bb5, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _id: YavWorld.Portal.NightmareBeetle
 --- !u!1 &1701331666
 GameObject:
   m_ObjectHideFlags: 16
@@ -208460,6 +208891,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2082340969}
+  - component: {fileID: 2082340970}
+  - component: {fileID: 2082340971}
+  - component: {fileID: 2082340972}
   m_Layer: 0
   m_Name: portal1
   m_TagString: Untagged
@@ -208480,6 +208914,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1362213417}
   - {fileID: 398899261}
   - {fileID: 1824163921}
   - {fileID: 780261434}
@@ -208492,6 +208927,60 @@ Transform:
   - {fileID: 810639287}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &2082340970
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2082340968}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 0
+  serializedVersion: 3
+  m_Size: {x: 5, y: 4, z: 2}
+  m_Center: {x: 0, y: 2, z: 0}
+--- !u!114 &2082340971
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2082340968}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f58d118375f4fe5a0ca7af41ba6e3b4, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _interactionPrompt: Portal
+  _interactionActionText: E - Close
+  _interactionCollider: {fileID: 2082340970}
+  _particleSystems: []
+  _particleRoots: []
+  _disableParticleGameObjects: 1
+  _bossDefeated: 0
+  _closed: 0
+--- !u!114 &2082340972
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2082340968}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7907834d6890e749982ecb398848bb5, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _id: YavWorld.Portal.GhoulZombie
 --- !u!1 &2083264014
 GameObject:
   m_ObjectHideFlags: 3

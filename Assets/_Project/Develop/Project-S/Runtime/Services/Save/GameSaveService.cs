@@ -10,6 +10,7 @@ using Project_S.Runtime.Gameplay.Character.Stats;
 using Project_S.Runtime.Gameplay.Crafting;
 using Project_S.Runtime.Gameplay.Enemies;
 using Project_S.Runtime.Gameplay.Harvesting;
+using Project_S.Runtime.Gameplay.Portals;
 using Project_S.Runtime.Gameplay.Respawn;
 using Project_S.Runtime.Gameplay.Upgrades;
 using Project_S.Runtime.Services.SceneManagement;
@@ -382,6 +383,17 @@ namespace Project_S.Runtime.Services.Save
                 };
             }
 
+            foreach (var portal in FindSceneComponents<BossPortal>(scene, true))
+            {
+                objectsById[ResolveObjectId(portal)] = new WorldObjectSaveData
+                {
+                    Id = ResolveObjectId(portal),
+                    Type = nameof(BossPortal),
+                    BossDefeated = portal.IsBossDefeated,
+                    PortalClosed = portal.IsClosed
+                };
+            }
+
             foreach (var pickup in FindSceneComponents<ItemPickup>(scene, true))
             {
                 if (pickup.GetComponent<RuntimeDroppedItem>() != null)
@@ -448,6 +460,12 @@ namespace Project_S.Runtime.Services.Save
             {
                 if (objectsById.TryGetValue(ResolveObjectId(enemy), out var saved))
                     enemy.RestoreSaveState(saved.CurrentHealth, saved.Dead);
+            }
+
+            foreach (var portal in FindSceneComponents<BossPortal>(scene, true))
+            {
+                if (objectsById.TryGetValue(ResolveObjectId(portal), out var saved))
+                    portal.RestoreSaveState(saved.BossDefeated, saved.PortalClosed);
             }
 
             foreach (var pickup in FindSceneComponents<ItemPickup>(scene, true))
@@ -555,6 +573,9 @@ namespace Project_S.Runtime.Services.Save
                 });
             }
 
+            foreach (var portal in FindSceneComponents<BossPortal>(scene, true))
+                Subscribe(portal, x => x.Changed += OnPortalChanged);
+
             foreach (var pickup in FindSceneComponents<ItemPickup>(scene, true))
             {
                 if (pickup.GetComponent<RuntimeDroppedItem>() != null)
@@ -605,6 +626,11 @@ namespace Project_S.Runtime.Services.Save
         private void OnEnemyDied(EnemyHealth _)
         {
             SaveNow("EnemyDied");
+        }
+
+        private void OnPortalChanged(BossPortal _)
+        {
+            SaveNow("PortalChanged");
         }
 
         private void OnPickupCollected(ItemPickup _)
