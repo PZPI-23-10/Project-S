@@ -169,7 +169,7 @@ namespace Project_S.Runtime.Gameplay.Ambient
             }
 
             var hitCollider = animal.AddComponent<CapsuleCollider>();
-            hitCollider.isTrigger = true;
+            hitCollider.isTrigger = false;
             hitCollider.radius = definition.ColliderRadius;
             hitCollider.height = definition.ColliderHeight;
             hitCollider.center = new Vector3(0f, definition.ColliderHeight * 0.5f, 0f);

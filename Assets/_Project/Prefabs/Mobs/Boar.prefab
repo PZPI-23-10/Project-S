@@ -56,11 +56,11 @@ CapsuleCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.55
+  m_Radius: 1.2
   m_Height: 1.15
   m_Direction: 1
   m_Center: {x: 0, y: 0.575, z: 0}
@@ -145,7 +145,7 @@ MonoBehaviour:
   _attackOrigin: {fileID: 0}
   _targetLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 1015
   _attackSelectionMode: 0
   _attackProfiles: []
 --- !u!114 &1410704035048023948

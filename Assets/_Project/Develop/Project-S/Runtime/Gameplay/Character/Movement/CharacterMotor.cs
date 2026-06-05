@@ -27,11 +27,18 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
         [SerializeField] private AudioClip _landSound;
         [SerializeField] private AudioClip _footstepSound;
 
+        [Header("Living Creature Collision")]
+        [SerializeField] private float _livingCreatureSeparationSkin = 0.04f;
+        [SerializeField] private float _livingCreatureMaxDepenetrationPerFrame = 0.35f;
+        [SerializeField] private int _livingCreatureDepenetrationIterations = 3;
+
         private KinematicCharacterMotor _motor;
         private Vector2 _moveInput;
         private Vector3 _moveInputVector;
         private Vector3 _dodgeVelocity;
         private readonly Collider[] _uncrouchOverlapBuffer = new Collider[8];
+        private readonly Collider[] _livingCreatureOverlapBuffer = new Collider[8];
+        private readonly RaycastHit[] _livingCreatureCastBuffer = new RaycastHit[8];
         private float _yaw;
         private float _pitch;
         private float _dodgeUntil;
@@ -172,12 +179,14 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
                 _attackDashCurrentYaw = Mathf.MoveTowardsAngle(_attackDashCurrentYaw, _yaw, _attackDashTurnSpeed * deltaTime);
                 Vector3 steerDirection = Quaternion.Euler(0f, _attackDashCurrentYaw, 0f) * Vector3.forward;
                 currentVelocity = steerDirection * _attackDashSpeed;
+                BlockVelocityIntoLivingCreatures(ref currentVelocity, deltaTime);
                 return;
             }
 
             if (IsDodging)
             {
                 currentVelocity = _dodgeVelocity;
+                BlockVelocityIntoLivingCreatures(ref currentVelocity, deltaTime);
                 return;
             }
 
@@ -208,6 +217,7 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
             }
 
             TryApplyJump(ref currentVelocity);
+            BlockVelocityIntoLivingCreatures(ref currentVelocity, deltaTime);
         }
 
         public void BeforeCharacterUpdate(float deltaTime)
@@ -216,6 +226,8 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
             {
                 EnterCrouch();
             }
+
+            DepenetrateFromLivingCreatures();
         }
 
         public void PostGroundingUpdate(float deltaTime) { }
@@ -264,6 +276,7 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
                 TryExitCrouch();
             }
 
+            DepenetrateFromLivingCreatures();
             UpdateCrouchView(deltaTime);
         }
 
@@ -272,10 +285,11 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
             if (coll == null || coll.isTrigger)
                 return false;
 
-            if (coll.GetComponentInParent<AnimalCorpseHarvest>() != null)
+            var corpseHarvest = coll.GetComponentInParent<AnimalCorpseHarvest>();
+            if (corpseHarvest != null && corpseHarvest.IsActive)
                 return false;
 
-            return !IsAttackDashing || coll.GetComponentInParent<EnemyHealth>() == null;
+            return true;
         }
         public void OnGroundHit(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport) { }
         public void OnMovementHit(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport) { }
@@ -327,6 +341,207 @@ namespace Project_S.Runtime.Gameplay.Character.Movement
             _dodgeVelocity = direction.normalized * _config.DodgeSpeed;
             _dodgeUntil = Time.time + _config.DodgeDuration;
             _dodgeCooldownUntil = Time.time + _config.DodgeCooldown;
+        }
+
+        private void BlockVelocityIntoLivingCreatures(ref Vector3 currentVelocity, float deltaTime)
+        {
+            if (_motor == null || _motor.Capsule == null)
+                return;
+
+            Vector3 horizontalVelocity = Vector3.ProjectOnPlane(currentVelocity, _motor.CharacterUp);
+            float speed = horizontalVelocity.magnitude;
+            if (speed <= 0.001f)
+                return;
+
+            GetCapsuleWorldPoints(out Vector3 point1, out Vector3 point2, out float radius);
+            Vector3 direction = horizontalVelocity / speed;
+            int layerMask = _motor.CollidableLayers;
+
+            int overlapCount = Physics.OverlapCapsuleNonAlloc(
+                point1,
+                point2,
+                radius,
+                _livingCreatureOverlapBuffer,
+                layerMask,
+                QueryTriggerInteraction.Ignore);
+
+            for (int i = 0; i < overlapCount; i++)
+            {
+                Collider hit = _livingCreatureOverlapBuffer[i];
+                if (!IsBlockingLivingCreature(hit))
+                    continue;
+
+                Vector3 normal = TryGetLivingCreaturePenetrationNormal(hit, out Vector3 penetrationNormal)
+                    ? penetrationNormal
+                    : Vector3.ProjectOnPlane(transform.position - hit.transform.position, _motor.CharacterUp);
+                if (TryBlockVelocityWithNormal(ref currentVelocity, normal))
+                    return;
+            }
+
+            float castDistance = Mathf.Max(0.05f, speed * Mathf.Max(0f, deltaTime) + 0.12f);
+            int hitCount = Physics.CapsuleCastNonAlloc(
+                point1,
+                point2,
+                radius,
+                direction,
+                _livingCreatureCastBuffer,
+                castDistance,
+                layerMask,
+                QueryTriggerInteraction.Ignore);
+
+            int closestIndex = -1;
+            float closestDistance = float.PositiveInfinity;
+            for (int i = 0; i < hitCount; i++)
+            {
+                RaycastHit hit = _livingCreatureCastBuffer[i];
+                if (hit.collider == null || hit.distance >= closestDistance)
+                    continue;
+
+                if (!IsBlockingLivingCreature(hit.collider))
+                    continue;
+
+                closestIndex = i;
+                closestDistance = hit.distance;
+            }
+
+            if (closestIndex < 0)
+                return;
+
+            TryBlockVelocityWithNormal(ref currentVelocity, _livingCreatureCastBuffer[closestIndex].normal);
+        }
+
+        private void DepenetrateFromLivingCreatures()
+        {
+            if (_motor == null || _motor.Capsule == null)
+                return;
+
+            int iterations = Mathf.Max(0, _livingCreatureDepenetrationIterations);
+            float maxCorrection = Mathf.Max(0f, _livingCreatureMaxDepenetrationPerFrame);
+            float appliedCorrection = 0f;
+
+            for (int iteration = 0; iteration < iterations && appliedCorrection < maxCorrection; iteration++)
+            {
+                GetCapsuleWorldPoints(_motor.TransientPosition, _motor.TransientRotation, out Vector3 point1, out Vector3 point2, out float radius);
+                int overlapCount = Physics.OverlapCapsuleNonAlloc(
+                    point1,
+                    point2,
+                    radius,
+                    _livingCreatureOverlapBuffer,
+                    _motor.CollidableLayers,
+                    QueryTriggerInteraction.Ignore);
+
+                Vector3 correction = Vector3.zero;
+                for (int i = 0; i < overlapCount; i++)
+                {
+                    Collider hit = _livingCreatureOverlapBuffer[i];
+                    if (!IsBlockingLivingCreature(hit))
+                        continue;
+
+                    if (!TryGetLivingCreaturePenetration(hit, out Vector3 direction, out float distance))
+                        continue;
+
+                    float correctionDistance = distance + Mathf.Max(0f, _livingCreatureSeparationSkin);
+                    correction += direction * correctionDistance;
+                }
+
+                correction = Vector3.ProjectOnPlane(correction, _motor.CharacterUp);
+                float correctionMagnitude = correction.magnitude;
+                if (correctionMagnitude <= 0.0001f)
+                    return;
+
+                float remainingCorrection = maxCorrection - appliedCorrection;
+                if (correctionMagnitude > remainingCorrection)
+                {
+                    correction = correction / correctionMagnitude * remainingCorrection;
+                    correctionMagnitude = remainingCorrection;
+                }
+
+                _motor.SetTransientPosition(_motor.TransientPosition + correction);
+                appliedCorrection += correctionMagnitude;
+            }
+        }
+
+        private bool TryGetLivingCreaturePenetrationNormal(Collider hit, out Vector3 normal)
+        {
+            normal = Vector3.zero;
+            if (!TryGetLivingCreaturePenetration(hit, out Vector3 direction, out _))
+                return false;
+
+            normal = direction;
+            return true;
+        }
+
+        private bool TryGetLivingCreaturePenetration(Collider hit, out Vector3 direction, out float distance)
+        {
+            direction = Vector3.zero;
+            distance = 0f;
+
+            if (hit == null || _motor == null || _motor.Capsule == null)
+                return false;
+
+            if (!Physics.ComputePenetration(
+                    _motor.Capsule,
+                    _motor.TransientPosition,
+                    _motor.TransientRotation,
+                    hit,
+                    hit.transform.position,
+                    hit.transform.rotation,
+                    out Vector3 penetrationDirection,
+                    out float penetrationDistance))
+                return false;
+
+            penetrationDirection = Vector3.ProjectOnPlane(penetrationDirection, _motor.CharacterUp);
+            if (penetrationDirection.sqrMagnitude <= 0.0001f)
+                return false;
+
+            direction = penetrationDirection.normalized;
+            distance = Mathf.Max(0f, penetrationDistance);
+            return true;
+        }
+
+        private bool TryBlockVelocityWithNormal(ref Vector3 currentVelocity, Vector3 normal)
+        {
+            normal = Vector3.ProjectOnPlane(normal, _motor.CharacterUp);
+            if (normal.sqrMagnitude <= 0.0001f)
+                return false;
+
+            normal.Normalize();
+            float inwardSpeed = Vector3.Dot(currentVelocity, normal);
+            if (inwardSpeed >= 0f)
+                return false;
+
+            currentVelocity -= normal * inwardSpeed;
+            return true;
+        }
+
+        private bool IsBlockingLivingCreature(Collider coll)
+        {
+            if (coll == null || coll.isTrigger || coll.transform.root == transform.root)
+                return false;
+
+            var corpseHarvest = coll.GetComponentInParent<AnimalCorpseHarvest>();
+            if (corpseHarvest != null && corpseHarvest.IsActive)
+                return false;
+
+            var health = coll.GetComponentInParent<EnemyHealth>();
+            return health != null && !health.IsDead;
+        }
+
+        private void GetCapsuleWorldPoints(out Vector3 point1, out Vector3 point2, out float radius)
+        {
+            GetCapsuleWorldPoints(_motor.TransientPosition, _motor.TransientRotation, out point1, out point2, out radius);
+        }
+
+        private void GetCapsuleWorldPoints(Vector3 motorPosition, Quaternion motorRotation, out Vector3 point1, out Vector3 point2, out float radius)
+        {
+            CapsuleCollider capsule = _motor.Capsule;
+            radius = Mathf.Max(0.01f, capsule.radius);
+            float halfSegment = Mathf.Max(0f, capsule.height * 0.5f - radius);
+            Vector3 center = motorPosition + (motorRotation * capsule.center);
+            Vector3 axis = motorRotation * Vector3.up;
+
+            point1 = center + axis * halfSegment;
+            point2 = center - axis * halfSegment;
         }
 
         private void TryApplyJump(ref Vector3 currentVelocity)

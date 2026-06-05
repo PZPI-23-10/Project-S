@@ -216,7 +216,7 @@ namespace Project_S.Editor
 
             var root = CreateRoot(variant.AssetName);
             var visual = AttachVisual(root.transform, variant.VisualPrefabPath, Vector3.zero, Quaternion.identity, Vector3.one);
-            ConfigureCapsule(root, variant.ColliderRadius, variant.ColliderHeight, new Vector3(0f, variant.ColliderHeight * 0.5f, 0f), true);
+            ConfigureCapsule(root, variant.ColliderRadius, variant.ColliderHeight, new Vector3(0f, variant.ColliderHeight * 0.5f, 0f));
             ConfigureRigidbody(root);
 
             var agent = root.AddComponent<NavMeshAgent>();
@@ -263,7 +263,7 @@ namespace Project_S.Editor
             var visual = AttachVisual(root.transform, "Assets/_Project/ThirdParty/WildBoar/WildBoar/Prefabs/BoarPrefab.prefab", Vector3.zero, Quaternion.identity, Vector3.one);
             AdjustBoarVisualHeight(visual);
             ForceMaterial(visual, BoarMaterialPath);
-            ConfigureCapsule(root, 0.55f, 1.15f, new Vector3(0f, 0.575f, 0f), true);
+            ConfigureCapsule(root, 0.55f, 1.15f, new Vector3(0f, 0.575f, 0f));
             ConfigureRigidbody(root);
 
             var agent = root.AddComponent<NavMeshAgent>();

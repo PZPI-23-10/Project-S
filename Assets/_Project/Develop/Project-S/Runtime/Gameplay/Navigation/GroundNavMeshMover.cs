@@ -1,3 +1,4 @@
+using Project_S.Runtime.Gameplay.Character.Player;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -8,6 +9,7 @@ namespace Project_S.Runtime.Gameplay.Navigation
     {
         private const float DefaultSampleRadius = 2f;
         private const float MovingVelocityThreshold = 0.01f;
+        private const float PlayerBlockBuffer = 0.08f;
 
         [SerializeField] private NavMeshAgent _agent;
         [SerializeField] private float _repathInterval = 0.2f;
@@ -16,6 +18,8 @@ namespace Project_S.Runtime.Gameplay.Navigation
         private float _repathTimer;
         private Vector3 _lastRequestedDestination;
         private bool _hasRequestedDestination;
+        private PlayerFacade _player;
+        private PlayerNavMeshObstacle _playerObstacle;
 
         public NavMeshAgent Agent => _agent;
         public bool IsReady => _agent != null && _agent.enabled && _agent.isOnNavMesh;
@@ -113,6 +117,12 @@ namespace Project_S.Runtime.Gameplay.Navigation
                 return false;
             }
 
+            if (ShouldStopForPlayer(hit.position))
+            {
+                Stop();
+                return false;
+            }
+
             if (!forceRepath && _hasRequestedDestination && _repathTimer > 0f)
             {
                 Vector3 delta = hit.position - _lastRequestedDestination;
@@ -153,6 +163,58 @@ namespace Project_S.Runtime.Gameplay.Navigation
         {
             if (_agent == null)
                 _agent = GetComponent<NavMeshAgent>();
+        }
+
+        private bool ShouldStopForPlayer(Vector3 destination)
+        {
+            ResolvePlayerBlocker();
+
+            if (_player == null || _agent == null)
+                return false;
+
+            Vector3 toPlayer = Flatten(_player.transform.position - transform.position);
+            float playerRadius = _playerObstacle != null ? _playerObstacle.ObstacleRadius : 0.55f;
+            float blockDistance = Mathf.Max(0.01f, _agent.radius + playerRadius + PlayerBlockBuffer);
+            if (toPlayer.sqrMagnitude > blockDistance * blockDistance)
+                return false;
+
+            Vector3 toDestination = Flatten(destination - transform.position);
+            if (toDestination.sqrMagnitude <= 0.0001f)
+                return false;
+
+            Vector3 playerToDestination = Flatten(destination - _player.transform.position);
+            float playerDestinationDistance = playerRadius + PlayerBlockBuffer;
+            if (playerToDestination.sqrMagnitude <= playerDestinationDistance * playerDestinationDistance)
+                return true;
+
+            Vector3 pathDirection = toDestination.normalized;
+            float projection = Vector3.Dot(toPlayer, pathDirection);
+            if (projection < 0f || projection > toDestination.magnitude)
+                return false;
+
+            Vector3 closestPointToPlayer = pathDirection * projection;
+            float pathClearance = playerRadius + PlayerBlockBuffer;
+            return (toPlayer - closestPointToPlayer).sqrMagnitude <= pathClearance * pathClearance;
+        }
+
+        private void ResolvePlayerBlocker()
+        {
+            if (_player != null)
+            {
+                if (_playerObstacle == null)
+                    _playerObstacle = _player.GetComponent<PlayerNavMeshObstacle>();
+
+                return;
+            }
+
+            _player = FindFirstObjectByType<PlayerFacade>();
+            _playerObstacle = _player != null ? _player.GetComponent<PlayerNavMeshObstacle>() : null;
+        }
+
+        private static Vector3 Flatten(Vector3 vector)
+        {
+            vector.y = 0f;
+            return vector;
         }
 
         private void ConfigureAgentDefaults()

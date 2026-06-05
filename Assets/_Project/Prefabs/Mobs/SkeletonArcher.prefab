@@ -63,8 +63,8 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.42
-  m_Height: 1.75
+  m_Radius: 0.7
+  m_Height: 3
   m_Direction: 1
   m_Center: {x: 0, y: 0.875, z: 0}
 --- !u!54 &6580746757600570231
@@ -148,7 +148,7 @@ MonoBehaviour:
   _attackOrigin: {fileID: 0}
   _targetLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 1015
   _attackSelectionMode: 0
   _attackProfiles: []
 --- !u!114 &4646605082872486261
@@ -262,7 +262,7 @@ MonoBehaviour:
   _projectileOrigin: {fileID: 949235974144631684}
   _targetLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 1015
   _attackClip: {fileID: 0}
 --- !u!114 &2670390722572856741
 MonoBehaviour:

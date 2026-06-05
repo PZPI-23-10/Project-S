@@ -39,6 +39,7 @@ namespace Project_S.Runtime.Gameplay.Character.Player
 
             if (_actionGate == null) _actionGate = GetComponent<PlayerActionGate>() ?? gameObject.AddComponent<PlayerActionGate>();
             if (_deathController == null) _deathController = GetComponent<PlayerDeathController>() ?? gameObject.AddComponent<PlayerDeathController>();
+            if (GetComponent<PlayerNavMeshObstacle>() == null) gameObject.AddComponent<PlayerNavMeshObstacle>();
             if (_motor == null) _motor = GetComponent<CharacterMotor>();
             if (_combat == null) _combat = GetComponent<CombatController>();
             if (_poise == null) _poise = GetComponent<PoiseController>();

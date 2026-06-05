@@ -16138,6 +16138,12 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 751671818}
   m_PrefabAsset: {fileID: 0}
+--- !u!198 &171210379 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 1344040796500374082, guid: dc4ae606e6258734282ef39e81e39759,
+    type: 3}
+  m_PrefabInstance: {fileID: 1918789390}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &172304617
 GameObject:
   m_ObjectHideFlags: 3
@@ -16824,6 +16830,12 @@ MonoBehaviour:
   - {fileID: 2001207514}
   - {fileID: 590501940}
   - {fileID: 1170786304}
+--- !u!198 &180159868 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 1344040795936564730, guid: dc4ae606e6258734282ef39e81e39759,
+    type: 3}
+  m_PrefabInstance: {fileID: 1918789390}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &181789641
 GameObject:
   m_ObjectHideFlags: 3
@@ -66306,6 +66318,12 @@ MonoBehaviour:
   meshCollider: {fileID: 662135112}
   hasCollider: 1
   isStatic: 1
+--- !u!198 &662802503 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 3125283637326174733, guid: 2a1d31c423a9065459f09981f94ef4c3,
+    type: 3}
+  m_PrefabInstance: {fileID: 1981376592}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &663211679
 GameObject:
   m_ObjectHideFlags: 3
@@ -72567,6 +72585,12 @@ MonoBehaviour:
   worldPosition: {x: 1171.875, y: 192, z: 820.3125}
   sizeInWorld: {x: 39.0625, y: 32, z: 39.0625}
   hasVisualMesh: 1
+--- !u!198 &726818223 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 313045326113187835, guid: 759953a11aee00e489d70dc6c056e232,
+    type: 3}
+  m_PrefabInstance: {fileID: 563740862}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &727459839
 GameObject:
   m_ObjectHideFlags: 3
@@ -89166,6 +89190,12 @@ MonoBehaviour:
   meshCollider: {fileID: 0}
   hasCollider: 0
   isStatic: 1
+--- !u!198 &891528005 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 504520477091627832, guid: 2a1d31c423a9065459f09981f94ef4c3,
+    type: 3}
+  m_PrefabInstance: {fileID: 1981376592}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &892613990
 GameObject:
   m_ObjectHideFlags: 3
@@ -94085,6 +94115,12 @@ MonoBehaviour:
   meshCollider: {fileID: 0}
   hasCollider: 0
   isStatic: 1
+--- !u!198 &942494271 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 5323121104620996106, guid: 2a1d31c423a9065459f09981f94ef4c3,
+    type: 3}
+  m_PrefabInstance: {fileID: 1981376592}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &944290255
 GameObject:
   m_ObjectHideFlags: 0
@@ -102361,6 +102397,12 @@ MonoBehaviour:
   meshCollider: {fileID: 0}
   hasCollider: 0
   isStatic: 1
+--- !u!198 &1011953374 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 616087910905847973, guid: dc4ae606e6258734282ef39e81e39759,
+    type: 3}
+  m_PrefabInstance: {fileID: 1918789390}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1012770387 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8420651816542619034, guid: e5c358a373d2fa840a2b94c42d8966af,
@@ -103020,6 +103062,12 @@ MonoBehaviour:
   meshCollider: {fileID: 0}
   hasCollider: 0
   isStatic: 1
+--- !u!198 &1015899099 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 616087911058387436, guid: dc4ae606e6258734282ef39e81e39759,
+    type: 3}
+  m_PrefabInstance: {fileID: 1918789390}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1017483463
 GameObject:
   m_ObjectHideFlags: 0
@@ -106813,6 +106861,12 @@ MonoBehaviour:
   meshCollider: {fileID: 0}
   hasCollider: 0
   isStatic: 1
+--- !u!198 &1057232832 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 1344040797314323683, guid: dc4ae606e6258734282ef39e81e39759,
+    type: 3}
+  m_PrefabInstance: {fileID: 1918789390}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1057765405
 GameObject:
   m_ObjectHideFlags: 3
@@ -127247,6 +127301,12 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1d47f675b47668b43892831a0ab32eb0, type: 3}
+--- !u!198 &1254868887 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 1234026831243032915, guid: 759953a11aee00e489d70dc6c056e232,
+    type: 3}
+  m_PrefabInstance: {fileID: 563740862}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1255216796
 GameObject:
   m_ObjectHideFlags: 0
@@ -133007,6 +133067,12 @@ MonoBehaviour:
   - {fileID: 1035459405}
   - {fileID: 799076415}
   - {fileID: 374921247}
+--- !u!198 &1316371135 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 4820564573736424548, guid: 2a1d31c423a9065459f09981f94ef4c3,
+    type: 3}
+  m_PrefabInstance: {fileID: 1981376592}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1317164013
 GameObject:
   m_ObjectHideFlags: 3
@@ -137981,7 +138047,7 @@ PrefabInstance:
     - target: {fileID: 2906300718157148375, guid: bb0ea75c001082344a7c68bc83110109,
         type: 3}
       propertyPath: m_Radius
-      value: 80
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 7680001023896619139, guid: bb0ea75c001082344a7c68bc83110109,
         type: 3}
@@ -138236,6 +138302,12 @@ MonoBehaviour:
   meshCollider: {fileID: 1363660763}
   hasCollider: 1
   isStatic: 1
+--- !u!198 &1364258734 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 313045326882289330, guid: 759953a11aee00e489d70dc6c056e232,
+    type: 3}
+  m_PrefabInstance: {fileID: 563740862}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1364352496
 GameObject:
   m_ObjectHideFlags: 16
@@ -162194,12 +162266,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2f58d118375f4fe5a0ca7af41ba6e3b4, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   _interactionPrompt: Portal
   _interactionActionText: E - Close
   _interactionCollider: {fileID: 1612961511}
-  _particleSystems: []
+  _particleSystems:
+  - {fileID: 1254868887}
+  - {fileID: 726818223}
+  - {fileID: 1364258734}
   _particleRoots: []
   _disableParticleGameObjects: 1
   _bossDefeated: 0
@@ -162214,8 +162289,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f7907834d6890e749982ecb398848bb5, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   _id: YavWorld.Portal.Minotaur
 --- !u!1 &1614259034
 GameObject:
@@ -164753,6 +164828,12 @@ MonoBehaviour:
     initialized: 0
     min: {x: 0, y: 0, z: 0}
     max: {x: 0, y: 0, z: 0}
+--- !u!198 &1643999234 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 1344040796440438502, guid: dc4ae606e6258734282ef39e81e39759,
+    type: 3}
+  m_PrefabInstance: {fileID: 1918789390}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1644308767
 GameObject:
   m_ObjectHideFlags: 3
@@ -171706,12 +171787,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2f58d118375f4fe5a0ca7af41ba6e3b4, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   _interactionPrompt: Portal
   _interactionActionText: E - Close
   _interactionCollider: {fileID: 1700676375}
-  _particleSystems: []
+  _particleSystems:
+  - {fileID: 1316371135}
+  - {fileID: 891528005}
+  - {fileID: 942494271}
+  - {fileID: 1899365026}
+  - {fileID: 662802503}
   _particleRoots: []
   _disableParticleGameObjects: 1
   _bossDefeated: 0
@@ -171726,8 +171812,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f7907834d6890e749982ecb398848bb5, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   _id: YavWorld.Portal.NightmareBeetle
 --- !u!1 &1701331666
 GameObject:
@@ -175575,6 +175661,12 @@ MonoBehaviour:
   worldPosition: {x: 664.0625, y: 192, z: 1054.6875}
   sizeInWorld: {x: 39.0625, y: 32, z: 39.0625}
   hasVisualMesh: 1
+--- !u!198 &1749037111 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 1344040796750350759, guid: dc4ae606e6258734282ef39e81e39759,
+    type: 3}
+  m_PrefabInstance: {fileID: 1918789390}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1749891112
 GameObject:
   m_ObjectHideFlags: 3
@@ -189976,6 +190068,12 @@ MonoBehaviour:
   - {fileID: 420513266}
   - {fileID: 24771844}
   - {fileID: 1105475983}
+--- !u!198 &1899365026 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 1510829206895417302, guid: 2a1d31c423a9065459f09981f94ef4c3,
+    type: 3}
+  m_PrefabInstance: {fileID: 1981376592}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1900385057
 GameObject:
   m_ObjectHideFlags: 0
@@ -208958,12 +209056,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2f58d118375f4fe5a0ca7af41ba6e3b4, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   _interactionPrompt: Portal
   _interactionActionText: E - Close
   _interactionCollider: {fileID: 2082340970}
-  _particleSystems: []
+  _particleSystems:
+  - {fileID: 171210379}
+  - {fileID: 1749037111}
+  - {fileID: 1057232832}
+  - {fileID: 1643999234}
+  - {fileID: 180159868}
+  - {fileID: 1011953374}
+  - {fileID: 1015899099}
   _particleRoots: []
   _disableParticleGameObjects: 1
   _bossDefeated: 0
@@ -208978,8 +209083,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f7907834d6890e749982ecb398848bb5, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   _id: YavWorld.Portal.GhoulZombie
 --- !u!1 &2083264014
 GameObject:
