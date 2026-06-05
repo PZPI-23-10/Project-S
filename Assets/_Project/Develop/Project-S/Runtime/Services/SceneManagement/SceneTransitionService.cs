@@ -1,9 +1,9 @@
 using System;
 using Cysharp.Threading.Tasks;
-using KinematicCharacterController;
 using Project_S.Runtime.Common.Constants;
 using Project_S.Runtime.Core.Services;
 using Project_S.Runtime.Gameplay.Character.Player;
+using Project_S.Runtime.Gameplay.Respawn;
 using Project_S.Runtime.Services.Save;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -26,8 +26,8 @@ namespace Project_S.Runtime.Services.SceneManagement
             SceneTransitionRequestBus.TransitionRequested += TransitionTo;
         }
 
-        public void LoadInitialLevel(string levelSceneName, string spawnId = null) =>
-            TransitionToAsync(levelSceneName, spawnId, true).Forget();
+        public void LoadInitialLevel(string levelSceneName, string spawnId = null, bool useNewGameSpawn = false) =>
+            TransitionToAsync(levelSceneName, spawnId, true, useNewGameSpawn).Forget();
 
         public void TransitionTo(string levelSceneName, string spawnId = null) =>
             TransitionToAsync(levelSceneName, spawnId, false).Forget();
@@ -40,7 +40,8 @@ namespace Project_S.Runtime.Services.SceneManagement
         public async UniTask TransitionToAsync(
             string levelSceneName,
             string spawnId = null,
-            bool unloadBootScene = false)
+            bool unloadBootScene = false,
+            bool useNewGameSpawn = false)
         {
             if (_isTransitioning || string.IsNullOrWhiteSpace(levelSceneName))
                 return;
@@ -51,13 +52,11 @@ namespace Project_S.Runtime.Services.SceneManagement
 
             Vector3 startPos = Vector3.zero;
             Quaternion startRot = Quaternion.identity;
-            KinematicCharacterMotor motor = null;
 
             if (player != null)
             {
                 startPos = player.transform.position;
                 startRot = player.transform.rotation;
-                motor = player.GetComponent<KinematicCharacterMotor>();
             }
 
             _isTransitioning = true;
@@ -82,18 +81,10 @@ namespace Project_S.Runtime.Services.SceneManagement
                 {
                     if (string.IsNullOrWhiteSpace(spawnId))
                     {
-                        if (player != null)
-                        {
-                            if (motor != null)
-                            {
-                                motor.BaseVelocity = Vector3.zero;
-                                motor.SetPositionAndRotation(startPos, startRot);
-                            }
-                            else
-                            {
-                                player.transform.SetPositionAndRotation(startPos, startRot);
-                            }
-                        }
+                        if (useNewGameSpawn)
+                            MovePlayerToNewGameSpawn(targetScene);
+                        else if (player != null)
+                            PlayerRespawnUtility.MovePlayer(player, startPos, startRot);
                     }
                     else
                     {
@@ -171,15 +162,28 @@ namespace Project_S.Runtime.Services.SceneManagement
                 return;
             }
 
-            KinematicCharacterMotor motor = player.GetComponent<KinematicCharacterMotor>();
-            if (motor != null)
+            PlayerRespawnUtility.MovePlayer(player, spawnPoint.transform.position, spawnPoint.transform.rotation);
+        }
+
+        private void MovePlayerToNewGameSpawn(Scene targetScene)
+        {
+            if (!RespawnPointResolver.TryFindNewGameSpawn(targetScene, out RespawnPoint respawnPoint))
             {
-                motor.BaseVelocity = Vector3.zero;
-                motor.SetPositionAndRotation(spawnPoint.transform.position, spawnPoint.transform.rotation);
+                Debug.LogWarning($"[SceneTransition] New game spawn point was not found in scene '{targetScene.name}'.");
                 return;
             }
 
-            player.transform.SetPositionAndRotation(spawnPoint.transform.position, spawnPoint.transform.rotation);
+            PlayerFacade player = _playerProvider != null && _playerProvider.Player != null
+                ? _playerProvider.Player
+                : UnityEngine.Object.FindFirstObjectByType<PlayerFacade>(FindObjectsInactive.Include);
+
+            if (player == null)
+            {
+                Debug.LogWarning("[SceneTransition] Player was not found.");
+                return;
+            }
+
+            PlayerRespawnUtility.MovePlayer(player, respawnPoint.Position, respawnPoint.Rotation);
         }
 
         private static SceneSpawnPoint FindSpawnPoint(Scene scene, string spawnId)

@@ -1,5 +1,5 @@
 using Project_S.Runtime.Gameplay.Character.Input;
-using Project_S.Runtime.Gameplay.Character.Inventory;
+using Project_S.Runtime.Gameplay.Respawn;
 using Project_S.Runtime.Gameplay.Character.Stats;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -12,7 +12,6 @@ namespace Project_S.Runtime.Gameplay.Character.Phylactery
         [SerializeField] private PhylacteryController _phylactery;
         [SerializeField] private PhylacteryConfig _config;
         [SerializeField] private PlayerActionGate _actionGate;
-        [SerializeField] private HomeTeleportController _homeTeleport;
         [SerializeField] private Transform _fallbackRespawnPoint;
 
         [Header("Death UI")]
@@ -21,6 +20,8 @@ namespace Project_S.Runtime.Gameplay.Character.Phylactery
 
         private bool _isDead;
         private bool _handlingHealthChange;
+        private bool _hasDeathPosition;
+        private Vector3 _deathPosition;
 
         public bool IsDead => _isDead;
 
@@ -38,7 +39,6 @@ namespace Project_S.Runtime.Gameplay.Character.Phylactery
             if (_stats == null) _stats = GetComponent<CharacterStats>() ?? GetComponentInParent<CharacterStats>();
             if (_phylactery == null) _phylactery = GetComponent<PhylacteryController>() ?? GetComponentInParent<PhylacteryController>();
             if (_actionGate == null) _actionGate = GetComponent<PlayerActionGate>() ?? GetComponentInParent<PlayerActionGate>();
-            if (_homeTeleport == null) _homeTeleport = GetComponent<HomeTeleportController>() ?? GetComponentInParent<HomeTeleportController>();
             if (_config == null && _phylactery != null) _config = _phylactery.Config;
         }
 
@@ -54,10 +54,15 @@ namespace Project_S.Runtime.Gameplay.Character.Phylactery
             if (_actionGate != null) _actionGate.SetDeathBlocked(false);
         }
 
-        public bool ForceRespawnAtHome()
+        public bool ForceRespawnAtNearestPoint()
         {
             Revive(false);
             return true;
+        }
+
+        public bool ForceRespawnAtHome()
+        {
+            return ForceRespawnAtNearestPoint();
         }
 
         private void OnStatChanged(StatType type, float value)
@@ -75,6 +80,9 @@ namespace Project_S.Runtime.Gameplay.Character.Phylactery
             if (_isDead) return;
 
             _isDead = true;
+            _deathPosition = transform.position;
+            _hasDeathPosition = true;
+
             if (_actionGate != null) _actionGate.SetDeathBlocked(true);
 
             // Показуємо UI екрана смерті
@@ -99,7 +107,7 @@ namespace Project_S.Runtime.Gameplay.Character.Phylactery
             }
             else
             {
-                // Якщо магічної енергії немає — відроджуємо безкоштовно на базі
+                // Якщо магічної енергії немає — відроджуємо безкоштовно на найближчій точці
                 Revive(false);
             }
         }
@@ -121,51 +129,54 @@ namespace Project_S.Runtime.Gameplay.Character.Phylactery
         {
             _handlingHealthChange = true;
 
-            if (spendCharge && _phylactery != null)
-                _phylactery.TrySpend(GetReviveChargeCost());
-
-            RestoreStatFraction(StatType.Health, StatType.MaxHealth, GetReviveHealthFraction());
-            RestoreStatFraction(StatType.Stamina, StatType.MaxStamina, GetReviveStaminaFraction());
-
-            if (ShouldRespawnAtHome())
-                RespawnAtHome();
-
-            _isDead = false;
-            if (_actionGate != null) _actionGate.SetDeathBlocked(false);
-
-            // Ховаємо UI, повертаємо час і ховаємо курсор
-            if (_deathScreenUI != null) _deathScreenUI.SetActive(false);
-            Time.timeScale = 1f;
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-
-            _handlingHealthChange = false;
-            Debug.Log("<color=green>[СМЕРТЬ]</color> Гравець відродився.");
-        }
-
-        private void RestoreStatFraction(StatType statType, StatType maxStatType, float fraction)
-        {
-            if (_stats == null) return;
-            float max = _stats.Get(maxStatType);
-            if (max <= 0f) max = _stats.GetMax(statType);
-            _stats.Set(statType, Mathf.Max(1f, max * Mathf.Clamp01(fraction)));
-        }
-
-        private void RespawnAtHome()
-        {
-            if (_homeTeleport != null)
+            try
             {
-                _homeTeleport.StartTeleport(0f);
+                if (spendCharge && _phylactery != null)
+                    _phylactery.TrySpend(GetReviveChargeCost());
+
+                PlayerRespawnUtility.RestoreHealthToMax(_stats);
+                PlayerRespawnUtility.RestoreStatFraction(_stats, StatType.Stamina, StatType.MaxStamina, GetReviveStaminaFraction());
+
+                RespawnAtNearestPoint();
+
+                _isDead = false;
+                _hasDeathPosition = false;
+                if (_actionGate != null) _actionGate.SetDeathBlocked(false);
+
+                // Ховаємо UI, повертаємо час і ховаємо курсор
+                if (_deathScreenUI != null) _deathScreenUI.SetActive(false);
+                Time.timeScale = 1f;
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+
+                Debug.Log("<color=green>[СМЕРТЬ]</color> Гравець відродився.");
+            }
+            finally
+            {
+                _handlingHealthChange = false;
+            }
+        }
+
+        private void RespawnAtNearestPoint()
+        {
+            Vector3 origin = _hasDeathPosition ? _deathPosition : transform.position;
+            if (RespawnPointResolver.TryFindNearest(origin, out RespawnPoint respawnPoint))
+            {
+                PlayerRespawnUtility.MovePlayer(this, respawnPoint.Position, respawnPoint.Rotation);
                 return;
             }
 
             if (_fallbackRespawnPoint != null)
-                transform.position = _fallbackRespawnPoint.position;
+            {
+                Debug.LogWarning("[Respawn] No available RespawnPoint was found. Using fallback respawn point.", this);
+                PlayerRespawnUtility.MovePlayer(this, _fallbackRespawnPoint.position, _fallbackRespawnPoint.rotation);
+                return;
+            }
+
+            Debug.LogWarning("[Respawn] No available RespawnPoint was found. Player remains at death position.", this);
         }
 
         private float GetReviveChargeCost() => _config != null ? Mathf.Max(0f, _config.ReviveChargeCost) : 25f;
-        private float GetReviveHealthFraction() => _config != null ? Mathf.Clamp01(_config.ReviveHealthFraction) : 0.5f;
         private float GetReviveStaminaFraction() => _config != null ? Mathf.Clamp01(_config.ReviveStaminaFraction) : 0.5f;
-        private bool ShouldRespawnAtHome() => _config == null || _config.RespawnAtHome;
     }
 }

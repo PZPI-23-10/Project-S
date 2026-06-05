@@ -5289,7 +5289,6 @@ MonoBehaviour:
   _phylactery: {fileID: 0}
   _config: {fileID: 0}
   _actionGate: {fileID: 0}
-  _homeTeleport: {fileID: 0}
   _fallbackRespawnPoint: {fileID: 0}
   _deathScreenUI: {fileID: 347872693}
 --- !u!82 &545051957

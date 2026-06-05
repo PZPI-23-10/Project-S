@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
-using KinematicCharacterController;
 using Project_S.Runtime.Common.Constants;
 using Project_S.Runtime.Gameplay.Character.Combat;
 using Project_S.Runtime.Gameplay.Character.Inventory;
@@ -11,6 +10,7 @@ using Project_S.Runtime.Gameplay.Character.Stats;
 using Project_S.Runtime.Gameplay.Crafting;
 using Project_S.Runtime.Gameplay.Enemies;
 using Project_S.Runtime.Gameplay.Harvesting;
+using Project_S.Runtime.Gameplay.Respawn;
 using Project_S.Runtime.Gameplay.Upgrades;
 using Project_S.Runtime.Services.SceneManagement;
 using Project_S.Runtime.Services.Storage;
@@ -317,16 +317,7 @@ namespace Project_S.Runtime.Services.Save
             {
                 Quaternion rotation = data.Rotation.ToQuaternion();
                 Vector3 position = data.Position.ToVector3();
-                var motor = player.GetComponent<KinematicCharacterMotor>();
-                if (motor != null)
-                {
-                    motor.BaseVelocity = Vector3.zero;
-                    motor.SetPositionAndRotation(position, rotation);
-                }
-                else
-                {
-                    player.transform.SetPositionAndRotation(position, rotation);
-                }
+                PlayerRespawnUtility.MovePlayer(player, position, rotation);
             }
         }
 

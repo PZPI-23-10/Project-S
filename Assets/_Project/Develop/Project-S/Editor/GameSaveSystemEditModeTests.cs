@@ -1,15 +1,16 @@
 using System;
-using System;
 using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
 using Project_S.Runtime.Gameplay.Character.Combat;
 using Project_S.Runtime.Gameplay.Character.Inventory;
+using Project_S.Runtime.Gameplay.Character.Phylactery;
 using Project_S.Runtime.Gameplay.Character.Player;
 using Project_S.Runtime.Gameplay.Character.Stats;
 using Project_S.Runtime.Gameplay.Crafting;
 using Project_S.Runtime.Gameplay.Enemies;
 using Project_S.Runtime.Gameplay.Harvesting;
+using Project_S.Runtime.Gameplay.Respawn;
 using Project_S.Runtime.Gameplay.Upgrades;
 using Project_S.Runtime.Services.Save;
 using Project_S.Runtime.Services.SceneManagement;
@@ -18,6 +19,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.TestTools;
 
 namespace Project_S.Editor.Tests
 {
@@ -62,6 +64,7 @@ namespace Project_S.Editor.Tests
             }
 
             _objects.Clear();
+            Time.timeScale = 1f;
             PlayerStorage.DisableSingleton();
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             AssetDatabase.DeleteAsset(TestScenePath);
@@ -188,6 +191,97 @@ namespace Project_S.Editor.Tests
             Assert.That(stats.GetRaw(StatType.Health), Is.EqualTo(42f).Within(0.001f));
             Assert.That(stats.GetRaw(StatType.Stamina), Is.EqualTo(21f).Within(0.001f));
             Assert.That(player.transform.position, Is.EqualTo(new Vector3(3f, 4f, 5f)));
+        }
+
+        [Test]
+        public void RespawnPointResolver_SelectsNearestAvailablePointInActiveLevel()
+        {
+            CreateRespawnPoint("Far", new Vector3(20f, 0f, 0f));
+            var inactive = CreateRespawnPoint("Inactive", new Vector3(0.5f, 0f, 0f));
+            inactive.gameObject.SetActive(false);
+            var disabled = CreateRespawnPoint("Disabled", new Vector3(1f, 0f, 0f));
+            disabled.enabled = false;
+            var nearest = CreateRespawnPoint("Nearest", new Vector3(2f, 0f, 0f));
+
+            bool found = RespawnPointResolver.TryFindNearest(Vector3.zero, out RespawnPoint result);
+
+            Assert.That(found, Is.True);
+            Assert.That(result, Is.EqualTo(nearest));
+        }
+
+        [Test]
+        public void RespawnPoint_UsesSpawnTransformForPositionAndRotation()
+        {
+            var point = CreateRespawnPoint("PointRoot", Vector3.zero);
+            var spawnObject = new GameObject("PlayerSpawn");
+            _objects.Add(spawnObject);
+            spawnObject.transform.SetParent(point.transform);
+            spawnObject.transform.SetPositionAndRotation(new Vector3(5f, 0f, 6f), Quaternion.Euler(0f, 135f, 0f));
+            SetPrivateField(point, "_spawnTransform", spawnObject.transform);
+
+            Assert.That(point.Position, Is.EqualTo(spawnObject.transform.position));
+            Assert.That(point.Rotation.eulerAngles.y, Is.EqualTo(135f).Within(0.001f));
+        }
+
+        [Test]
+        public void RespawnPointResolver_SelectsConfiguredNewGameSpawn()
+        {
+            CreateRespawnPoint("Regular", Vector3.zero);
+            var start = CreateRespawnPoint("Start", new Vector3(4f, 0f, 5f), Quaternion.Euler(0f, 45f, 0f));
+            SetPrivateField(start, "_useAsNewGameSpawn", true);
+
+            bool found = RespawnPointResolver.TryFindNewGameSpawn(SceneManager.GetActiveScene(), out RespawnPoint result);
+
+            Assert.That(found, Is.True);
+            Assert.That(result, Is.EqualTo(start));
+            Assert.That(result.Position, Is.EqualTo(new Vector3(4f, 0f, 5f)));
+        }
+
+        [Test]
+        public void RespawnPointResolver_ReturnsFalseWhenNoPointsExist()
+        {
+            bool found = RespawnPointResolver.TryFindNearest(Vector3.zero, out RespawnPoint result);
+
+            Assert.That(found, Is.False);
+            Assert.That(result, Is.Null);
+        }
+
+        [Test]
+        public void PlayerDeathController_RespawnsAtNearestPointAndRestoresFullHealth()
+        {
+            var player = CreatePlayer(out _, out _, out var stats, out _, out _);
+            player.transform.position = Vector3.zero;
+            CreateRespawnPoint("Far", new Vector3(20f, 0f, 0f));
+            var nearest = CreateRespawnPoint("Nearest", new Vector3(3f, 0f, 4f), Quaternion.Euler(0f, 90f, 0f));
+            var controller = CreateDeathController(player, stats);
+            PrepareDeadPlayer(controller, player.transform.position);
+            stats.Set(StatType.Health, 0f);
+
+            controller.OnRespawnButtonClicked();
+
+            Assert.That(player.transform.position, Is.EqualTo(nearest.Position));
+            Assert.That(player.transform.rotation.eulerAngles.y, Is.EqualTo(90f).Within(0.001f));
+            Assert.That(stats.GetRaw(StatType.Health), Is.EqualTo(100f).Within(0.001f));
+        }
+
+        [Test]
+        public void PlayerDeathController_UsesFallbackWhenNoRespawnPointExists()
+        {
+            var player = CreatePlayer(out _, out _, out var stats, out _, out _);
+            player.transform.position = Vector3.zero;
+            var fallback = new GameObject("FallbackRespawnPoint");
+            _objects.Add(fallback);
+            fallback.transform.SetPositionAndRotation(new Vector3(7f, 0f, 8f), Quaternion.Euler(0f, 180f, 0f));
+            var controller = CreateDeathController(player, stats, fallback.transform);
+            PrepareDeadPlayer(controller, player.transform.position);
+            stats.Set(StatType.Health, 0f);
+            LogAssert.Expect(LogType.Warning, "[Respawn] No available RespawnPoint was found. Using fallback respawn point.");
+
+            controller.OnRespawnButtonClicked();
+
+            Assert.That(player.transform.position, Is.EqualTo(fallback.transform.position));
+            Assert.That(player.transform.rotation.eulerAngles.y, Is.EqualTo(180f).Within(0.001f));
+            Assert.That(stats.GetRaw(StatType.Health), Is.EqualTo(100f).Within(0.001f));
         }
 
         [Test]
@@ -400,6 +494,39 @@ namespace Project_S.Editor.Tests
             pickup.Item = item;
             pickup.Amount = amount;
             return pickup;
+        }
+
+        private RespawnPoint CreateRespawnPoint(string name, Vector3 position)
+        {
+            return CreateRespawnPoint(name, position, Quaternion.identity);
+        }
+
+        private RespawnPoint CreateRespawnPoint(string name, Vector3 position, Quaternion rotation)
+        {
+            var obj = new GameObject(name);
+            _objects.Add(obj);
+            obj.transform.SetPositionAndRotation(position, rotation);
+            var point = obj.AddComponent<RespawnPoint>();
+            SetPrivateField(point, "_id", name);
+            return point;
+        }
+
+        private PlayerDeathController CreateDeathController(
+            PlayerFacade player,
+            CharacterStats stats,
+            Transform fallbackRespawnPoint = null)
+        {
+            var controller = player.gameObject.AddComponent<PlayerDeathController>();
+            SetPrivateField(controller, "_stats", stats);
+            SetPrivateField(controller, "_fallbackRespawnPoint", fallbackRespawnPoint);
+            return controller;
+        }
+
+        private static void PrepareDeadPlayer(PlayerDeathController controller, Vector3 deathPosition)
+        {
+            SetPrivateField(controller, "_isDead", true);
+            SetPrivateField(controller, "_hasDeathPosition", true);
+            SetPrivateField(controller, "_deathPosition", deathPosition);
         }
 
         private PlayerFacade CreatePlayer(
