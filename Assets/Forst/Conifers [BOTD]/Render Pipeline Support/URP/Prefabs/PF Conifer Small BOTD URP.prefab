@@ -172,6 +172,7 @@ GameObject:
   - component: {fileID: 720100000000000001}
   - component: {fileID: 720100000000000002}
   - component: {fileID: 720100000000000003}
+  - component: {fileID: 6828125537787607808}
   m_Layer: 0
   m_Name: PF Conifer Small BOTD URP
   m_TagString: Untagged
@@ -247,6 +248,72 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0.9, z: 0}
+--- !u!114 &720100000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1364922359172550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 886a2fabd8341022204b04ada9e47189, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _data: {fileID: 11400000, guid: 1ad550ac31a5829dc2cde4729e735760, type: 2}
+  _currentHealth: 0
+  _createFallbackPresentation: 0
+  _fallbackColor: {r: 0.34, g: 0.28, b: 0.18, a: 1}
+  _hitFeedbackColor: {r: 0.9, g: 0.72, b: 0.35, a: 1}
+--- !u!114 &720100000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1364922359172550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 387a1004290a8d6688a2377b46eb32f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _node: {fileID: 720100000000000001}
+  _topPadding: 0.35
+  _maxHeightAboveCamera: 0.7
+  _minHeightAboveCamera: -0.45
+  _cameraPullForward: 0.18
+  _barSize: {x: 96, y: 8}
+--- !u!114 &720100000000000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1364922359172550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94223dc5f5859e01fdfb011c547dc972, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _fallDuration: 1.15
+  _fallAngle: 82
+  _lingerSeconds: 1.25
+--- !u!208 &6828125537787607808
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1364922359172550}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 0
+  m_Extents: {x: 0.1, y: 3.625, z: 0.1}
+  m_MoveThreshold: 0.1
+  m_Carve: 1
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0, y: 3.38, z: 0}
+  m_TimeToStationary: 0.5
 --- !u!1 &1500231203828324
 GameObject:
   m_ObjectHideFlags: 0
@@ -331,50 +398,3 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &720100000000000001
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1364922359172550}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 886a2fabd8341022204b04ada9e47189, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _data: {fileID: 11400000, guid: 1ad550ac31a5829dc2cde4729e735760, type: 2}
-  _currentHealth: 0
-  _createFallbackPresentation: 0
-  _fallbackColor: {r: 0.34, g: 0.28, b: 0.18, a: 1}
-  _hitFeedbackColor: {r: 0.9, g: 0.72, b: 0.35, a: 1}
---- !u!114 &720100000000000002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1364922359172550}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 387a1004290a8d6688a2377b46eb32f3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _node: {fileID: 720100000000000001}
-  _worldOffset: {x: 0, y: 2.2, z: 0}
-  _barSize: {x: 96, y: 8}
---- !u!114 &720100000000000003
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1364922359172550}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 94223dc5f5859e01fdfb011c547dc972, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _fallDuration: 1.15
-  _fallAngle: 82
-  _lingerSeconds: 1.25

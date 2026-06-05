@@ -256,6 +256,7 @@ GameObject:
   - component: {fileID: 720300000000000001}
   - component: {fileID: 720300000000000002}
   - component: {fileID: 720300000000000003}
+  - component: {fileID: 7353636144916087053}
   m_Layer: 0
   m_Name: PF Conifer Tall BOTD URP
   m_TagString: Untagged
@@ -361,7 +362,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _node: {fileID: 720300000000000001}
-  _worldOffset: {x: 0, y: 4.5, z: 0}
+  _topPadding: 0.35
+  _maxHeightAboveCamera: 0.7
+  _minHeightAboveCamera: -0.45
+  _cameraPullForward: 0.18
   _barSize: {x: 96, y: 8}
 --- !u!114 &720300000000000003
 MonoBehaviour:
@@ -378,3 +382,19 @@ MonoBehaviour:
   _fallDuration: 1.15
   _fallAngle: 82
   _lingerSeconds: 1.25
+--- !u!208 &7353636144916087053
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1743353957770956}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 0
+  m_Extents: {x: 0.3, y: 7.5, z: 0.3}
+  m_MoveThreshold: 0.1
+  m_Carve: 1
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0, y: 6.53, z: 0}
+  m_TimeToStationary: 0.5

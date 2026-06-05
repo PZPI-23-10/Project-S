@@ -79,6 +79,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 710400000000000002}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e607c9ea3a77c844db7c1a3f2d180ce1,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4799931981945135318}
   m_SourcePrefab: {fileID: 100100000, guid: e607c9ea3a77c844db7c1a3f2d180ce1, type: 3}
 --- !u!1 &1637364417365498074 stripped
 GameObject:
@@ -138,5 +142,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _node: {fileID: 710400000000000001}
-  _worldOffset: {x: 0, y: 1.6, z: 0}
+  _topPadding: 0.35
+  _maxHeightAboveCamera: 0.7
+  _minHeightAboveCamera: -0.45
+  _cameraPullForward: 0.18
   _barSize: {x: 96, y: 8}
+--- !u!208 &4799931981945135318
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1637364417365498074}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 0.726, y: 0.68500006, z: 1.3620001}
+  m_MoveThreshold: 0.1
+  m_Carve: 1
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0.023000002, y: 0.58000004, z: -0.051000003}
+  m_TimeToStationary: 0.5
