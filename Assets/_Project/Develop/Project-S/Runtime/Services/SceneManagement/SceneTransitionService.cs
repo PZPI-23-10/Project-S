@@ -45,6 +45,21 @@ namespace Project_S.Runtime.Services.SceneManagement
             if (_isTransitioning || string.IsNullOrWhiteSpace(levelSceneName))
                 return;
 
+            PlayerFacade player = _playerProvider != null && _playerProvider.Player != null
+                ? _playerProvider.Player
+                : UnityEngine.Object.FindFirstObjectByType<PlayerFacade>(FindObjectsInactive.Include);
+
+            Vector3 startPos = Vector3.zero;
+            Quaternion startRot = Quaternion.identity;
+            KinematicCharacterMotor motor = null;
+
+            if (player != null)
+            {
+                startPos = player.transform.position;
+                startRot = player.transform.rotation;
+                motor = player.GetComponent<KinematicCharacterMotor>();
+            }
+
             _isTransitioning = true;
             SceneTransitionRequestBus.NotifyTransitionStarted();
 
@@ -64,7 +79,27 @@ namespace Project_S.Runtime.Services.SceneManagement
                     SceneManager.SetActiveScene(targetScene);
 
                 if (_saveService == null || !_saveService.ShouldRestorePlayerFromSave(levelSceneName))
-                    MovePlayerToSpawn(targetScene, spawnId);
+                {
+                    if (string.IsNullOrWhiteSpace(spawnId))
+                    {
+                        if (player != null)
+                        {
+                            if (motor != null)
+                            {
+                                motor.BaseVelocity = Vector3.zero;
+                                motor.SetPositionAndRotation(startPos, startRot);
+                            }
+                            else
+                            {
+                                player.transform.SetPositionAndRotation(startPos, startRot);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        MovePlayerToSpawn(targetScene, spawnId);
+                    }
+                }
 
                 if (!string.IsNullOrWhiteSpace(previousLevelSceneName)
                     && previousLevelSceneName != levelSceneName)

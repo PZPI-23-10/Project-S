@@ -66,7 +66,7 @@ namespace Project_S.Runtime.Services.Save
             if (HasSave)
             {
                 _pendingLoad = _storedSave.Value;
-                if (!string.IsNullOrWhiteSpace(_pendingLoad.ActiveSceneName))
+                if (!string.IsNullOrWhiteSpace(_pendingLoad.ActiveSceneName) && IsLevelScene(_pendingLoad.ActiveSceneName))
                     return _pendingLoad.ActiveSceneName;
             }
 
@@ -83,6 +83,9 @@ namespace Project_S.Runtime.Services.Save
 
         public bool ShouldRestorePlayerFromSave(string sceneName)
         {
+            if (_storedSave == null || _storedSave.Value == null || !_storedSave.Value.HasSave)
+                return false;
+
             return _pendingLoad != null
                 && !string.IsNullOrWhiteSpace(sceneName)
                 && _pendingLoad.ActiveSceneName == sceneName;
@@ -310,17 +313,20 @@ namespace Project_S.Runtime.Services.Save
                     stats.Set(stat.Type, stat.Value);
             }
 
-            Quaternion rotation = data.Rotation.ToQuaternion();
-            Vector3 position = data.Position.ToVector3();
-            var motor = player.GetComponent<KinematicCharacterMotor>();
-            if (motor != null)
+            if (_storedSave != null && _storedSave.Value != null && _storedSave.Value.HasSave)
             {
-                motor.BaseVelocity = Vector3.zero;
-                motor.SetPositionAndRotation(position, rotation);
-            }
-            else
-            {
-                player.transform.SetPositionAndRotation(position, rotation);
+                Quaternion rotation = data.Rotation.ToQuaternion();
+                Vector3 position = data.Position.ToVector3();
+                var motor = player.GetComponent<KinematicCharacterMotor>();
+                if (motor != null)
+                {
+                    motor.BaseVelocity = Vector3.zero;
+                    motor.SetPositionAndRotation(position, rotation);
+                }
+                else
+                {
+                    player.transform.SetPositionAndRotation(position, rotation);
+                }
             }
         }
 
@@ -663,7 +669,8 @@ namespace Project_S.Runtime.Services.Save
             return !string.IsNullOrWhiteSpace(sceneName)
                 && sceneName != SceneNames.Boot
                 && sceneName != SceneNames.Core
-                && sceneName != SceneNames.Menu;
+                && sceneName != SceneNames.Menu
+                && sceneName != "Credits";
         }
 
         private static PlayerFacade FindPlayer()
