@@ -154,7 +154,7 @@ namespace Project_S.Runtime.Gameplay.Portals
             Debug.Log("[Portals] All portals are closed. Loading credits.");
             AllPortalsClosed?.Invoke();
 
-            if (_loadCreditsOnCompletion)
+            if (_loadCreditsOnCompletion && Application.isPlaying)
                 SceneManager.LoadScene(SceneNames.Credits);
         }
 

@@ -20,6 +20,7 @@ namespace Project_S.Runtime.Boot
             
             Container.Bind<AssetLoader>().AsSingle();
             Container.Bind<SceneLoader>().AsSingle();
+            Container.Bind<SceneTransitionState>().AsSingle();
             Container.BindInstance(_playerStorage).AsSingle().NonLazy();
             Container.Bind<SaveAssetRegistry>().AsSingle();
             Container.Bind<GameSaveService>().AsSingle().NonLazy();

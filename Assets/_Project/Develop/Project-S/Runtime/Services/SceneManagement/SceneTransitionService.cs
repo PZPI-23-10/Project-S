@@ -10,19 +10,44 @@ using UnityEngine.SceneManagement;
 
 namespace Project_S.Runtime.Services.SceneManagement
 {
+    public class SceneTransitionState
+    {
+        public bool IsTransitioning { get; private set; }
+
+        public bool TryBegin()
+        {
+            if (IsTransitioning)
+                return false;
+
+            IsTransitioning = true;
+            return true;
+        }
+
+        public void End()
+        {
+            IsTransitioning = false;
+        }
+    }
+
     public class SceneTransitionService : IDisposable
     {
         private readonly SceneLoader _sceneLoader;
         private readonly PlayerProvider _playerProvider;
         private readonly GameSaveService _saveService;
+        private readonly SceneTransitionState _transitionState;
         private bool _isTransitioning;
         private string _currentLevelSceneName;
 
-        public SceneTransitionService(SceneLoader sceneLoader, PlayerProvider playerProvider, GameSaveService saveService)
+        public SceneTransitionService(
+            SceneLoader sceneLoader,
+            PlayerProvider playerProvider,
+            GameSaveService saveService,
+            SceneTransitionState transitionState)
         {
             _sceneLoader = sceneLoader;
             _playerProvider = playerProvider;
             _saveService = saveService;
+            _transitionState = transitionState;
             SceneTransitionRequestBus.TransitionRequested += TransitionTo;
         }
 
@@ -43,7 +68,7 @@ namespace Project_S.Runtime.Services.SceneManagement
             bool unloadBootScene = false,
             bool useNewGameSpawn = false)
         {
-            if (_isTransitioning || string.IsNullOrWhiteSpace(levelSceneName))
+            if (_isTransitioning || string.IsNullOrWhiteSpace(levelSceneName) || !_transitionState.TryBegin())
                 return;
 
             PlayerFacade player = _playerProvider != null && _playerProvider.Player != null
@@ -109,6 +134,7 @@ namespace Project_S.Runtime.Services.SceneManagement
             {
                 SceneTransitionRequestBus.NotifyTransitionCompleted();
                 _isTransitioning = false;
+                _transitionState.End();
             }
         }
 

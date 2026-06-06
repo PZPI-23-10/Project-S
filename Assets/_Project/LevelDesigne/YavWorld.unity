@@ -162277,6 +162277,8 @@ MonoBehaviour:
   - {fileID: 1364258734}
   _particleRoots: []
   _disableParticleGameObjects: 1
+  _bossDefeatedFlagKey: Boss.Minotaur.Defeated
+  _portalClosedFlagKey: Portal.Minotaur.Closed
   _bossDefeated: 0
   _closed: 0
 --- !u!114 &1612961513
@@ -171800,6 +171802,8 @@ MonoBehaviour:
   - {fileID: 662802503}
   _particleRoots: []
   _disableParticleGameObjects: 1
+  _bossDefeatedFlagKey: Boss.NightmareBeetle.Defeated
+  _portalClosedFlagKey: Portal.NightmareBeetle.Closed
   _bossDefeated: 0
   _closed: 0
 --- !u!114 &1700676377
@@ -209071,6 +209075,8 @@ MonoBehaviour:
   - {fileID: 1015899099}
   _particleRoots: []
   _disableParticleGameObjects: 1
+  _bossDefeatedFlagKey: Boss.GhoulZombie.Defeated
+  _portalClosedFlagKey: Portal.GhoulZombie.Closed
   _bossDefeated: 0
   _closed: 0
 --- !u!114 &2082340972

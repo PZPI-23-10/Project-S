@@ -35,6 +35,15 @@ namespace Project_S.Runtime.Gameplay.Upgrades
 
         public event Action Changed;
 
+        public IReadOnlyCollection<string> PurchasedUpgradeIds
+        {
+            get
+            {
+                EnsureInitialized();
+                return _progressStore != null ? _progressStore.PurchasedIds : Array.Empty<string>();
+            }
+        }
+
         public IReadOnlyList<UpgradeDefinition> Upgrades
         {
             get
@@ -123,6 +132,15 @@ namespace Project_S.Runtime.Gameplay.Upgrades
             return true;
         }
 
+        public void RestorePurchasedUpgradeIds(IEnumerable<string> ids)
+        {
+            EnsureInitialized();
+            _progressStore?.Replace(ids);
+            ApplyPurchasedUpgrades();
+            SyncUnlockStates();
+            Changed?.Invoke();
+        }
+
         public int GetOwnedItemCount(ItemData item)
         {
             EnsureInitialized();
@@ -166,7 +184,7 @@ namespace Project_S.Runtime.Gameplay.Upgrades
 
         private void InitializeProgressStore()
         {
-            _progressStore = new UpgradeProgressStore(_usePersistence ? _playerStorage : null);
+            _progressStore = new UpgradeProgressStore((DataStorage)null);
         }
 
         private void ApplyPurchasedUpgrades()

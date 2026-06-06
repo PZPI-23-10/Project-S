@@ -53,6 +53,25 @@ namespace Project_S.Runtime.Gameplay.Upgrades
             return true;
         }
 
+        public void Replace(IEnumerable<string> ids)
+        {
+            _runtimeIds.Clear();
+
+            if (_storedIds != null)
+                _storedIds.Value = new List<string>();
+
+            foreach (var id in ids ?? Array.Empty<string>())
+            {
+                if (string.IsNullOrWhiteSpace(id) || !_runtimeIds.Add(id))
+                    continue;
+
+                if (_storedIds != null && !_storedIds.Value.Contains(id))
+                    _storedIds.Value.Add(id);
+            }
+
+            _storedIds?.ForceStore();
+        }
+
         public void Dispose()
         {
             _storedIds.SafeDispose();

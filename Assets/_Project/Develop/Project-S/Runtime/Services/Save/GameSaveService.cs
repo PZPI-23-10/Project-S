@@ -37,7 +37,6 @@ namespace Project_S.Runtime.Services.Save
         };
 
         private readonly PlayerStorage _playerStorage;
-        private readonly SceneLoader _sceneLoader;
         private readonly SaveAssetRegistry _registry;
         private readonly HashSet<UnityEngine.Object> _subscribedObjects = new HashSet<UnityEngine.Object>();
 
@@ -51,22 +50,24 @@ namespace Project_S.Runtime.Services.Save
         public GameSaveService(PlayerStorage playerStorage, SceneLoader sceneLoader, SaveAssetRegistry registry = null)
         {
             _playerStorage = playerStorage;
-            _sceneLoader = sceneLoader;
             _registry = registry ?? new SaveAssetRegistry();
 
             if (_playerStorage != null)
                 _storedSave = new StoredObject<GameSaveData>(MainSaveKey, _playerStorage.DataStorage, new GameSaveData());
 
+            ResetIncompatibleStoredSave();
             CreateLifecycle();
         }
 
-        public bool HasSave => _storedSave != null && _storedSave.Value != null && _storedSave.Value.HasSave;
+        public bool HasSave => IsCompatibleSave(_storedSave?.Value);
 
         public string BeginLoadOrStartNew(string defaultSceneName)
         {
+            ResetIncompatibleStoredSave();
+
             if (HasSave)
             {
-                _pendingLoad = _storedSave.Value;
+                _pendingLoad = EnsureSaveShape(_storedSave.Value);
                 if (!string.IsNullOrWhiteSpace(_pendingLoad.ActiveSceneName) && IsLevelScene(_pendingLoad.ActiveSceneName))
                     return _pendingLoad.ActiveSceneName;
             }
@@ -84,10 +85,8 @@ namespace Project_S.Runtime.Services.Save
 
         public bool ShouldRestorePlayerFromSave(string sceneName)
         {
-            if (_storedSave == null || _storedSave.Value == null || !_storedSave.Value.HasSave)
-                return false;
-
-            return _pendingLoad != null
+            return IsCompatibleSave(_storedSave?.Value)
+                && _pendingLoad != null
                 && !string.IsNullOrWhiteSpace(sceneName)
                 && _pendingLoad.ActiveSceneName == sceneName;
         }
@@ -102,15 +101,15 @@ namespace Project_S.Runtime.Services.Save
             if (_isApplying || _storedSave == null || _playerStorage == null)
                 return;
 
-            // Не зберігаємо гру, якщо ми знаходимось в головному меню або поза ігровим рівнем
             Scene activeScene = SceneManager.GetActiveScene();
             if (!activeScene.IsValid() || !IsLevelScene(activeScene.name))
                 return;
 
             _registry.EnsureLoaded();
+            ResetIncompatibleStoredSave();
 
-            GameSaveData data = _storedSave.Value ?? new GameSaveData();
-            PlayerSaveData playerSnapshot = CapturePlayer();
+            GameSaveData data = EnsureSaveShape(_storedSave.Value ?? new GameSaveData());
+            PlayerState playerSnapshot = CapturePlayer();
             bool hadSave = data.HasSave;
 
             if (playerSnapshot == null && !hadSave)
@@ -119,17 +118,16 @@ namespace Project_S.Runtime.Services.Save
             if (playerSnapshot != null)
                 data.Player = playerSnapshot;
             else
-                data.Player ??= new PlayerSaveData();
+                data.Player ??= new PlayerState();
 
-            data.Scenes ??= new List<SceneSaveData>();
+            EnsureWorldShape(data.World);
+            data.World.Pickups.RuntimeDropped.Clear();
 
             for (int i = 0; i < SceneManager.sceneCount; i++)
             {
                 Scene scene = SceneManager.GetSceneAt(i);
                 if (scene.IsValid() && scene.isLoaded && IsLevelScene(scene.name))
-                {
-                    UpsertScene(data, CaptureScene(scene, data));
-                }
+                    CaptureSceneIntoWorld(scene, data.World);
             }
 
             data.Version = GameSaveData.CurrentVersion;
@@ -168,14 +166,17 @@ namespace Project_S.Runtime.Services.Save
             if (!scene.IsValid() || !scene.isLoaded)
                 return;
 
+            bool canApplySave = IsCompatibleSave(_pendingLoad ?? _storedSave?.Value);
+
             _registry.EnsureLoaded();
             _isApplying = true;
 
             try
             {
-                ApplySceneState(scene);
+                if (canApplySave)
+                    ApplySceneState(scene);
 
-                if (_pendingLoad != null && _pendingLoad.ActiveSceneName == scene.name)
+                if (canApplySave && _pendingLoad != null && _pendingLoad.ActiveSceneName == scene.name)
                 {
                     ApplyPlayer(_pendingLoad.Player);
                     _pendingLoad = null;
@@ -212,19 +213,21 @@ namespace Project_S.Runtime.Services.Save
             SaveNow("Autosave");
         }
 
-        private PlayerSaveData CapturePlayer()
+        private PlayerState CapturePlayer()
         {
             PlayerFacade player = FindPlayer();
             if (player == null)
                 return null;
 
-            var result = new PlayerSaveData();
-            result.Position = SaveVector3.From(player.transform.position);
-            result.Rotation = SaveQuaternion.From(player.transform.rotation);
+            var result = new PlayerState
+            {
+                Position = SaveVector3.From(player.transform.position),
+                Rotation = SaveQuaternion.From(player.transform.rotation)
+            };
 
             var inventory = player.GetComponent<InventoryController>();
             if (inventory != null)
-                result.InventorySlots = inventory.CaptureSaveSlots(_registry);
+                result.Inventory.Slots = inventory.CaptureSaveSlots(_registry);
 
             var wallet = player.GetComponent<SoulAshWallet>() ?? inventory?.GetComponent<SoulAshWallet>();
             result.SoulAsh = wallet != null ? wallet.Amount : 0;
@@ -232,17 +235,17 @@ namespace Project_S.Runtime.Services.Save
             var equipment = player.GetComponentInChildren<EquipmentSlots>(true) ?? player.GetComponent<EquipmentSlots>();
             if (equipment != null)
             {
-                result.CurrentEquipmentSlot = equipment.CurrentSlotIndex;
-                result.EquipmentItemIds = new List<string>();
+                result.Equipment.CurrentSlot = equipment.CurrentSlotIndex;
+                result.Equipment.ItemIds = new List<string>();
                 for (int i = 0; i < equipment.GetSize(); i++)
-                    result.EquipmentItemIds.Add(_registry.GetItemId(equipment.GetItemInSlot(i)));
+                    result.Equipment.ItemIds.Add(_registry.GetItemId(equipment.GetItemInSlot(i)));
             }
 
             var combat = player.GetComponent<CombatController>();
             if (combat != null)
             {
-                result.CurrentWeaponId = _registry.GetItemId(combat.SavedCurrentWeapon);
-                result.OffhandWeaponId = _registry.GetItemId(combat.EquippedOffhandItem);
+                result.Combat.CurrentWeaponId = _registry.GetItemId(combat.SavedCurrentWeapon);
+                result.Combat.OffhandWeaponId = _registry.GetItemId(combat.EquippedOffhandItem);
             }
 
             var accessories = player.GetComponent<AccessorySlotController>() ?? player.GetComponentInChildren<AccessorySlotController>(true);
@@ -253,31 +256,44 @@ namespace Project_S.Runtime.Services.Save
                     result.AccessoryItemIds.Add(_registry.GetItemId(accessories.GetItemInSlot(i)));
             }
 
+            var upgrades = player.GetComponent<PlayerUpgradeController>();
+            if (upgrades != null)
+            {
+                upgrades.EnsureInitialized();
+                result.PurchasedUpgradeIds = upgrades.PurchasedUpgradeIds
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .ToList();
+            }
+
             var stats = player.Stats != null ? player.Stats : player.GetComponent<CharacterStats>();
             if (stats != null)
             {
-                result.Stats = new List<StatValueSaveData>();
+                result.Stats = new Dictionary<StatType, float>();
                 foreach (StatType type in VolatileStats)
                 {
                     if (stats.TryGetStat(type, out _))
-                        result.Stats.Add(new StatValueSaveData { Type = type, Value = stats.GetRaw(type) });
+                        result.Stats[type] = stats.GetRaw(type);
                 }
             }
 
             return result;
         }
 
-        private void ApplyPlayer(PlayerSaveData data)
+        private void ApplyPlayer(PlayerState data)
         {
             PlayerFacade player = FindPlayer();
             if (player == null || data == null)
                 return;
 
-            var upgrades = player.GetComponent<PlayerUpgradeController>();
-            upgrades?.EnsureInitialized();
+            data.Inventory ??= new InventoryState();
+            data.Equipment ??= new EquipmentState();
+            data.Combat ??= new CombatSaveState();
+            data.AccessoryItemIds ??= new List<string>();
+            data.Stats ??= new Dictionary<StatType, float>();
+            data.PurchasedUpgradeIds ??= new List<string>();
 
             var inventory = player.GetComponent<InventoryController>();
-            inventory?.RestoreSaveSlots(data.InventorySlots, _registry);
+            inventory?.RestoreSaveSlots(data.Inventory.Slots, _registry);
 
             var wallet = player.GetComponent<SoulAshWallet>() ?? inventory?.GetComponent<SoulAshWallet>();
             wallet?.SetAmount(data.SoulAsh);
@@ -286,9 +302,9 @@ namespace Project_S.Runtime.Services.Save
             if (equipment != null)
             {
                 var items = new List<ItemData>();
-                foreach (string id in data.EquipmentItemIds ?? new List<string>())
+                foreach (string id in data.Equipment.ItemIds ?? new List<string>())
                     items.Add(_registry.GetItem(id));
-                equipment.RestoreSlots(items, data.CurrentEquipmentSlot);
+                equipment.RestoreSlots(items, data.Equipment.CurrentSlot);
             }
 
             var accessories = player.GetComponent<AccessorySlotController>() ?? player.GetComponentInChildren<AccessorySlotController>(true);
@@ -302,37 +318,34 @@ namespace Project_S.Runtime.Services.Save
             var combat = player.GetComponent<CombatController>();
             if (combat != null)
             {
-                combat.EquipWeapon(_registry.GetItem(data.CurrentWeaponId) as WeaponItemData);
-                combat.EquipOffhand(_registry.GetItem(data.OffhandWeaponId) as WeaponItemData);
+                combat.EquipWeapon(_registry.GetItem(data.Combat.CurrentWeaponId) as WeaponItemData);
+                combat.EquipOffhand(_registry.GetItem(data.Combat.OffhandWeaponId) as WeaponItemData);
                 combat.TryShowCombatOffhand();
             }
 
+            var upgrades = player.GetComponent<PlayerUpgradeController>();
+            upgrades?.RestorePurchasedUpgradeIds(data.PurchasedUpgradeIds);
+
             var stats = player.Stats != null ? player.Stats : player.GetComponent<CharacterStats>();
-            if (stats != null && data.Stats != null)
+            if (stats != null)
             {
                 foreach (var stat in data.Stats)
-                    stats.Set(stat.Type, stat.Value);
+                    stats.Set(stat.Key, stat.Value);
             }
 
-            if (_storedSave != null && _storedSave.Value != null && _storedSave.Value.HasSave)
-            {
-                Quaternion rotation = data.Rotation.ToQuaternion();
-                Vector3 position = data.Position.ToVector3();
-                PlayerRespawnUtility.MovePlayer(player, position, rotation);
-            }
+            Quaternion rotation = data.Rotation.ToQuaternion();
+            Vector3 position = data.Position.ToVector3();
+            PlayerRespawnUtility.MovePlayer(player, position, rotation);
         }
 
-        private SceneSaveData CaptureScene(Scene scene, GameSaveData currentData)
+        private void CaptureSceneIntoWorld(Scene scene, WorldState world)
         {
-            var existing = currentData.Scenes?.FirstOrDefault(x => x != null && x.SceneName == scene.name);
-            var objectsById = BuildObjectDictionary(existing?.Objects);
+            EnsureWorldShape(world);
 
             foreach (var storage in FindSceneComponents<BaseResourceStorage>(scene, true))
             {
-                objectsById[ResolveObjectId(storage)] = new WorldObjectSaveData
+                world.Inventories[ResolveDomainId(storage)] = new InventoryState
                 {
-                    Id = ResolveObjectId(storage),
-                    Type = nameof(BaseResourceStorage),
                     Slots = storage.CaptureSaveSlots(_registry),
                     SoulAsh = storage.SoulAshAmount
                 };
@@ -340,20 +353,16 @@ namespace Project_S.Runtime.Services.Save
 
             foreach (var storage in FindSceneComponents<GeneralItemStorage>(scene, true))
             {
-                objectsById[ResolveObjectId(storage)] = new WorldObjectSaveData
+                world.Inventories[ResolveDomainId(storage)] = new InventoryState
                 {
-                    Id = ResolveObjectId(storage),
-                    Type = nameof(GeneralItemStorage),
                     Slots = storage.CaptureSaveSlots(_registry)
                 };
             }
 
             foreach (var station in FindSceneComponents<TimedCraftingStation>(scene, true))
             {
-                objectsById[ResolveObjectId(station)] = new WorldObjectSaveData
+                world.CraftingStations[ResolveDomainId(station)] = new CraftingStationState
                 {
-                    Id = ResolveObjectId(station),
-                    Type = nameof(TimedCraftingStation),
                     FuelSeconds = station.FuelSeconds,
                     ActiveRecipeId = _registry.GetRecipeId(station.ActiveRecipe),
                     ActiveDurationSeconds = station.ActiveDurationSeconds,
@@ -363,10 +372,8 @@ namespace Project_S.Runtime.Services.Save
 
             foreach (var node in FindSceneComponents<HarvestableResourceNode>(scene, true))
             {
-                objectsById[ResolveObjectId(node)] = new WorldObjectSaveData
+                world.Resources[ResolveDomainId(node)] = new ResourceNodeState
                 {
-                    Id = ResolveObjectId(node),
-                    Type = nameof(HarvestableResourceNode),
                     CurrentHealth = node.CurrentHealth,
                     Depleted = node.IsDepleted
                 };
@@ -374,135 +381,117 @@ namespace Project_S.Runtime.Services.Save
 
             foreach (var enemy in FindSceneComponents<EnemyHealth>(scene, true))
             {
-                objectsById[ResolveObjectId(enemy)] = new WorldObjectSaveData
+                world.Enemies[ResolveDomainId(enemy)] = new EnemyState
                 {
-                    Id = ResolveObjectId(enemy),
-                    Type = nameof(EnemyHealth),
                     CurrentHealth = enemy.CurrentHealth,
                     Dead = enemy.IsDead
                 };
             }
 
             foreach (var portal in FindSceneComponents<BossPortal>(scene, true))
-            {
-                objectsById[ResolveObjectId(portal)] = new WorldObjectSaveData
-                {
-                    Id = ResolveObjectId(portal),
-                    Type = nameof(BossPortal),
-                    BossDefeated = portal.IsBossDefeated,
-                    PortalClosed = portal.IsClosed
-                };
-            }
+                portal.WriteToWorld(world);
 
             foreach (var pickup in FindSceneComponents<ItemPickup>(scene, true))
             {
                 if (pickup.GetComponent<RuntimeDroppedItem>() != null)
                     continue;
 
-                objectsById[ResolveObjectId(pickup)] = new WorldObjectSaveData
-                {
-                    Id = ResolveObjectId(pickup),
-                    Type = nameof(ItemPickup),
-                    ItemId = _registry.GetItemId(pickup.Item),
-                    Amount = pickup.Amount,
-                    Collected = pickup.IsCollected
-                };
+                string id = ResolveDomainId(pickup);
+                if (pickup.IsCollected)
+                    world.Pickups.CollectedAuthoredIds.Add(id);
+                else
+                    world.Pickups.CollectedAuthoredIds.Remove(id);
             }
 
-            return new SceneSaveData
-            {
-                SceneName = scene.name,
-                Objects = objectsById.Values.ToList(),
-                RuntimePickups = CaptureRuntimePickups(scene)
-            };
+            CaptureRuntimePickups(scene, world.Pickups.RuntimeDropped);
         }
 
         private void ApplySceneState(Scene scene)
         {
-            GameSaveData data = _pendingLoad ?? _storedSave?.Value;
-            SceneSaveData sceneData = data?.Scenes?.FirstOrDefault(x => x != null && x.SceneName == scene.name);
-            if (sceneData == null)
+            GameSaveData data = EnsureSaveShape(_pendingLoad ?? _storedSave?.Value);
+            WorldState world = data?.World;
+            if (world == null)
                 return;
 
-            var objectsById = BuildObjectDictionary(sceneData.Objects);
+            EnsureWorldShape(world);
 
             foreach (var storage in FindSceneComponents<BaseResourceStorage>(scene, true))
             {
-                if (objectsById.TryGetValue(ResolveObjectId(storage), out var saved))
+                if (world.Inventories.TryGetValue(ResolveDomainId(storage), out var saved))
                     storage.RestoreSaveState(saved.Slots, saved.SoulAsh, _registry);
             }
 
             foreach (var storage in FindSceneComponents<GeneralItemStorage>(scene, true))
             {
-                if (objectsById.TryGetValue(ResolveObjectId(storage), out var saved))
+                if (world.Inventories.TryGetValue(ResolveDomainId(storage), out var saved))
                     storage.RestoreSaveSlots(saved.Slots, _registry);
             }
 
             InventoryController playerInventory = FindPlayer()?.GetComponent<InventoryController>();
             foreach (var station in FindSceneComponents<TimedCraftingStation>(scene, true))
             {
-                if (objectsById.TryGetValue(ResolveObjectId(station), out var saved))
+                if (world.CraftingStations.TryGetValue(ResolveDomainId(station), out var saved))
+                {
                     station.RestoreSaveState(
                         saved.FuelSeconds,
                         _registry.GetRecipe(saved.ActiveRecipeId),
                         saved.ActiveDurationSeconds,
                         saved.RemainingCraftSeconds,
                         playerInventory);
+                }
             }
 
             foreach (var node in FindSceneComponents<HarvestableResourceNode>(scene, true))
             {
-                if (objectsById.TryGetValue(ResolveObjectId(node), out var saved))
+                if (world.Resources.TryGetValue(ResolveDomainId(node), out var saved))
                     node.RestoreSaveState(saved.CurrentHealth, saved.Depleted);
             }
 
             foreach (var enemy in FindSceneComponents<EnemyHealth>(scene, true))
             {
-                if (objectsById.TryGetValue(ResolveObjectId(enemy), out var saved))
+                if (world.Enemies.TryGetValue(ResolveDomainId(enemy), out var saved))
                     enemy.RestoreSaveState(saved.CurrentHealth, saved.Dead);
             }
 
             foreach (var portal in FindSceneComponents<BossPortal>(scene, true))
-            {
-                if (objectsById.TryGetValue(ResolveObjectId(portal), out var saved))
-                    portal.RestoreSaveState(saved.BossDefeated, saved.PortalClosed);
-            }
+                portal.RestoreFromWorld(world);
 
             foreach (var pickup in FindSceneComponents<ItemPickup>(scene, true))
             {
                 if (pickup.GetComponent<RuntimeDroppedItem>() != null)
                     continue;
 
-                if (objectsById.TryGetValue(ResolveObjectId(pickup), out var saved))
-                    pickup.RestoreSaveState(_registry.GetItem(saved.ItemId), saved.Amount, saved.Collected);
+                bool collected = world.Pickups.CollectedAuthoredIds.Contains(ResolveDomainId(pickup));
+                pickup.RestoreSaveState(pickup.Item, pickup.Amount, collected);
             }
 
-            RestoreRuntimePickups(scene, sceneData.RuntimePickups);
+            RestoreRuntimePickups(scene, world.Pickups.RuntimeDropped);
         }
 
-        private List<WorldPickupSaveData> CaptureRuntimePickups(Scene scene)
+        private void CaptureRuntimePickups(Scene scene, List<RuntimePickupState> result)
         {
-            var result = new List<WorldPickupSaveData>();
+            if (result == null)
+                return;
+
             foreach (var marker in FindSceneComponents<RuntimeDroppedItem>(scene, true))
             {
                 var pickup = marker.GetComponent<ItemPickup>();
                 if (pickup == null || pickup.Item == null || pickup.Amount <= 0)
                     continue;
 
-                result.Add(new WorldPickupSaveData
+                result.Add(new RuntimePickupState
                 {
-                    Id = ResolveObjectId(marker),
+                    Id = ResolveDomainId(marker),
+                    SceneName = scene.name,
                     ItemId = _registry.GetItemId(pickup.Item),
                     Amount = pickup.Amount,
                     Position = SaveVector3.From(marker.transform.position),
                     Rotation = SaveQuaternion.From(marker.transform.rotation)
                 });
             }
-
-            return result;
         }
 
-        private void RestoreRuntimePickups(Scene scene, IReadOnlyList<WorldPickupSaveData> pickups)
+        private void RestoreRuntimePickups(Scene scene, IReadOnlyList<RuntimePickupState> pickups)
         {
             foreach (var marker in FindSceneComponents<RuntimeDroppedItem>(scene, true))
                 DestroyObject(marker.gameObject);
@@ -512,6 +501,9 @@ namespace Project_S.Runtime.Services.Save
 
             foreach (var saved in pickups)
             {
+                if (saved == null || (!string.IsNullOrWhiteSpace(saved.SceneName) && saved.SceneName != scene.name))
+                    continue;
+
                 ItemData item = _registry.GetItem(saved.ItemId);
                 if (item == null || saved.Amount <= 0)
                 {
@@ -638,33 +630,6 @@ namespace Project_S.Runtime.Services.Save
             SaveNow("PickupCollected");
         }
 
-        private void UpsertScene(GameSaveData data, SceneSaveData sceneData)
-        {
-            data.Scenes ??= new List<SceneSaveData>();
-            int index = data.Scenes.FindIndex(x => x != null && x.SceneName == sceneData.SceneName);
-            if (index >= 0)
-                data.Scenes[index] = sceneData;
-            else
-                data.Scenes.Add(sceneData);
-        }
-
-        private static Dictionary<string, WorldObjectSaveData> BuildObjectDictionary(IEnumerable<WorldObjectSaveData> objects)
-        {
-            var result = new Dictionary<string, WorldObjectSaveData>();
-            if (objects == null)
-                return result;
-
-            foreach (var obj in objects)
-            {
-                if (obj == null || string.IsNullOrWhiteSpace(obj.Id))
-                    continue;
-
-                result[obj.Id] = obj;
-            }
-
-            return result;
-        }
-
         private string ResolveActiveLevelSceneName(string fallback)
         {
             Scene activeScene = SceneManager.GetActiveScene();
@@ -679,6 +644,53 @@ namespace Project_S.Runtime.Services.Save
             }
 
             return string.IsNullOrWhiteSpace(fallback) ? SceneNames.YavWorld : fallback;
+        }
+
+        private void ResetIncompatibleStoredSave()
+        {
+            GameSaveData data = _storedSave?.Value;
+            if (data == null || !data.HasSave || data.Version >= GameSaveData.CurrentVersion)
+                return;
+
+            Debug.LogWarning($"[Save] Save version {data.Version} is incompatible with version {GameSaveData.CurrentVersion}. Resetting save.");
+            DeleteSave();
+        }
+
+        private static bool IsCompatibleSave(GameSaveData data)
+        {
+            return data != null && data.HasSave && data.Version >= GameSaveData.CurrentVersion;
+        }
+
+        private static GameSaveData EnsureSaveShape(GameSaveData data)
+        {
+            if (data == null)
+                return null;
+
+            data.Player ??= new PlayerState();
+            data.Player.Inventory ??= new InventoryState();
+            data.Player.Equipment ??= new EquipmentState();
+            data.Player.Combat ??= new CombatSaveState();
+            data.Player.AccessoryItemIds ??= new List<string>();
+            data.Player.Stats ??= new Dictionary<StatType, float>();
+            data.Player.PurchasedUpgradeIds ??= new List<string>();
+            data.World ??= new WorldState();
+            EnsureWorldShape(data.World);
+            return data;
+        }
+
+        private static void EnsureWorldShape(WorldState world)
+        {
+            if (world == null)
+                return;
+
+            world.Flags ??= new HashSet<string>();
+            world.Inventories ??= new Dictionary<string, InventoryState>();
+            world.CraftingStations ??= new Dictionary<string, CraftingStationState>();
+            world.Resources ??= new Dictionary<string, ResourceNodeState>();
+            world.Enemies ??= new Dictionary<string, EnemyState>();
+            world.Pickups ??= new PickupWorldState();
+            world.Pickups.CollectedAuthoredIds ??= new HashSet<string>();
+            world.Pickups.RuntimeDropped ??= new List<RuntimePickupState>();
         }
 
         private static bool IsLevelScene(string sceneName)
@@ -707,17 +719,20 @@ namespace Project_S.Runtime.Services.Save
             return result;
         }
 
-        private static string ResolveObjectId(Component component)
+        private static string ResolveDomainId(Component component)
         {
             if (component == null)
                 return null;
 
             var saveableId = component.GetComponent<SaveableObjectId>();
-            string rawId = saveableId != null && !string.IsNullOrWhiteSpace(saveableId.Id)
-                ? saveableId.Id
-                : GetHierarchyPath(component.transform);
+            if (saveableId != null && !string.IsNullOrWhiteSpace(saveableId.Id))
+                return saveableId.Id;
 
-            return $"{component.GetType().Name}:{rawId}";
+            string scenePrefix = component.gameObject.scene.IsValid()
+                ? component.gameObject.scene.name
+                : "UnknownScene";
+
+            return $"{scenePrefix}:{GetHierarchyPath(component.transform)}";
         }
 
         private static string GetHierarchyPath(Transform transform)

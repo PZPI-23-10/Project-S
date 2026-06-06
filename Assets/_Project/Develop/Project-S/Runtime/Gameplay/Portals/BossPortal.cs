@@ -1,5 +1,6 @@
 using System;
 using Project_S.Runtime.Gameplay.Character.Interaction;
+using Project_S.Runtime.Services.Save;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -14,6 +15,8 @@ namespace Project_S.Runtime.Gameplay.Portals
         [SerializeField] private ParticleSystem[] _particleSystems;
         [SerializeField] private GameObject[] _particleRoots;
         [SerializeField] private bool _disableParticleGameObjects = true;
+        [SerializeField] private string _bossDefeatedFlagKey;
+        [SerializeField] private string _portalClosedFlagKey;
         [SerializeField] private bool _bossDefeated;
         [SerializeField] private bool _closed;
 
@@ -21,6 +24,8 @@ namespace Project_S.Runtime.Gameplay.Portals
 
         public bool IsBossDefeated => _bossDefeated;
         public bool IsClosed => _closed;
+        public string BossDefeatedFlagKey => ResolveBossDefeatedFlagKey();
+        public string PortalClosedFlagKey => ResolvePortalClosedFlagKey();
 
         public string InteractionPrompt
         {
@@ -99,6 +104,25 @@ namespace Project_S.Runtime.Gameplay.Portals
             _bossDefeated = bossDefeated || closed;
             ApplyStateToScene();
             NotifyChanged();
+        }
+
+        public void RestoreFromWorld(WorldState world)
+        {
+            if (world == null)
+                return;
+
+            RestoreSaveState(
+                world.HasFlag(BossDefeatedFlagKey),
+                world.HasFlag(PortalClosedFlagKey));
+        }
+
+        public void WriteToWorld(WorldState world)
+        {
+            if (world == null)
+                return;
+
+            world.SetFlag(BossDefeatedFlagKey, _bossDefeated);
+            world.SetFlag(PortalClosedFlagKey, _closed);
         }
 
         [Button("Debug: Kill Boss And Close Portal")]
@@ -202,6 +226,33 @@ namespace Project_S.Runtime.Gameplay.Portals
         private string DisplayName()
         {
             return string.IsNullOrWhiteSpace(_interactionPrompt) ? name : _interactionPrompt;
+        }
+
+        private string ResolveBossDefeatedFlagKey()
+        {
+            if (!string.IsNullOrWhiteSpace(_bossDefeatedFlagKey))
+                return _bossDefeatedFlagKey;
+
+            return $"Boss.{ResolveDomainToken()}.Defeated";
+        }
+
+        private string ResolvePortalClosedFlagKey()
+        {
+            if (!string.IsNullOrWhiteSpace(_portalClosedFlagKey))
+                return _portalClosedFlagKey;
+
+            return $"Portal.{ResolveDomainToken()}.Closed";
+        }
+
+        private string ResolveDomainToken()
+        {
+            SaveableObjectId saveableId = GetComponent<SaveableObjectId>();
+            string rawId = saveableId != null && !string.IsNullOrWhiteSpace(saveableId.Id)
+                ? saveableId.Id
+                : name;
+
+            string[] parts = rawId.Split('.');
+            return parts.Length > 0 && !string.IsNullOrWhiteSpace(parts[^1]) ? parts[^1] : rawId;
         }
 
         private void NotifyChanged()

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -7,6 +8,8 @@ namespace Project_S.Runtime.Services.SceneManagement
 {
     public class SceneLoader
     {
+        private readonly HashSet<string> _loadingScenes = new HashSet<string>();
+
         public void Load(string sceneName, Action onLoaded = null) =>
             LoadAsync(sceneName, LoadSceneMode.Single, onLoaded).Forget();
 
@@ -17,6 +20,14 @@ namespace Project_S.Runtime.Services.SceneManagement
         {
             if (string.IsNullOrWhiteSpace(sceneName))
                 return;
+
+            string loadingKey = $"{loadMode}:{sceneName}";
+            if (_loadingScenes.Contains(loadingKey))
+            {
+                await UniTask.WaitUntil(() => IsLoaded(sceneName) || !_loadingScenes.Contains(loadingKey));
+                onLoaded?.Invoke();
+                return;
+            }
 
             if (loadMode == LoadSceneMode.Additive && IsLoaded(sceneName))
             {
@@ -30,11 +41,19 @@ namespace Project_S.Runtime.Services.SceneManagement
                 return;
             }
 
-            AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName, loadMode);
-            if (operation == null)
-                return;
+            _loadingScenes.Add(loadingKey);
+            try
+            {
+                AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName, loadMode);
+                if (operation == null)
+                    return;
 
-            await operation.ToUniTask();
+                await operation.ToUniTask();
+            }
+            finally
+            {
+                _loadingScenes.Remove(loadingKey);
+            }
 
             onLoaded?.Invoke();
         }

@@ -8,64 +8,115 @@ namespace Project_S.Runtime.Services.Save
     [Serializable]
     public class GameSaveData
     {
-        public const int CurrentVersion = 1;
+        public const int CurrentVersion = 2;
 
         public int Version = CurrentVersion;
         public bool HasSave;
         public long SavedUtcTicks;
         public string ActiveSceneName;
-        public PlayerSaveData Player = new PlayerSaveData();
-        public List<SceneSaveData> Scenes = new List<SceneSaveData>();
+        public PlayerState Player = new PlayerState();
+        public WorldState World = new WorldState();
     }
 
     [Serializable]
-    public class PlayerSaveData
+    public class PlayerState
     {
         public SaveVector3 Position;
         public SaveQuaternion Rotation;
-        public List<ItemStackSaveData> InventorySlots = new List<ItemStackSaveData>();
+        public InventoryState Inventory = new InventoryState();
         public int SoulAsh;
-        public List<string> EquipmentItemIds = new List<string>();
-        public int CurrentEquipmentSlot;
-        public string CurrentWeaponId;
-        public string OffhandWeaponId;
+        public EquipmentState Equipment = new EquipmentState();
+        public CombatSaveState Combat = new CombatSaveState();
         public List<string> AccessoryItemIds = new List<string>();
-        public List<StatValueSaveData> Stats = new List<StatValueSaveData>();
+        public Dictionary<StatType, float> Stats = new Dictionary<StatType, float>();
+        public List<string> PurchasedUpgradeIds = new List<string>();
     }
 
     [Serializable]
-    public class SceneSaveData
+    public class WorldState
     {
-        public string SceneName;
-        public List<WorldObjectSaveData> Objects = new List<WorldObjectSaveData>();
-        public List<WorldPickupSaveData> RuntimePickups = new List<WorldPickupSaveData>();
+        public HashSet<string> Flags = new HashSet<string>();
+        public Dictionary<string, InventoryState> Inventories = new Dictionary<string, InventoryState>();
+        public Dictionary<string, CraftingStationState> CraftingStations = new Dictionary<string, CraftingStationState>();
+        public Dictionary<string, ResourceNodeState> Resources = new Dictionary<string, ResourceNodeState>();
+        public Dictionary<string, EnemyState> Enemies = new Dictionary<string, EnemyState>();
+        public PickupWorldState Pickups = new PickupWorldState();
+
+        public bool HasFlag(string key)
+        {
+            return !string.IsNullOrWhiteSpace(key) && Flags != null && Flags.Contains(key);
+        }
+
+        public void SetFlag(string key, bool value)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+                return;
+
+            Flags ??= new HashSet<string>();
+
+            if (value)
+                Flags.Add(key);
+            else
+                Flags.Remove(key);
+        }
     }
 
     [Serializable]
-    public class WorldObjectSaveData
+    public class InventoryState
     {
-        public string Id;
-        public string Type;
         public List<ItemStackSaveData> Slots = new List<ItemStackSaveData>();
         public int SoulAsh;
+    }
+
+    [Serializable]
+    public class EquipmentState
+    {
+        public List<string> ItemIds = new List<string>();
+        public int CurrentSlot;
+    }
+
+    [Serializable]
+    public class CombatSaveState
+    {
+        public string CurrentWeaponId;
+        public string OffhandWeaponId;
+    }
+
+    [Serializable]
+    public class CraftingStationState
+    {
         public float FuelSeconds;
         public string ActiveRecipeId;
         public float ActiveDurationSeconds;
         public float RemainingCraftSeconds;
-        public float CurrentHealth;
-        public bool Depleted;
-        public bool Dead;
-        public bool BossDefeated;
-        public bool PortalClosed;
-        public string ItemId;
-        public int Amount;
-        public bool Collected;
     }
 
     [Serializable]
-    public class WorldPickupSaveData
+    public class ResourceNodeState
+    {
+        public float CurrentHealth;
+        public bool Depleted;
+    }
+
+    [Serializable]
+    public class EnemyState
+    {
+        public float CurrentHealth;
+        public bool Dead;
+    }
+
+    [Serializable]
+    public class PickupWorldState
+    {
+        public HashSet<string> CollectedAuthoredIds = new HashSet<string>();
+        public List<RuntimePickupState> RuntimeDropped = new List<RuntimePickupState>();
+    }
+
+    [Serializable]
+    public class RuntimePickupState
     {
         public string Id;
+        public string SceneName;
         public string ItemId;
         public int Amount;
         public SaveVector3 Position;
@@ -77,13 +128,6 @@ namespace Project_S.Runtime.Services.Save
     {
         public string ItemId;
         public int Amount;
-    }
-
-    [Serializable]
-    public class StatValueSaveData
-    {
-        public StatType Type;
-        public float Value;
     }
 
     [Serializable]
