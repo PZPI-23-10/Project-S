@@ -20,6 +20,7 @@ GameObject:
   - component: {fileID: 8150431351323847761}
   - component: {fileID: 7151557490587513896}
   - component: {fileID: 4178674215773077125}
+  - component: {fileID: -6401905856120670017}
   m_Layer: 0
   m_Name: NightmareBeetleBoss
   m_TagString: Untagged
@@ -359,6 +360,23 @@ MonoBehaviour:
     DamageApplicationCount: 1
     DamageApplicationInterval: 0.12
   _healthBarOffset: {x: 0, y: 2.8, z: 0}
+--- !u!114 &-6401905856120670017
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2111892759517623772}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a89cfb8579de3a419cacbaa29e83159, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _bossName: "\u041A\u043E\u0448\u043C\u0430\u0440\u043D\u0438\u0439 \u0416\u0443\u043A"
+  _fillColor: {r: 1, g: 0, b: 0, a: 1}
+  _barWidth: 800
+  _barHeight: 40
+  _barScale: {x: 1, y: 1, z: 1}
 --- !u!1001 &6923254057833569077
 PrefabInstance:
   m_ObjectHideFlags: 0

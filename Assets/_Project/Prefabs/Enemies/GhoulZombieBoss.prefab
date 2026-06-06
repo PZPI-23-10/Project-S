@@ -20,6 +20,7 @@ GameObject:
   - component: {fileID: 1597452472163001536}
   - component: {fileID: 2767167594614856574}
   - component: {fileID: 7660291035603359217}
+  - component: {fileID: -5925666197535165036}
   m_Layer: 0
   m_Name: GhoulZombieBoss
   m_TagString: Untagged
@@ -327,6 +328,23 @@ MonoBehaviour:
     DamageApplicationCount: 1
     DamageApplicationInterval: 0.12
   _healthBarOffset: {x: 0, y: 2, z: 0}
+--- !u!114 &-5925666197535165036
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8236062497718919353}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a89cfb8579de3a419cacbaa29e83159, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _bossName: "\u0413\u0443\u043B\u044C \u0437\u043E\u043C\u0431\u0456"
+  _fillColor: {r: 1, g: 0, b: 0, a: 1}
+  _barWidth: 800
+  _barHeight: 40
+  _barScale: {x: 1, y: 1, z: 1}
 --- !u!1001 &623625160637973758
 PrefabInstance:
   m_ObjectHideFlags: 0

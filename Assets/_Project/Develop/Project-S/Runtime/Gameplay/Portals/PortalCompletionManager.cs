@@ -18,6 +18,7 @@ namespace Project_S.Runtime.Gameplay.Portals
         private bool _endingStarted;
 
         public static event Action AllPortalsClosed;
+        public static event Action<int, int> PortalClosedProgress;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
@@ -105,7 +106,30 @@ namespace Project_S.Runtime.Gameplay.Portals
 
         private void OnPortalChanged(BossPortal portal)
         {
+            if (portal != null && portal.IsClosed)
+            {
+                BroadcastProgress();
+            }
             CheckCompletion();
+        }
+
+        private void BroadcastProgress()
+        {
+            if (_portals.Count == 0) return;
+            
+            int closedCount = 0;
+            int totalCount = 0;
+            for (int i = 0; i < _portals.Count; i++)
+            {
+                if (_portals[i] != null)
+                {
+                    totalCount++;
+                    if (_portals[i].IsClosed)
+                        closedCount++;
+                }
+            }
+            
+            PortalClosedProgress?.Invoke(closedCount, totalCount);
         }
 
         private void CheckCompletion()

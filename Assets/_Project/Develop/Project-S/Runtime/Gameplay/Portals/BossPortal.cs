@@ -103,7 +103,6 @@ namespace Project_S.Runtime.Gameplay.Portals
             _closed = closed;
             _bossDefeated = bossDefeated || closed;
             ApplyStateToScene();
-            NotifyChanged();
         }
 
         public void RestoreFromWorld(WorldState world)
